@@ -50,8 +50,22 @@ if ($_REQUEST['method'] == 'save') {
 		}
 	}
 	
-	// save
-	$json = array_key_blacklist($board, array('author', 'board', 'parentBoard', 'parentRev', 'rev'));
+	// save layers separately
+	foreach ($board['layers'] as $key=>$val) {
+		if (@is_string($val['png'])) {
+			if (substr($val['png'], 0, 22) == 'data:image/png;base64,') {
+				$val['png'] = @base64_decode(substr($val['png'], 22));
+			} else {
+				// unsupported Data-URL
+				$val['png'] = NULL;
+			}
+			// png can be set to NULL, meaning that the layer is blank
+		}
+		db_insert('layers', array('board'=>$board['board'], 'rev'=>$board['rev'], 'layer'=>$key, 'width'=>$val['width'], 'height'=>$val['height'], 'png'=>$val['png']));
+	}
+	
+	// save the rest
+	$json = array_key_blacklist($board, array('author', 'board', 'layers', 'parentBoard', 'parentRev', 'rev'));
 	$json = json_encode($json, JSON_FORCE_OBJECT);
 	db_insert('revisions', array('board'=>$board['board'], 'rev'=>$board['rev'], 'created'=>'NOW()', 'author'=>$auth['uid'], 'host'=>$_SERVER['REMOTE_ADDR'], 'parentBoard'=>$board['parentBoard'], 'parentRev'=>$board['parentRev'], 'json'=>$json));
 	// return ids
