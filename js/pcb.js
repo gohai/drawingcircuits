@@ -6,13 +6,13 @@
 			user: null
 		},
 		baseUrl: null,
-		highDpi: 300.0
+		highDpi: 300
 	};
 	
 	var defaultBoard = {
 		author: null,
 		board: null,
-		height: 100.0,
+		height: 100,
 		layers: {
 			'bottom': null,
 			'substrate': null,
@@ -21,12 +21,12 @@
 		parentBoard: null,
 		parentRev: null,
 		rev: null,
-		width: 100.0
+		width: 100
 	};
 	var board = {};
 	
 	var defaultView = {
-		diameter: 5.0,
+		diameter: 5,
 		lastMouseX: null,
 		lastMouseY: null,
 		layer: 'top',
@@ -34,7 +34,7 @@
 		layersToLoad: 0,
 		redrawPending: false,
 		tool: 'draw',
-		zoom: 1.0
+		zoom: 1
 	};
 	var view = {};
 	
@@ -51,6 +51,13 @@
 			dataType: 'json',
 			success: success
 		});
+	};
+	var fillCanvas = function(cvs, color) {
+		var ctx = cvs.getContext('2d');
+		ctx.save();
+		ctx.fillStyle = color;
+		ctx.fillRect(0, 0, cvs.width, cvs.height);
+		ctx.restore();
 	};
 	var imgToCanvas = function(src, callback) {
 		var img = new Image();
@@ -100,6 +107,21 @@
 		}
 		redraw();
 	}
+	var isLayerMirrored = function(l) {
+		if (l === undefined) {
+			l = view.layer;
+		}
+		if (l == 'bottom') {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	var mirrorContext = function(ctx) {
+		ctx.translate(mmToPx(board.width, true)/2, 0);
+		ctx.scale(-1, 1);
+		ctx.translate(-mmToPx(board.width, true)/2, 0);
+	};
 	var mmToPx = function(mm, handleZoom) {
 		if (handleZoom === false || handleZoom === undefined) {
 			// high DPI
@@ -127,19 +149,35 @@
 		// draw to screen
 		var cvs = $('#pcb-canvas').get(0);
 		var ctx = cvs.getContext('2d');
+		ctx.save();
+		if (isLayerMirrored()) {
+			mirrorContext(ctx);
+		}
+		
 		// layers
 		ctx.save();
-		ctx.drawImage(view.layers[view.layer], 0, 0);
+		ctx.globalAlpha = 0.5;
+		if (view.layer == 'top' || view.layer == 'substrate') {
+			var order = ['bottom', 'substrate', 'top'];
+		} else {
+			var order = ['top', 'substrate', 'bottom'];
+		}
+		for (var l in order) {
+			ctx.drawImage(view.layers[order[l]], 0, 0);		
+		}
 		ctx.restore();
+		
 		// mouse cursor
+		ctx.save();
 		if (view.lastMouseX !== null && view.lastMouseY !== null) {
-			ctx.save();
 			ctx.strokeStyle='#f00';
 			ctx.beginPath();
 			ctx.arc(view.lastMouseX, view.lastMouseY, mmToPx(view.diameter/2, true), 0, 2*Math.PI);
 			ctx.stroke();
-			ctx.restore();
 		}
+		ctx.restore();
+		
+		ctx.restore();
 	};
 	var requestRedraw = function() {
 		if (view.redrawPending === false) {
@@ -156,21 +194,66 @@
 			return false;
 		}
 	};
+	var screenPxToCanvas = function(x, y) {
+		if (isLayerMirrored()) {
+			x = mmToPx(board.width, true)-x;
+		}
+		return { x: x, y: y };
+	};
 	
 	// Event handlers
 	$(document).ready(function(e) {
+		$('html').on('keypress', function(e) {
+			if (!$(e.target).is('body')) {
+				return;
+			}
+			if (e.keyCode == 43 || e.keyCode == 61) {
+				// + or =
+				$.pcb.zoom($.pcb.zoom()*0.8);
+			} else if (e.keyCode == 45) {
+				// -
+				$.pcb.zoom($.pcb.zoom()*1.2);
+			} else if (e.keyCode == 48) {
+				// 0
+				$.pcb.zoom(defaultView.zoom);
+			} else if (e.keyCode == 49) {
+				// 1
+				$.pcb.layer('top');
+			} else if (e.keyCode == 50) {
+				$.pcb.layer('substrate');
+			} else if (e.keyCode == 51) {
+				$.pcb.layer('bottom');
+			} else if (e.keyCode == 91) {
+				// [
+				$.pcb.diameter($.pcb.diameter()-1);
+			} else if (e.keyCode == 93) {
+				// ]
+				$.pcb.diameter($.pcb.diameter()+1);
+			} else if (e.keyCode == 98) {
+				// B
+				$.pcb.tool('draw');
+			} else if (e.keyCode == 101) {
+				// E
+				$.pcb.tool('erase');
+			} else {
+				// DEBUG
+				//console.log(e.keyCode);
+			}
+		});
 		$('html').on('mousedown', '#pcb-canvas', function(e) {
 			view.usingTool = true;
-			$.pcb.point(pxToMm(e.offsetX, true), pxToMm(e.offsetY, true));
+			var p = screenPxToCanvas(e.offsetX, e.offsetY);
+			$.pcb.point(pxToMm(p.x, true), pxToMm(p.y, true));
 			return false;
 		});
 		$('html').on('mousemove', '#pcb-canvas', function(e) {
+			var p = screenPxToCanvas(e.offsetX, e.offsetY);
 			if (view.usingTool === true) {
-				$.pcb.point(pxToMm(e.offsetX, true), pxToMm(e.offsetY, true));
+				$.pcb.point(pxToMm(p.x, true), pxToMm(p.y, true));
 			}
 			// track mouse
-			view.lastMouseX = e.offsetX;
-			view.lastMouseY = e.offsetY;
+			view.lastMouseX = p.x;
+			view.lastMouseY = p.y;
 			requestRedraw();
 			return false;
 		});
@@ -229,6 +312,10 @@
 				$(cvs).prop('width', mmToPx(board.width));
 				$(cvs).prop('height', mmToPx(board.height));
 				board.layers[l] = $(cvs).get(0);
+				// substrate is filled by default
+				if (l == 'substrate') {
+					fillCanvas(board.layers[l], '#000');
+				}
 			}
 			view = $.extend(true, {}, defaultView);
 			invalidateView();
@@ -237,13 +324,29 @@
 			if (mm === undefined) {
 				return view.diameter;
 			} else {
-				view.diameter = mm;
-				requestRedraw();
-				// TODO: event
+				if (mm <= 0) {
+					return false;
+				} else {
+					view.diameter = mm;
+					requestRedraw();
+					// TODO: event
+					return true;
+				}
 			}
 		},
-		layer: function() {
-			return view.layer;
+		layer: function(l) {
+			if (l === undefined) {
+				return view.layer;
+			} else {
+				if (board.layers[l] === undefined) {
+					return false;
+				} else {
+					view.layer = l;
+					invalidateView(false);
+					// TODO: event
+					return true;
+				}
+			}
 		},
 		load: function(brd, rev) {
 			if (typeof brd != 'number') {
@@ -289,7 +392,7 @@
 			return { board: board.parentBoard, rev: board.parentRev };
 		},
 		point: function(x, y) {
-			if (view.tool == 'draw') {
+			if (view.tool == 'draw' || view.tool == 'erase') {
 				for (var i=0; i < 2; i++) {
 					if (i == 0) {
 						var cvs = board.layers[view.layer];
@@ -300,7 +403,18 @@
 					}
 					var ctx = cvs.getContext('2d');
 					ctx.save();
-					ctx.fillStyle='#000';
+					if (view.tool == 'draw') {
+						if (view.layer == 'top') {
+							ctx.fillStyle = '#f00';
+						} else if (view.layer == 'substrate') {
+							ctx.fillStyle = '#000';
+						} else {
+							ctx.fillStyle = '#00f';
+						}
+					} else {
+						ctx.fillStyle = '#000';
+						ctx.globalCompositeOperation = 'destination-out';
+					}
 					ctx.beginPath();
 					ctx.arc(mmToPx(x, zoom), mmToPx(y, zoom), mmToPx(view.diameter/2, zoom), 0, 2*Math.PI);
 					ctx.fill();
@@ -348,18 +462,30 @@
 				}
 			});
 		},
-		tool: function() {
-			return view.tool;
+		tool: function(t) {
+			if (t === undefined) {
+				return view.tool;
+			} else {
+				if (t == view.tool) {
+					return;
+				} else {
+					view.tool = t;
+					requestRedraw();
+				}
+			}
 		},
 		zoom: function(fac) {
 			if (fac === undefined) {
 				return view.zoom;
 			} else {
-				if (fac === view.zoom) {
+				if (fac <= 0) {
+					return false;
+				} else if (fac === view.zoom) {
 					return;
 				} else {
 					view.zoom = fac;
 					invalidateView();
+					return true;
 				}
 			}
 		}
