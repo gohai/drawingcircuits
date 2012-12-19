@@ -1,0 +1,17 @@
+.pcb-ui {
+}
+
+.pcb-ui-banner {
+	background-color: rgb(255, 255, 255, 0.9);
+	border-radius: 10px;
+	line-height: 200px;
+	position: fixed;
+	text-align: center;
+	width: 400px;
+}
+
+#pcb-ui-banner-loading {
+}
+
+#pcb-ui-banner-saving {
+}

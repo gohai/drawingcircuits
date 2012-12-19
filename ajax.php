@@ -9,7 +9,23 @@ foreach ($_REQUEST as $key=>$val) {
 	$_REQUEST[$key] = @json_decode($val, true);
 }
 
-if ($_REQUEST['method'] == 'save') {
+if ($_REQUEST['method'] == 'export') {
+	$board = $_REQUEST['board'];
+	$rev = $_REQUEST['rev'];
+	$q = db_fetch('layers', 'board='.@intval($board).' AND rev='.@intval($rev).' AND layer="top"');
+	if ($q === false) {
+		http_error(500, false);
+		die();
+	} else if (empty($q)) {
+		http_error(404, false);
+		die();
+	} else {
+		header('Content-type: application/octet-stream');
+		header('Content-Disposition: attachment; filename="board'.$board.'_rev'.$rev.'_top.png"');
+		echo $q[0]['png'];
+		die();
+	}
+} else if ($_REQUEST['method'] == 'save') {
 	check_auth();
 	$board = $_REQUEST['board'];
 	$auth = $_REQUEST['auth'];
@@ -18,10 +34,12 @@ if ($_REQUEST['method'] == 'save') {
 	if ($board['board'] !== NULL) {
 		$q = db_fetch('boards', 'board='.@intval($board['board']));
 		if ($q === false) {
-			http_error(500);
+			http_error(500, false);
+			die();
 		} elseif (empty($q)) {
 			// unknown board
-			http_error(400);
+			http_error(400, false);
+			die();
 		} elseif ($q[0]['owner'] !== NULL && $q[0]['owner'] !== $auth['uid']) {
 			// TODO: we might check for administrative role here as well
 			$board['board'] = NULL;
@@ -32,7 +50,8 @@ if ($_REQUEST['method'] == 'save') {
 		// create a new board
 		$id = db_insert('boards', array('owner'=>$auth['uid']));
 		if ($id === false) {
-			http_error(500);
+			http_error(500, false);
+			die();
 		} else {
 			$board['board'] = $id;
 			$board['rev'] = 1;
@@ -41,7 +60,8 @@ if ($_REQUEST['method'] == 'save') {
 		// create a new revision
 		$q = db_fetch_raw('SELECT rev FROM revisions WHERE board='.@intval($board['board']).' ORDER BY rev DESC LIMIT	1');
 		if ($q === false) {
-			http_error(500);
+			http_error(500, false);
+			die();
 		} elseif (empty($q)) {
 			// no revisions
 			$board['rev'] = 1;
@@ -81,10 +101,12 @@ if ($_REQUEST['method'] == 'save') {
 		// use the latest revision
 		$q = db_fetch_raw('SELECT rev FROM revisions WHERE board='.$board.' ORDER BY rev DESC LIMIT 1');
 		if ($q === false) {
-			http_error(500);
+			http_error(500, false);
+			die();
 		} elseif (empty($q)) {
 			// no revision for board
-			http_error(404);
+			http_error(404, false);
+			die();
 		} else {
 			$rev = $q[0]['rev'];
 		}
@@ -92,10 +114,12 @@ if ($_REQUEST['method'] == 'save') {
 	
 	$q = db_fetch('revisions', 'board='.$board.' AND rev='.$rev);
 	if ($q === false) {
-		http_error(500);
+		http_error(500, false);
+		die();
 	} elseif (empty($q)) {
 		// revision not found
-		http_error(404);
+		http_error(404, false);
+		die();
 	} else {
 		$json = @json_decode($q[0]['json'], true);
 		$json['board'] = $board;
@@ -115,7 +139,8 @@ if ($_REQUEST['method'] == 'save') {
 	}
 } else {
 	// unsupported method
-	http_error(400);
+	http_error(400, false);
+	die();
 }
 
 
@@ -145,7 +170,8 @@ function arg_optional(&$var, $type, $default, &$used_default = NULL)
 function arg_required(&$var, $type)
 {
 	if (!isset($var) || gettype($var) != $type) {
-		http_error(400);
+		http_error(400, false);
+		die();
 	}
 	return $var;
 }

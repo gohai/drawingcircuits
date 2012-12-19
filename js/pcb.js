@@ -26,6 +26,7 @@
 	var board = {};
 	
 	var defaultView = {
+		ajaxPending: 0,
 		diameter: 5,
 		lastMouseX: null,
 		lastMouseY: null,
@@ -33,6 +34,7 @@
 		layers: {},
 		layersToLoad: 0,
 		redrawPending: false,
+		ruler: false,
 		tool: 'draw',
 		zoom: 1
 	};
@@ -40,17 +42,49 @@
 	
 	// Helper functions
 	var ajaxRequest = function(data, success) {
+		// setup shim success function
+		var shimSuccess = function(data) {
+			success(data);
+			// reference counting (also see ajaxError())
+			view.ajaxPending--;
+			// sanity check
+			if (view.ajaxPending < 0) {
+				view.ajaxPending = 0;
+			}
+		};
+		
 		// encode request data
 		for (key in data) {
 			data[key] = JSON.stringify(data[key]);
 		}
+		// reference counting
+		view.ajaxPending++;
 		$.ajax({
 			url: options.baseUrl+'ajax.php',
 			type: 'POST',
 			data: data,
 			dataType: 'json',
-			success: success
+			success: shimSuccess
 		});
+	};
+	var downloadRequest = function(data) {
+		var arg = '';
+		// encode request data
+		for (key in data) {
+			if (arg.length == 0) {
+				arg = '?';
+			} else {
+				arg += '&';
+			}
+			arg += encodeURIComponent(key);
+			arg += '=';
+			arg += encodeURIComponent(JSON.stringify(data[key]));
+		}
+		var iframe = $('<iframe class="pcb-download" style="display: none;"></iframe>');
+		// TODO: Resource interpreted as Document but transferred with MIME type application/octet-stream
+		$(iframe).prop('src', options.baseUrl+'ajax.php'+arg);
+		// TODO: set and check for cookie (see jquery.fileDownload.js)
+		$('body').append(iframe);
 	};
 	var fillCanvas = function(cvs, color) {
 		var ctx = cvs.getContext('2d');
@@ -63,8 +97,8 @@
 		var img = new Image();
 		img.onload = function() {
 			var cvs = $('<canvas></canvas>');
-			$(cvs).attr('width', this.width);
-			$(cvs).attr('height', this.height);
+			$(cvs).prop('width', this.width);
+			$(cvs).prop('height', this.height);
 			var ctx = $(cvs).get(0).getContext('2d');
 			ctx.save();
 			ctx.drawImage(img, 0, 0);
@@ -144,8 +178,8 @@
 		// clear flag (see requestRedraw())
 		view.redrawPending = false;
 		// clear canvas
-		$('#pcb-canvas').attr('width', mmToPx(board.height, true));
-		$('#pcb-canvas').attr('height', mmToPx(board.width, true));
+		$('#pcb-canvas').prop('width', mmToPx(board.height, true));
+		$('#pcb-canvas').prop('height', mmToPx(board.width, true));
 		// draw to screen
 		var cvs = $('#pcb-canvas').get(0);
 		var ctx = cvs.getContext('2d');
@@ -170,12 +204,45 @@
 		// mouse cursor
 		ctx.save();
 		if (view.lastMouseX !== null && view.lastMouseY !== null) {
-			ctx.strokeStyle='#f00';
+			ctx.strokeStyle = '#f00';
 			ctx.beginPath();
 			ctx.arc(view.lastMouseX, view.lastMouseY, mmToPx(view.diameter/2, true), 0, 2*Math.PI);
 			ctx.stroke();
 		}
 		ctx.restore();
+		
+		// ruler
+		if (view.ruler == true) {
+			ctx.save();
+			ctx.strokeStyle = '#000';
+			var cnt = 0;
+			for (var x=0; x < cvs.width; x += (cvs.width-1)/board.width) {
+				ctx.beginPath();
+				// this is to make sure we draw at .5 for a 1px line
+				ctx.moveTo(Math.round(x)+0.5, 0);
+				if (cnt % 10 == 0) {
+					ctx.lineTo(Math.round(x)+0.5, 10);
+				} else {
+					ctx.lineTo(Math.round(x)+0.5, 5);
+				}
+				// TODO: text
+				cnt++;
+				ctx.stroke();
+			}
+			cnt = 0;
+			for (var y=0; y < cvs.width; y += (cvs.height-1)/board.height) {
+				ctx.beginPath();
+				ctx.moveTo(0, Math.round(y)+0.5);
+				if (cnt % 10 == 0) {
+					ctx.lineTo(10, Math.round(y)+0.5);
+				} else {
+					ctx.lineTo(5, Math.round(y)+0.5);
+				}
+				cnt++;
+				ctx.stroke();
+			}
+			ctx.restore();
+		}
 		
 		ctx.restore();
 	};
@@ -199,6 +266,13 @@
 			x = mmToPx(board.width, true)-x;
 		}
 		return { x: x, y: y };
+	};
+	var updateTooltip = function() {
+		if (view.ruler && view.lastMouseX !== null && view.lastMouseY !== null) {
+			$('#pcb-canvas').prop('title', pxToMm(view.lastMouseX, true).toFixed(1)+', '+pxToMm(view.lastMouseY, true).toFixed(1)+' mm');
+		} else {
+			$('#pcb-canvas').prop('title', '');
+		}
 	};
 	
 	// Event handlers
@@ -235,6 +309,14 @@
 			} else if (e.keyCode == 101) {
 				// E
 				$.pcb.tool('erase');
+			} else if (e.keyCode == 114) {
+				// R
+				$.pcb.ruler(!$.pcb.ruler());
+			} else if (e.keyCode == 115) {
+				// S
+				if (!$.pcb.requestPending()) {
+					$.pcb.save();
+				}
 			} else {
 				// DEBUG
 				//console.log(e.keyCode);
@@ -254,6 +336,7 @@
 			// track mouse
 			view.lastMouseX = p.x;
 			view.lastMouseY = p.y;
+			updateTooltip();
 			requestRedraw();
 			return false;
 		});
@@ -269,7 +352,17 @@
 			requestRedraw();
 			return false;
 		});
-		
+		$('html').ajaxError(function(e, jqxhr, settings, exception) {
+			// DEBUG
+			console.warn('ajaxError: '+exception);
+			// reference counting (also see ajaxRequest())
+			view.ajaxPending--;
+			// sanity check
+			if (view.ajaxPending < 0) {
+				view.ajaxPending = 0;
+			}
+		});
+				
 		// create main canvas
 		var cvs = $('<canvas id="pcb-canvas"></canvas>');
 		$('body').append(cvs);
@@ -298,6 +391,7 @@
 			return board.board;
 		},
 		clear: function(width, height) {
+			// setup board & view
 			board = $.extend(true, {}, defaultBoard);
 			if (width !== undefined) {
 				board.width = width;
@@ -333,6 +427,25 @@
 					return true;
 				}
 			}
+		},
+		export: function() {
+			// save board first
+			$.pcb.save();
+			var retry = function() {
+				if ($.pcb.requestPending()) {
+					setTimeout(retry, 100);
+					return;
+				}
+				if (board.board === null || board.rev === null) {
+					return;
+				}
+				downloadRequest({
+					method: 'export',
+					board: board.board,
+					rev: board.rev
+				});
+			};
+			setTimeout(retry, 100);
 		},
 		layer: function(l) {
 			if (l === undefined) {
@@ -372,21 +485,29 @@
 								data.layers[l] = cvs;
 								view.layersToLoad--;
 								if (view.layersToLoad == 0) {
-									// done
+									// done: setup board & view
 									board = data;
+									view = $.extend(true, {}, defaultView);
 									invalidateView();
+									// EVENT
+									$('html').trigger('pcb-loaded');
 								}
 							});
 						}(l));
 					}
 					// fallback if we don't have any layers at all
 					if (!hasLayers) {
-						// done
+						// done: setup board & view
 						board = data;
+						view = $.extend(true, {}, defaultView);
 						invalidateView();
+						// EVENT
+						$('html').trigger('pcb-loaded');
 					}
 				}
 			});
+			// EVENT
+			$('html').trigger('pcb-loading');
 		},
 		parent: function() {
 			return { board: board.parentBoard, rev: board.parentRev };
@@ -405,6 +526,7 @@
 					ctx.save();
 					if (view.tool == 'draw') {
 						if (view.layer == 'top') {
+							// TODO: change color for high DPI
 							ctx.fillStyle = '#f00';
 						} else if (view.layer == 'substrate') {
 							ctx.fillStyle = '#000';
@@ -423,8 +545,28 @@
 				requestRedraw();
 			}
 		},
+		requestPending: function() {
+			return (0 < view.ajaxPending);
+		},
 		rev: function() {
 			return board.rev;
+		},
+		ruler: function(enable) {
+			if (enable === undefined) {
+				return view.ruler;
+			} else {
+				if (enable) {
+					enable = true;
+				} else {
+					enable = false;
+				}
+				if (enable == view.ruler) {
+					return;
+				} else {
+					view.ruler = enable;
+					requestRedraw();
+				}
+			}
 		},
 		save: function(asNew) {
 			board.parentBoard = board.board;
@@ -449,18 +591,15 @@
 				auth: options.auth
 			}, function(data) {
 				if (data !== null) {
-					var redirect = false;
-					if (data.board !== board.board) {
-						redirect = true;
-					}
 					board.board = data.board;
 					board.rev = data.rev;
-					if (redirect) {
-						// redirect if we created a whole new board
-						window.location = options.baseUrl+board.board;
-					}
+					// EVENT
+					$('html').trigger('pcb-saved');
+					// TODO: have redirect in UI code
 				}
 			});
+			// EVENT
+			$('html').trigger('pcb-saving');
 		},
 		tool: function(t) {
 			if (t === undefined) {
