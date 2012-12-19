@@ -13,6 +13,17 @@ CREATE TABLE IF NOT EXISTS `boards` (
   PRIMARY KEY (`board`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
+CREATE TABLE IF NOT EXISTS `layers` (
+  `board` int(10) unsigned NOT NULL,
+  `rev` int(10) unsigned NOT NULL,
+  `layer` varchar(255) NOT NULL,
+  `width` smallint(5) unsigned NOT NULL,
+  `height` smallint(5) unsigned NOT NULL,
+  `png` longblob,
+  PRIMARY KEY (`board`,`rev`,`layer`),
+  KEY `board` (`board`,`rev`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 CREATE TABLE IF NOT EXISTS `revisions` (
   `board` int(10) unsigned NOT NULL,
   `rev` int(10) unsigned NOT NULL,

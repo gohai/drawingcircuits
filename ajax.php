@@ -52,15 +52,12 @@ if ($_REQUEST['method'] == 'save') {
 	
 	// save layers separately
 	foreach ($board['layers'] as $key=>$val) {
-		if (@is_string($val['png'])) {
-			if (substr($val['png'], 0, 22) == 'data:image/png;base64,') {
-				$val['png'] = @base64_decode(substr($val['png'], 22));
-			} else {
-				// unsupported Data-URL
-				$val['png'] = NULL;
-			}
-			// png can be set to NULL, meaning that the layer is blank
+		if (!@is_string($val['png']) || substr($val['png'], 0, 22) != 'data:image/png;base64,') {
+			// unsupported Data-URL
+			// TODO: allow for blank layers being set to NULL later
+			continue;
 		}
+		$val['png'] = @base64_decode(substr($val['png'], 22));
 		db_insert('layers', array('board'=>$board['board'], 'rev'=>$board['rev'], 'layer'=>$key, 'width'=>$val['width'], 'height'=>$val['height'], 'png'=>$val['png']));
 	}
 	
@@ -106,6 +103,14 @@ if ($_REQUEST['method'] == 'save') {
 		$json['author'] = $q[0]['author'];
 		$json['parentBoard'] = $q[0]['parentBoard'];
 		$json['parentRev'] = $q[0]['parentRev'];
+		// load layers
+		$json['layers'] = array();
+		$q = db_fetch('layers', 'board='.$board.' AND rev='.$rev);
+		if ($q !== false) {
+			foreach ($q as $l) {
+				$json['layers'][$l['layer']] = array('width'=>$l['width'], 'height'=>$l['height'], 'png'=>'data:image/png;base64,'.@base64_encode($l['png']));
+			}
+		}
 		ajax_response($json);
 	}
 } else {

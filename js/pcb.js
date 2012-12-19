@@ -27,8 +27,11 @@
 	
 	var defaultView = {
 		diameter: 5.0,
+		lastMouseX: null,
+		lastMouseY: null,
 		layer: 'top',
 		layers: {},
+		layersToLoad: 0,
 		redrawPending: false,
 		tool: 'draw',
 		zoom: 1.0
@@ -110,9 +113,19 @@
 		// draw to screen
 		var cvs = $('#pcb-canvas').get(0);
 		var ctx = cvs.getContext('2d');
+		// layers
 		ctx.save();
 		ctx.drawImage(view.layers[view.layer], 0, 0);
 		ctx.restore();
+		// mouse cursor
+		if (view.lastMouseX !== null && view.lastMouseY !== null) {
+			ctx.save();
+			ctx.strokeStyle='#f00';
+			ctx.beginPath();
+			ctx.arc(view.lastMouseX, view.lastMouseY, mmToPx(view.diameter/2, true), 0, 2*Math.PI);
+			ctx.stroke();
+			ctx.restore();
+		}
 	};
 	var requestRedraw = function() {
 		if (view.redrawPending === false) {
@@ -141,10 +154,22 @@
 			if (view.usingTool === true) {
 				$.pcb.point(pxToMm(e.offsetX, true), pxToMm(e.offsetY, true));
 			}
+			// track mouse
+			view.lastMouseX = e.offsetX;
+			view.lastMouseY = e.offsetY;
+			requestRedraw();
 			return false;
 		});
-		$('html').on('mouseup mouseleave', '#pcb-canvas', function(e) {
+		$('html').on('mouseup', '#pcb-canvas', function(e) {
 			view.usingTool = false;
+			return false;
+		});
+		$('html').on('mouseleave', '#pcb-canvas', function(e) {
+			view.usingTool = false;
+			// track mouse
+			view.lastMouseX = null;
+			view.lastMouseY = null;
+			requestRedraw();
 			return false;
 		});
 		
@@ -219,9 +244,37 @@
 				rev: rev
 			}, function(data) {
 				if (data !== null) {
-					board = data;
-					// DEBUG
-					console.log('loaded '+board.board+' '+board.rev);
+					// convert layers into canvas elements
+					view.layersToLoad = 0;
+					var hasLayers = false;
+					for (var l in data.layers) {
+						view.layersToLoad++;
+						hasLayers = true;
+						(function(l) {
+							var img = new Image();
+							img.onload = function() {
+								var cvs = $('<canvas></canvas>');
+								$(cvs).attr('width', this.width);
+								$(cvs).attr('height', this.height);
+								var ctx = $(cvs).get(0).getContext('2d');
+								ctx.save();
+								ctx.drawImage(img, 0, 0);
+								ctx.restore();
+								data.layers[l] = $(cvs).get(0);
+								view.layersToLoad--;
+								if (view.layersToLoad == 0) {
+									board = data;
+									invalidateView();
+								}
+							};
+							img.src = data.layers[l].png;
+						}(l));
+					}
+					// fallback if we don't have any layers
+					if (!hasLayers) {
+						board = data;
+						invalidateView();
+					}
 				}
 			});
 		},
