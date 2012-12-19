@@ -127,6 +127,29 @@ function ajax_response($data)
 	die();
 }
 
+function arg_optional(&$var, $type, $default, &$used_default = NULL)
+{
+	if (!isset($var) || gettype($var) != $type) {
+		$var = $default;
+		if ($used_default !== NULL) {
+			$used_default = true;
+		}
+	} else {
+		if ($used_default !== NULL) {
+			$used_default = false;
+		}
+	}
+	return $var;
+}
+
+function arg_required(&$var, $type)
+{
+	if (!isset($var) || gettype($var) != $type) {
+		http_error(400);
+	}
+	return $var;
+}
+
 function array_key_blacklist($a, $keys)
 {
 	$ret = array();

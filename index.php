@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="<?php echo base_url(); ?>css/pcb.css" type="text/css">
 <link rel="stylesheet" href="<?php echo base_url(); ?>css/ui.css" type="text/css">
 <script type="text/javascript" src="<?php echo base_url(); ?>js/<?php echo JQUERY; ?>"></script>
+<script type="text/javascript" src="<?php echo base_url(); ?>js/paper.js"></script>
 <script type="text/javascript" src="<?php echo base_url(); ?>js/pcb.js"></script>
 <script type="text/javascript" src="<?php echo base_url(); ?>js/ui.js"></script>
 <script type="text/javascript">

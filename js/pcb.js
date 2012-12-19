@@ -52,6 +52,20 @@
 			success: success
 		});
 	};
+	var imgToCanvas = function(src, callback) {
+		var img = new Image();
+		img.onload = function() {
+			var cvs = $('<canvas></canvas>');
+			$(cvs).attr('width', this.width);
+			$(cvs).attr('height', this.height);
+			var ctx = $(cvs).get(0).getContext('2d');
+			ctx.save();
+			ctx.drawImage(img, 0, 0);
+			ctx.restore();
+			callback($(cvs).get(0));
+		};
+		img.src = src;
+	};
 	var invalidateView = function(l) {
 		// delete variable DPI canvas elements
 		if (l === undefined) {
@@ -244,34 +258,27 @@
 				rev: rev
 			}, function(data) {
 				if (data !== null) {
-					// convert layers into canvas elements
+					// decode layers
 					view.layersToLoad = 0;
 					var hasLayers = false;
 					for (var l in data.layers) {
 						view.layersToLoad++;
 						hasLayers = true;
-						(function(l) {
-							var img = new Image();
-							img.onload = function() {
-								var cvs = $('<canvas></canvas>');
-								$(cvs).attr('width', this.width);
-								$(cvs).attr('height', this.height);
-								var ctx = $(cvs).get(0).getContext('2d');
-								ctx.save();
-								ctx.drawImage(img, 0, 0);
-								ctx.restore();
-								data.layers[l] = $(cvs).get(0);
+						(function(l){
+							imgToCanvas(data.layers[l].png, function(cvs) {
+								data.layers[l] = cvs;
 								view.layersToLoad--;
 								if (view.layersToLoad == 0) {
+									// done
 									board = data;
 									invalidateView();
 								}
-							};
-							img.src = data.layers[l].png;
+							});
 						}(l));
 					}
-					// fallback if we don't have any layers
+					// fallback if we don't have any layers at all
 					if (!hasLayers) {
+						// done
 						board = data;
 						invalidateView();
 					}
@@ -313,18 +320,18 @@
 				board.board = null;
 			}
 			// make a copy of board in order to base64-encode the contained layers
-			var b = $.extend(true, {}, board);
-			for (var l in b.layers) {
-				var png = b.layers[l].toDataURL('image/png');
-				b.layers[l] = {
-					width: b.layers[l].width,
-					height: b.layers[l].height,
+			var boardCopy = $.extend(true, {}, board);
+			for (var l in boardCopy.layers) {
+				var png = boardCopy.layers[l].toDataURL('image/png');
+				boardCopy.layers[l] = {
+					width: boardCopy.layers[l].width,
+					height: boardCopy.layers[l].height,
 					png: png
 				};
 			}
 			ajaxRequest({
 				method: 'save',
-				board: b,
+				board: boardCopy,
 				auth: options.auth
 			}, function(data) {
 				if (data !== null) {
