@@ -1,0 +1,170 @@
+diff --git a/src/core/CMakeLists.txt b/src/core/CMakeLists.txt
+index 0c28774..e144246 100644
+--- a/src/core/CMakeLists.txt
++++ b/src/core/CMakeLists.txt
+@@ -21,7 +21,7 @@ add_library(fab STATIC fab.c)
+ 
+ foreach(program ${PROGRAMS})
+   add_executable(${program} ${program}.c)
+-  target_link_libraries(${program} fab ${PNG_LIBRARY})
++  target_link_libraries(${program} fab ${PNG_LIBRARY} -lm)
+ endforeach(program)
+ 
+ if( ${CMAKE_PROJECT_NAME} MATCHES fabmod )
+diff --git a/src/core/fab.c b/src/core/fab.c
+index f433cee..b2fae37 100644
+--- a/src/core/fab.c
++++ b/src/core/fab.c
+@@ -157,9 +157,9 @@ void fab_read_png(struct fab_vars *v, char *input_file_name) {
+       v->dy = 1000 * v->ny / ((float) res_y);
+    }
+    else {
+-      printf("fab.c: don't recognize PNG units, assuming 72/inch\n");
+-      res_x = (72*1000.0)/(25.4);
+-      res_y = (72*1000.0)/(25.4);
++      printf("fab.c: don't recognize PNG units, assuming 300/inch\n");
++      res_x = (300*1000.0)/(25.4);
++      res_y = (300*1000.0)/(25.4);
+       v->dx = 1000 * v->nx / ((float) res_x);
+       v->dy = 1000 * v->ny / ((float) res_y);
+       }
+diff --git a/src/core/path_rml.c b/src/core/path_rml.c
+index 6c5d027..8a0ecc0 100644
+--- a/src/core/path_rml.c
++++ b/src/core/path_rml.c
+@@ -12,6 +12,10 @@
+ 
+ #include "fab.h"
+ 
++// #define mm_scale 40.0 // For Modela MDX-15/20
++#define mm_scale 100.0 // For Modela MDX-40A
++
++
+ void fab_write_rml(struct fab_vars *v, char *output_file_name, float speed, int direction, float z_up) {
+    //
+    // write path to Roland Modela file
+@@ -22,16 +26,16 @@ void fab_write_rml(struct fab_vars *v, char *output_file_name, float speed, int
+    output_file = fopen(output_file_name,"w");
+    fprintf(output_file,"PA;PA;"); // plot absolute
+    fprintf(output_file,"VS%.1f;!VZ%.1f;",speed,speed);
+-   xscale = 40.0*v->dx/(v->nx-1.0); // 40/mm
+-   yscale = 40.0*v->dy/(v->ny-1.0); // 40/mm
++   xscale = mm_scale*v->dx/(v->nx-1.0);
++   yscale = mm_scale*v->dy/(v->ny-1.0);
+    if (v->nz > 1)
+-      zscale = 40.0*v->dz/v->nz; // 40/mm
++      zscale = mm_scale*v->dz/v->nz;
+    else
+       zscale = 0;
+-   xoffset = 40.0*v->xmin;
+-   yoffset = 40.0*v->ymin;
+-   zoffset = 40.0*v->zmin;
+-   iz_up = 40.0*z_up;
++   xoffset = mm_scale*v->xmin;
++   yoffset = mm_scale*v->ymin;
++   zoffset = mm_scale*v->zmin;
++   iz_up = mm_scale*z_up;
+    iz_down = zoffset;
+    fprintf(output_file,"!PZ%d,%d;",iz_down,iz_up); // set z down, jog 
+    fprintf(output_file,"!MC1;\n"); // turn motor on
+diff --git a/src/scripts/rml_move b/src/scripts/rml_move
+index 24965f4..8dd23f2 100755
+--- a/src/scripts/rml_move
++++ b/src/scripts/rml_move
+@@ -12,22 +12,40 @@
+ #
+ 
+ #
++# Modified by Blair Evans 2/17/2011 for MDX-40A mill
++# changed from serial to printer device and 100 steps per mm instead of 40
++#
++
++#
+ # check command line
+ #
+ 
+-if [ $# -eq 0 ] || [ $# -gt 2 ]; then
+-   echo command line: rml_move x y
++if [ $# -eq 0 ] || [ $# -gt 3 ]; then
++   echo command line: rml_move x y [port]
+    echo "   x,y, = position to move to (mm)"
++   echo "   printer = rml printer name (optional, default Roland-MDX-40A)"
+    exit
+    fi
+ 
+ #
++# get command line arguments
++#
++if [ $# -eq 2 ]
++   then
++      printer="Roland-MDX-40A"
++   else
++      printer=$3
++   fi
++
++#
+ # move
+ #
+ 
+-x=$(echo "(40.0*$1)/1" | bc) # 40/mm
+-y=$(echo "(40.0*$2)/1" | bc)
+-echo "PA;PA;!VZ10;!PZ0,100;PU $x $y;PD $x $y;!MC0;" > rml_move.rml
+-cat rml_move.rml
+-fab_send rml_move.rml
+-rm rml_move.rml
++x=$(echo "(100.0*$1)/1" | bc) # 100/mm changed from 40 -bhe
++y=$(echo "(100.0*$2)/1" | bc) # 100/mm changed from 40 -bhe
++
++cmd="echo 'PA;PA;!VZ10;!PZ0,100;PU $x $y;PD $x $y;!MC0;' | lpr -P$printer; lpq -P$printer"
++echo $cmd
++eval $cmd
++
++
+diff --git a/src/scripts/rml_send b/src/scripts/rml_send
+new file mode 100755
+index 0000000..71301b2
+--- /dev/null
++++ b/src/scripts/rml_send
+@@ -0,0 +1,42 @@
++#!/bin/bash
++#
++# rml_send
++#    send .rml to Roland Modela
++#
++# Neil Gershenfeld
++# CBA MIT 9/18/10
++#
++# (c) Massachusetts Institute of Technology 2010
++# Permission granted for experimental and personal use;
++# license for commercial sale available from MIT.
++#
++
++#
++# Modified by Blair Evans 2/17/2011 for MDX-40A mill
++# changed from serial to printer device
++#
++
++#
++# check command line
++#
++if [ $# -eq 0 ] || [ $# -gt 2 ]; then
++   echo command line: rml_send in.rml [port]
++   echo "   in.rml = input Roland Modela file"
++   echo "   printer = rml printer name (optional, default Roland-MDX-40A)"
++   exit
++   fi
++#
++# get command line arguments
++#
++if [ $# -eq 1 ]
++   then
++      printer="Roland-MDX-40A"
++   else
++      printer=$2
++   fi
++#
++# send file
++#
++cmd="lpr -P$printer $1; lpq -P$printer"
++echo $cmd
++eval $cmd
