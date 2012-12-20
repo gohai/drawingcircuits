@@ -12,6 +12,7 @@
 	var defaultBoard = {
 		author: null,
 		board: null,
+		drill: {},
 		height: 100,
 		layers: {
 			'bottom': null,
@@ -27,7 +28,9 @@
 	
 	var defaultView = {
 		ajaxPending: 0,
-		diameter: 5,
+		diameterDraw: 2,
+		diameterDrill: 1,
+		diameterErase: 2,
 		lastMouseX: null,
 		lastMouseY: null,
 		layer: 'top',
@@ -187,6 +190,11 @@
 		if (isLayerMirrored()) {
 			mirrorContext(ctx);
 		}
+		// enable better quality interpolation
+		// TODO: doesn't seem to work on Chrome atm
+		//ctx.imageSmoothingEnabled = true;
+		//ctx.mozImageSmoothingEnabled = true;
+		//ctx.webkitImageSmoothingEnabled = true;
 		
 		// layers
 		ctx.save();
@@ -201,12 +209,29 @@
 		}
 		ctx.restore();
 		
+		// drill holes
+		ctx.save();
+		for (var d in board.drill) {
+			ctx.fillStyle = '#000';
+			ctx.beginPath();
+			ctx.arc(mmToPx(board.drill[d].x, true), mmToPx(board.drill[d].y, true), mmToPx(board.drill[d].diameter/2, true), 0, 2*Math.PI);
+			ctx.fill();
+			// vias
+			if (board.drill[d].via == true) {
+				ctx.fillStyle = '#FF0'
+				ctx.beginPath();
+				ctx.arc(mmToPx(board.drill[d].x, true), mmToPx(board.drill[d].y, true), mmToPx(board.drill[d].diameter*0.5/2, true), 0, 2*Math.PI);
+				ctx.fill();
+			}
+		}
+		ctx.restore();
+		
 		// mouse cursor
 		ctx.save();
 		if (view.lastMouseX !== null && view.lastMouseY !== null) {
 			ctx.strokeStyle = '#f00';
 			ctx.beginPath();
-			ctx.arc(view.lastMouseX, view.lastMouseY, mmToPx(view.diameter/2, true), 0, 2*Math.PI);
+			ctx.arc(view.lastMouseX, view.lastMouseY, mmToPx($.pcb.diameter()/2, true), 0, 2*Math.PI);
 			ctx.stroke();
 		}
 		ctx.restore();
@@ -306,6 +331,9 @@
 			} else if (e.keyCode == 98) {
 				// B
 				$.pcb.tool('draw');
+			} else if (e.keyCode == 100) {
+				// D
+				$.pcb.tool('drill');
 			} else if (e.keyCode == 101) {
 				// E
 				$.pcb.tool('erase');
@@ -325,13 +353,17 @@
 		$('html').on('mousedown', '#pcb-canvas', function(e) {
 			view.usingTool = true;
 			var p = screenPxToCanvas(e.offsetX, e.offsetY);
-			$.pcb.point(pxToMm(p.x, true), pxToMm(p.y, true));
+			if (view.tool == 'draw' || view.tool == 'erase' || view.tool == 'drill') {
+				$.pcb.point(pxToMm(p.x, true), pxToMm(p.y, true));
+			}
 			return false;
 		});
 		$('html').on('mousemove', '#pcb-canvas', function(e) {
 			var p = screenPxToCanvas(e.offsetX, e.offsetY);
 			if (view.usingTool === true) {
-				$.pcb.point(pxToMm(p.x, true), pxToMm(p.y, true));
+				if (view.tool == 'draw' || view.tool == 'erase') {
+					$.pcb.point(pxToMm(p.x, true), pxToMm(p.y, true));
+				}
 			}
 			// track mouse
 			view.lastMouseX = p.x;
@@ -415,18 +447,60 @@
 			invalidateView();
 		},
 		diameter: function(mm) {
+			var diameterKey = 'diameter'+view.tool.charAt(0).toUpperCase()+view.tool.slice(1);
 			if (mm === undefined) {
-				return view.diameter;
+				if (view[diameterKey] === undefined) {
+					return 0;
+				} else {
+					return view[diameterKey];
+				}
 			} else {
 				if (mm <= 0) {
 					return false;
 				} else {
-					view.diameter = mm;
+					view[diameterKey] = mm;
 					requestRedraw();
 					// TODO: event
 					return true;
 				}
 			}
+		},
+		drill: function(x, y, diameter, parent, pin) {
+			if (typeof x != 'number' || typeof y != 'number') {
+				return false;
+			}
+			if (diameter === undefined) {
+				diameter = $.pcb.diameter();
+			} else if (typeof diameter != 'number') {
+				return false;
+			}
+			if (parent === undefined) {
+				parent = null;
+			}
+			if (typeof pin != 'number') {
+				pin = null;
+			}
+			// get key for new object
+			var max = -1;
+			for (var key in board.drill) {
+				if (key.substr(0, 5) == 'drill') {
+					var cur = parseInt(key.substr(5));
+					if (max < cur) {
+						max = cur;
+					}
+				}
+			}
+			var key = 'drill'+(max+1);
+			board.drill[key] = {
+				x: x,
+				y: y,
+				diameter: diameter,
+				parent: parent,
+				pin: pin,
+				via: false,
+			};
+			requestRedraw();
+			return key;
 		},
 		export: function() {
 			// save board first
@@ -461,6 +535,14 @@
 				}
 			}
 		},
+		line: function(x1, y1, x2, y2) {
+			var len = Math.sqrt(Math.pow(x2-x1, 2)+Math.pow(y2-y1, 2));
+			var step = pxToMm(1);
+			// TODO: evaluate performance later
+			for (var i=0; i <= len; i += step) {
+				$.pcb.point(x1+((x2-x1)/len)*i, y1+((y2-y1)/len)*i);
+			}
+		},
 		load: function(brd, rev) {
 			if (typeof brd != 'number') {
 				return false;
@@ -486,7 +568,7 @@
 								view.layersToLoad--;
 								if (view.layersToLoad == 0) {
 									// done: setup board & view
-									board = data;
+									board = $.extend(true, defaultBoard, data);
 									view = $.extend(true, {}, defaultView);
 									invalidateView();
 									// EVENT
@@ -498,7 +580,7 @@
 					// fallback if we don't have any layers at all
 					if (!hasLayers) {
 						// done: setup board & view
-						board = data;
+						board = $.extend(true, defaultBoard, data);
 						view = $.extend(true, {}, defaultView);
 						invalidateView();
 						// EVENT
@@ -509,7 +591,14 @@
 			// EVENT
 			$('html').trigger('pcb-loading');
 		},
-		parent: function() {
+		objects: function() {
+			var ret = {
+				drill: {}
+			};
+			ret.drill = $.extend(true, {}, board.drill);
+			return ret;
+		},
+		parentBoard: function() {
 			return { board: board.parentBoard, rev: board.parentRev };
 		},
 		point: function(x, y) {
@@ -538,12 +627,31 @@
 						ctx.globalCompositeOperation = 'destination-out';
 					}
 					ctx.beginPath();
-					ctx.arc(mmToPx(x, zoom), mmToPx(y, zoom), mmToPx(view.diameter/2, zoom), 0, 2*Math.PI);
+					ctx.arc(mmToPx(x, zoom), mmToPx(y, zoom), mmToPx($.pcb.diameter()/2, zoom), 0, 2*Math.PI);
 					ctx.fill();
 					ctx.restore();
 				}
 				requestRedraw();
+			} else if (view.tool == 'drill') {
+				$.pcb.drill(x, y, $.pcb.diameter());
 			}
+		},
+		removeObject: function(name) {
+			var scope = [ board.drill ];
+			for (s in scope) {
+				for (o in scope[s]) {
+					if (name === o) {
+						// TODO: event
+						if (scope[s] == board.drill) {
+							// TODO: also remove connected jumpers
+							delete board.drill[name];
+						}
+						requestRedraw();
+						return true;
+					}
+				}
+			}
+			return false;
 		},
 		requestPending: function() {
 			return (0 < view.ajaxPending);
@@ -610,6 +718,26 @@
 				} else {
 					view.tool = t;
 					requestRedraw();
+				}
+			}
+		},
+		via: function(drill, isVia) {
+			if (board.drill[drill] === undefined) {
+				return false;
+			} else if (isVia === undefined) {
+				return board.drill[drill].via;
+			} else {
+				if (isVia) {
+					isVia = true;
+				} else {
+					isVia = false;
+				}
+				if (isVia == board.drill[drill].via) {
+					return;
+				} else {
+					board.drill[drill].via = isVia;
+					requestRedraw();
+					return true;
 				}
 			}
 		},
