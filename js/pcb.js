@@ -12,8 +12,9 @@
 	var defaultBoard = {
 		author: null,
 		board: null,
-		drill: {},
+		drills: {},
 		height: 100,
+		jumpers: {},
 		layers: {
 			'bottom': null,
 			'substrate': null,
@@ -21,7 +22,9 @@
 		},
 		parentBoard: null,
 		parentRev: null,
+		parts: {},
 		rev: null,
+		texts: {},
 		width: 100
 	};
 	var board = {};
@@ -95,6 +98,23 @@
 		ctx.fillStyle = color;
 		ctx.fillRect(0, 0, cvs.width, cvs.height);
 		ctx.restore();
+	};
+	var getFirstAvailableKey = function(object, prefix, start) {
+		if (start === undefined) {
+			// start with index zero
+			var max = -1;
+		} else {
+			var max = start-1;
+		}
+		for (var key in object) {
+			if (key.substr(0, prefix.length) == prefix) {
+				var cur = parseInt(key.substr(prefix.length));
+				if (max < cur) {
+					max = cur;
+				}
+			}
+		}
+		return prefix+(max+1);
 	};
 	var imgToCanvas = function(src, callback) {
 		var img = new Image();
@@ -211,17 +231,31 @@
 		
 		// drill holes
 		ctx.save();
-		for (var d in board.drill) {
+		for (var d in board.drills) {
 			ctx.fillStyle = '#000';
 			ctx.beginPath();
-			ctx.arc(mmToPx(board.drill[d].x, true), mmToPx(board.drill[d].y, true), mmToPx(board.drill[d].diameter/2, true), 0, 2*Math.PI);
+			ctx.arc(mmToPx(board.drills[d].x, true), mmToPx(board.drills[d].y, true), mmToPx(board.drills[d].diameter/2, true), 0, 2*Math.PI);
 			ctx.fill();
 			// vias
-			if (board.drill[d].via == true) {
-				ctx.fillStyle = '#FF0'
+			if (board.drills[d].via == true) {
+				ctx.fillStyle = '#ff0'
 				ctx.beginPath();
-				ctx.arc(mmToPx(board.drill[d].x, true), mmToPx(board.drill[d].y, true), mmToPx(board.drill[d].diameter*0.5/2, true), 0, 2*Math.PI);
+				ctx.arc(mmToPx(board.drills[d].x, true), mmToPx(board.drills[d].y, true), mmToPx(board.drills[d].diameter*0.5/2, true), 0, 2*Math.PI);
 				ctx.fill();
+			}
+		}
+		ctx.restore();
+		
+		// texts
+		ctx.save();
+		for (var t in board.texts) {
+			if (typeof board.texts[t].parent == 'object') {
+				if (board.texts[t].parent.layer != view.layer) {
+					continue;
+				}
+				ctx.fillStyle = '#ff0';
+				ctx.font = 'caption';
+				ctx.fillText(board.texts[t].text, mmToPx(board.texts[t].parent.x, true), mmToPx(board.texts[t].parent.y, true));
 			}
 		}
 		ctx.restore();
@@ -237,6 +271,7 @@
 		ctx.restore();
 		
 		// ruler
+		// TODO: have it always visible
 		if (view.ruler == true) {
 			ctx.save();
 			ctx.strokeStyle = '#000';
@@ -481,17 +516,8 @@
 				pin = null;
 			}
 			// get key for new object
-			var max = -1;
-			for (var key in board.drill) {
-				if (key.substr(0, 5) == 'drill') {
-					var cur = parseInt(key.substr(5));
-					if (max < cur) {
-						max = cur;
-					}
-				}
-			}
-			var key = 'drill'+(max+1);
-			board.drill[key] = {
+			var key = getFirstAvailableKey(board.drills, 'drill');
+			board.drills[key] = {
 				x: x,
 				y: y,
 				diameter: diameter,
@@ -501,6 +527,23 @@
 			};
 			requestRedraw();
 			return key;
+		},
+		editText: function(name, string) {
+			if (name === undefined) {
+				return false;
+			} else if (board.texts[name] === undefined) {
+				return false;
+			} else if (string === undefined) {
+				return board.texts[name].text;
+			} else {
+				if (string == board.texts[name].text) {
+					return;
+				} else {
+					board.texts[name].text = string;
+					requestRedraw();
+					return true;
+				}
+			}
 		},
 		export: function() {
 			// save board first
@@ -542,6 +585,7 @@
 			for (var i=0; i <= len; i += step) {
 				$.pcb.point(x1+((x2-x1)/len)*i, y1+((y2-y1)/len)*i);
 			}
+			// TODO: add raw pixel access
 		},
 		load: function(brd, rev) {
 			if (typeof brd != 'number') {
@@ -592,10 +636,9 @@
 			$('html').trigger('pcb-loading');
 		},
 		objects: function() {
-			var ret = {
-				drill: {}
-			};
-			ret.drill = $.extend(true, {}, board.drill);
+			var ret = {};
+			ret.drills = $.extend(true, {}, board.drills);
+			ret.texts = $.extend(true, {}, board.texts);
 			return ret;
 		},
 		parentBoard: function() {
@@ -637,14 +680,16 @@
 			}
 		},
 		removeObject: function(name) {
-			var scope = [ board.drill ];
+			var scope = [ board.drills, board.texts ];
 			for (s in scope) {
 				for (o in scope[s]) {
 					if (name === o) {
 						// TODO: event
-						if (scope[s] == board.drill) {
-							// TODO: also remove connected jumpers
-							delete board.drill[name];
+						if (scope[s] == board.drills) {
+							// TODO: also remove connected jumpers, texts
+							delete board.drills[name];
+						} else if (scope[s] == board.texts) {
+							delete board.texts[name];
 						}
 						requestRedraw();
 						return true;
@@ -709,6 +754,26 @@
 			// EVENT
 			$('html').trigger('pcb-saving');
 		},
+		text: function(parent, string) {
+			if (typeof parent == 'object' && typeof parent.x == 'number' && typeof parent.y == 'number') {
+				if (parent.layer === undefined) {
+					parent.layer = view.layer;
+				}
+				// get key for new object
+				var key = getFirstAvailableKey(board.texts, 'text');
+				board.texts[key] = {
+					parent: {
+						x: parent.x,
+						y: parent.y,
+						layer: parent.layer
+					},
+					text: string
+				};
+				requestRedraw();
+				return key;
+			}
+			return false;
+		},
 		tool: function(t) {
 			if (t === undefined) {
 				return view.tool;
@@ -722,20 +787,20 @@
 			}
 		},
 		via: function(drill, isVia) {
-			if (board.drill[drill] === undefined) {
+			if (board.drills[drill] === undefined) {
 				return false;
 			} else if (isVia === undefined) {
-				return board.drill[drill].via;
+				return board.drills[drill].via;
 			} else {
 				if (isVia) {
 					isVia = true;
 				} else {
 					isVia = false;
 				}
-				if (isVia == board.drill[drill].via) {
+				if (isVia == board.drills[drill].via) {
 					return;
 				} else {
-					board.drill[drill].via = isVia;
+					board.drills[drill].via = isVia;
 					requestRedraw();
 					return true;
 				}
