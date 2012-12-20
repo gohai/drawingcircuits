@@ -42,6 +42,7 @@
 		redrawPending: false,
 		ruler: false,
 		tool: 'draw',
+		toolData: {},
 		zoom: 1
 	};
 	var view = {};
@@ -263,10 +264,22 @@
 		// mouse cursor
 		ctx.save();
 		if (view.lastMouseX !== null && view.lastMouseY !== null) {
-			ctx.strokeStyle = '#f00';
-			ctx.beginPath();
-			ctx.arc(view.lastMouseX, view.lastMouseY, mmToPx($.pcb.diameter()/2, true), 0, 2*Math.PI);
-			ctx.stroke();
+			if (view.tool == 'text') {
+				ctx.strokeStyle = '#ff0';
+				ctx.beginPath();
+				ctx.moveTo(view.lastMouseX+0.5, view.lastMouseY-4.5);
+				ctx.lineTo(view.lastMouseX+0.5, view.lastMouseY+4.5);
+				ctx.stroke();
+				ctx.beginPath();
+				ctx.moveTo(view.lastMouseX-3.5, view.lastMouseY+0.5);
+				ctx.lineTo(view.lastMouseX+5.5, view.lastMouseY+0.5);
+				ctx.stroke();
+			} else {
+				ctx.strokeStyle = '#f00';
+				ctx.beginPath();
+				ctx.arc(view.lastMouseX, view.lastMouseY, mmToPx($.pcb.diameter()/2, true), 0, 2*Math.PI);
+				ctx.stroke();
+			}
 		}
 		ctx.restore();
 		
@@ -380,16 +393,28 @@
 				if (!$.pcb.requestPending()) {
 					$.pcb.save();
 				}
+			} else if (e.keyCode == 116) {
+				// T
+				$.pcb.tool('text');
 			} else {
 				// DEBUG
 				//console.log(e.keyCode);
 			}
 		});
 		$('html').on('mousedown', '#pcb-canvas', function(e) {
+			// TODO: usingTool and toolchange
 			view.usingTool = true;
 			var p = screenPxToCanvas(e.offsetX, e.offsetY);
 			if (view.tool == 'draw' || view.tool == 'erase' || view.tool == 'drill') {
 				$.pcb.point(pxToMm(p.x, true), pxToMm(p.y, true));
+			} else if (view.tool == 'text') {
+				var text = prompt("Enter text");
+				if (text !== null) {
+					$.pcb.text({
+						x: pxToMm(p.x, true),
+						y: pxToMm(p.y, true)
+					}, text);
+				}
 			}
 			return false;
 		});
@@ -782,6 +807,7 @@
 					return;
 				} else {
 					view.tool = t;
+					view.toolData = {};
 					requestRedraw();
 				}
 			}
