@@ -40,6 +40,8 @@
 		layer: 'top',
 		layers: {},
 		layersToLoad: 0,
+		part: null,
+		parts: {},
 		redrawPending: false,
 		ruler: false,
 		tool: 'draw',
@@ -192,6 +194,15 @@
 			return Math.floor(mm*options.highDpi/25.4/view.zoom);
 		}
 	};
+	var normalizeAngle = function(angle) {
+		while (360 < angle) {
+			angle -= 360;
+		}
+		while (angle < 0) {
+			angle += 360;
+		}
+		return angle;
+	};
 	var pxToMm = function(px, handleZoom) {
 		if (handleZoom === false || handleZoom === undefined) {
 			// high DPI
@@ -250,6 +261,11 @@
 		}
 		ctx.restore();
 
+		// parts
+		ctx.save();
+		// TODO
+		ctx.restore();
+
 		// texts
 		// TODO: handle mirrored text
 		// TODO: handle zoom
@@ -287,6 +303,19 @@
 				ctx.moveTo(view.lastMouseX-3.5, view.lastMouseY+0.5);
 				ctx.lineTo(view.lastMouseX+5.5, view.lastMouseY+0.5);
 				ctx.stroke();
+			} else if (view.tool == 'part' && view.part !== null) {
+				var part = requestPart(view.part);
+				if (part !== null) {
+					var w = mmToPx(options.library[view.part].width, true);
+					var h = mmToPx(options.library[view.part].height, true);
+					ctx.save();
+					ctx.translate(view.lastMouseX, view.lastMouseY);
+					if (view.toolData.rot !== undefined) {
+						ctx.rotate(view.toolData.rot*Math.PI/180);
+					}
+					ctx.drawImage(part, -w/2, -h/2, w, h);
+					ctx.restore();
+				}
 			} else {
 				ctx.strokeStyle = '#f00';
 				ctx.beginPath();
@@ -332,6 +361,23 @@
 
 		ctx.restore();
 	};
+	var requestPart = function(part) {
+		if (view.parts[part] === undefined) {
+			// not yet in the cache
+			view.parts[part] = false;
+			var img = new Image();
+			img.onload = function() {
+				view.parts[part] = img;
+			}
+			img.src = 'data:image/svg+xml;utf8,'+options.library[part].svg;
+			return null;
+		} else if (view.parts[part] === false) {
+			// still loading
+			return null;
+		} else {
+			return view.parts[part];
+		}
+	};
 	var requestRedraw = function() {
 		if (view.redrawPending === false) {
 			var ret = requestAnimationFrame(redraw);
@@ -363,6 +409,10 @@
 
 	// Event handlers
 	$(document).ready(function(e) {
+		$('html').on('contextmenu', '#pcb-canvas', function(e) {
+			// prevent context menu from showing up
+			return false;
+		});
 		$('html').on('keypress', function(e) {
 			if (!$(e.target).is('body')) {
 				return;
@@ -398,6 +448,9 @@
 			} else if (e.keyCode == 101) {
 				// e
 				$.pcb.tool('erase');
+			} else if (e.keyCode == 112) {
+				// p
+				$.pcb.tool('part');
 			} else if (e.keyCode == 114) {
 				// r
 				$.pcb.ruler(!$.pcb.ruler());
@@ -439,6 +492,20 @@
 						x: pxToMm(p.x, true),
 						y: pxToMm(p.y, true)
 					}, text);
+				}
+			} else if (view.tool == 'part') {
+				if (view.part !== null & e.which == 1) {
+					// place a part
+					$.pcb.part(view.part, pxToMm(p.x, true), pxToMm(p.y, true), view.toolData.rot);
+				} else if (view.part !== null & e.which == 3) {
+					// rotate part
+					if (view.toolData.rot === undefined) {
+						view.toolData.rot = 22.5;
+					} else {
+						view.toolData.rot += 22.5;
+					}
+					view.toolData.rot = normalizeAngle(view.toolData.rot);
+					requestRedraw();
 				}
 			}
 			return false;
@@ -828,6 +895,50 @@
 		parentBoard: function() {
 			return { board: board.parentBoard, rev: board.parentRev };
 		},
+		part: function(part, x, y, rot, layer) {
+			var l = $.pcb.library();
+			if (l === false) {
+				console.log('Library not available yet');
+				return false;
+			} else if (l[part] === undefined) {
+				return false;
+			}
+			if (typeof x != 'number' || typeof y != 'number') {
+				return false;
+			}
+			if (typeof layer != 'string') {
+				layer = $.pcb.layer();
+			}
+			if (typeof rot != 'number') {
+				rot = 0;
+			}
+			if (layer != 'top' && layer != 'bottom') {
+				return false;
+			}
+
+			// get a unique name
+			var i = 0;
+			var name = part;
+			if (48 <= name.charCodeAt(name.length-1) && name.charCodeAt(name.length-1) <= 57) {
+				name += '-';
+			}
+			while (board.parts[name+i] !== undefined) {
+				i++;
+			}
+			name += i;
+
+			board.parts[name] = {
+				part: part,
+				x: x,
+				y: y,
+				rot: rot,
+				layer: layer,
+				rev: options.library[part].rev,
+				width: options.library[part].width,
+				height: options.library[part].height
+			};
+			return name;
+		},
 		point: function(x, y) {
 			if (view.tool == 'draw' || view.tool == 'erase') {
 				for (var i=0; i < 2; i++) {
@@ -937,6 +1048,19 @@
 			});
 			// EVENT
 			$('html').trigger('pcb-saving');
+		},
+		selectPart: function(part) {
+			var l = $.pcb.library();
+			if (l === false) {
+				console.log('Library not available yet');
+				return false;
+			} else if (l[part] === undefined) {
+				return false;
+			} else if (part !== view.part) {
+				view.part = part;
+				view.toolData.rot = 0;
+				requestRedraw();
+			}
 		},
 		testParts: function() {
 			// TODO: remove

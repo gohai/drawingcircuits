@@ -3,12 +3,13 @@
 0	Reset zoom
 1	Switch to top layer
 2	Switch to substrate layer
-3	Switch tp bottom layer
+3	Switch to bottom layer
 [	Decrease tool diameter
 ]	Increase tool diameter
 b	Switch to draw ("brush") tool
 d	Switch to drill tool
 e	Switch to erase tool
+p	Place a part
 r	Toggle ruler
 s	Save board
 t	Add a text annotation
