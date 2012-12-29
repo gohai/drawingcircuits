@@ -6,9 +6,10 @@
 			user: null
 		},
 		baseUrl: null,
-		highDpi: 300
+		highDpi: 300,
+		library: null
 	};
-	
+
 	var defaultBoard = {
 		author: null,
 		board: null,
@@ -28,7 +29,7 @@
 		width: 100
 	};
 	var board = {};
-	
+
 	var defaultView = {
 		ajaxPending: 0,
 		diameterDraw: 2,
@@ -46,12 +47,14 @@
 		zoom: 1
 	};
 	var view = {};
-	
+
 	// Helper functions
 	var ajaxRequest = function(data, success) {
 		// setup shim success function
 		var shimSuccess = function(data) {
-			success(data);
+			if (typeof success == 'function') {
+				success(data);
+			}
 			// reference counting (also see ajaxError())
 			view.ajaxPending--;
 			// sanity check
@@ -59,7 +62,7 @@
 				view.ajaxPending = 0;
 			}
 		};
-		
+
 		// encode request data
 		for (key in data) {
 			data[key] = JSON.stringify(data[key]);
@@ -142,7 +145,7 @@
 		} else {
 			// none (only call redraw())
 		}
-		
+
 		// recreate them if needed
 		for (var l in board.layers) {
 			if (view.layers[l] === undefined) {
@@ -157,7 +160,7 @@
 				ctx.restore();
 			}
 		}
-		
+
 		// try to cancel outstanding requests
 		if (typeof view.redrawPending == 'number') {
 			cancelAnimationFrame(view.redrawPending);
@@ -216,7 +219,7 @@
 		//ctx.imageSmoothingEnabled = true;
 		//ctx.mozImageSmoothingEnabled = true;
 		//ctx.webkitImageSmoothingEnabled = true;
-		
+
 		// layers
 		ctx.save();
 		ctx.globalAlpha = 0.5;
@@ -226,10 +229,10 @@
 			var order = ['top', 'substrate', 'bottom'];
 		}
 		for (var l in order) {
-			ctx.drawImage(view.layers[order[l]], 0, 0);		
+			ctx.drawImage(view.layers[order[l]], 0, 0);
 		}
 		ctx.restore();
-		
+
 		// drill holes
 		ctx.save();
 		for (var d in board.drills) {
@@ -246,21 +249,31 @@
 			}
 		}
 		ctx.restore();
-		
+
 		// texts
+		// TODO: handle mirrored text
+		// TODO: handle zoom
+		// TODO: always draw crosshair if we have no parent
+		// TODO: right-align text if close to the right border
+		// TODO: top to bottom (optional)
 		ctx.save();
 		for (var t in board.texts) {
 			if (typeof board.texts[t].parent == 'object') {
 				if (board.texts[t].parent.layer != view.layer) {
 					continue;
 				}
+				var lines = board.texts[t].text.split('\\n');
+				var lineHeight = 30;
 				ctx.fillStyle = '#ff0';
 				ctx.font = 'caption';
-				ctx.fillText(board.texts[t].text, mmToPx(board.texts[t].parent.x, true), mmToPx(board.texts[t].parent.y, true));
+				ctx.textBaseline = 'top';
+				for (var l in lines) {
+					ctx.fillText(lines[l], mmToPx(board.texts[t].parent.x, true)+5, mmToPx(board.texts[t].parent.y, true)+5+l*lineHeight);
+				}
 			}
 		}
 		ctx.restore();
-		
+
 		// mouse cursor
 		ctx.save();
 		if (view.lastMouseX !== null && view.lastMouseY !== null) {
@@ -282,7 +295,7 @@
 			}
 		}
 		ctx.restore();
-		
+
 		// ruler
 		// TODO: have it always visible
 		if (view.ruler == true) {
@@ -316,7 +329,7 @@
 			}
 			ctx.restore();
 		}
-		
+
 		ctx.restore();
 	};
 	var requestRedraw = function() {
@@ -347,7 +360,7 @@
 			$('#pcb-canvas').prop('title', '');
 		}
 	};
-	
+
 	// Event handlers
 	$(document).ready(function(e) {
 		$('html').on('keypress', function(e) {
@@ -377,24 +390,37 @@
 				// ]
 				$.pcb.diameter($.pcb.diameter()+1);
 			} else if (e.keyCode == 98) {
-				// B
+				// b
 				$.pcb.tool('draw');
 			} else if (e.keyCode == 100) {
-				// D
+				// d
 				$.pcb.tool('drill');
 			} else if (e.keyCode == 101) {
-				// E
+				// e
 				$.pcb.tool('erase');
 			} else if (e.keyCode == 114) {
-				// R
+				// r
 				$.pcb.ruler(!$.pcb.ruler());
 			} else if (e.keyCode == 115) {
-				// S
+				// s
 				if (!$.pcb.requestPending()) {
+					var origBoard = $.pcb.board();
 					$.pcb.save();
+					// wait for request to finish
+					var retry = function() {
+						if (!$.pcb.requestPending()) {
+							if (origBoard !== $.pcb.board()) {
+								// redirect
+								window.location = $.pcb.baseUrl()+$.pcb.board();
+							}
+						} else {
+							setTimeout(retry, 100);
+						}
+					};
+					setTimeout(retry, 100);
 				}
 			} else if (e.keyCode == 116) {
-				// T
+				// t
 				$.pcb.tool('text');
 			} else {
 				// DEBUG
@@ -402,11 +428,10 @@
 			}
 		});
 		$('html').on('mousedown', '#pcb-canvas', function(e) {
-			// TODO: usingTool and toolchange
-			view.usingTool = true;
 			var p = screenPxToCanvas(e.offsetX, e.offsetY);
 			if (view.tool == 'draw' || view.tool == 'erase' || view.tool == 'drill') {
 				$.pcb.point(pxToMm(p.x, true), pxToMm(p.y, true));
+				view.toolData.usingTool = true;
 			} else if (view.tool == 'text') {
 				var text = prompt("Enter text");
 				if (text !== null) {
@@ -420,8 +445,8 @@
 		});
 		$('html').on('mousemove', '#pcb-canvas', function(e) {
 			var p = screenPxToCanvas(e.offsetX, e.offsetY);
-			if (view.usingTool === true) {
-				if (view.tool == 'draw' || view.tool == 'erase') {
+			if (view.tool == 'draw' || view.tool == 'erase') {
+				if (view.toolData.usingTool === true) {
 					$.pcb.point(pxToMm(p.x, true), pxToMm(p.y, true));
 				}
 			}
@@ -433,11 +458,15 @@
 			return false;
 		});
 		$('html').on('mouseup', '#pcb-canvas', function(e) {
-			view.usingTool = false;
+			if (view.toolData.usingTool === true) {
+				view.toolData.usingTool = false;
+			}
 			return false;
 		});
 		$('html').on('mouseleave', '#pcb-canvas', function(e) {
-			view.usingTool = false;
+			if (view.toolData.usingTool === true) {
+				view.toolData.usingTool = false;
+			}
 			// track mouse
 			view.lastMouseX = null;
 			view.lastMouseY = null;
@@ -454,7 +483,7 @@
 				view.ajaxPending = 0;
 			}
 		});
-				
+
 		// create main canvas
 		var cvs = $('<canvas id="pcb-canvas"></canvas>');
 		$('body').append(cvs);
@@ -463,12 +492,122 @@
 		window.requestAnimationFrame = requestAnimationFrame;
 		var cancelAnimationFrame = window.cancelAnimationFrame || window.webkitCancelAnimationFrame || window.mozCancelAnimationFrame || window.msCancelAnimationFrame;
 		window.cancelAnimationFrame = cancelAnimationFrame;
-		
+
 		$.pcb.clear();
+		$.pcb.library();
 	});
-	
+
 	// Interface
 	$.pcb = {
+		addDrawing: function(part, svg, success) {
+			if (typeof part != 'string') {
+				return false;
+			}
+			if (typeof svg != 'object') {
+				return false;
+			}
+			// read file
+			var reader = new FileReader();
+			reader.onload = function() {
+				ajaxRequest({
+					method: 'addDrawing',
+					part: part,
+					svg: reader.result,
+					auth: options.auth,
+				}, function(data) {
+					if (data !== null) {
+						if (typeof data.error == 'string') {
+							console.warn(data.error);
+						} else if (typeof success == 'function') {
+							success(data);
+						}
+					}
+				});
+			};
+			reader.readAsText(svg);
+		},
+		addPart: function(part, title, parent, overlay, success) {
+			if (typeof part != 'string') {
+				return false;
+			}
+			if (typeof title != 'string') {
+				return false;
+			}
+			if (typeof parent != 'string' && parent !== null) {
+				return false;
+			}
+			if (typeof overlay != 'object') {
+				return false;
+			}
+			ajaxRequest({
+				method: 'addPart',
+				part: part,
+				title: title,
+				parent: parent,
+				overlay: overlay,
+				auth: options.auth
+			}, function(data) {
+				if (data !== null) {
+					if (typeof data.error == 'string') {
+						console.warn(data.error);
+					} else if (typeof success == 'function') {
+						success(data);
+					}
+				}
+			});
+		},
+		addPartComment: function(part, comment, success) {
+			if (typeof part != 'string') {
+				return false;
+			}
+			if (typeof comment != 'string') {
+				return false;
+			}
+			ajaxRequest({
+				method: 'addPartComment',
+				part: part,
+				comment: comment,
+				auth: options.auth
+			}, function(data) {
+				if (data !== null) {
+					if (typeof data.error == 'string') {
+						console.warn(data.error);
+					} else if (typeof success == 'function') {
+						success(data);
+					}
+				}
+			});
+		},
+		addPartSupplier: function(part, supplier, partNumber, url, success) {
+			if (typeof part != 'string') {
+				return false;
+			}
+			if (typeof supplier != 'string') {
+				return false;
+			}
+			if (typeof partNumber != 'string') {
+				partNumber = null;
+			}
+			if (typeof url != 'string') {
+				url = null;
+			}
+			ajaxRequest({
+				method: 'addPartSupplier',
+				part: part,
+				supplier: supplier,
+				partNumber: partNumber,
+				url: url,
+				auth: options.auth
+			}, function(data) {
+				if (data != null) {
+					if (typeof data.error == 'string') {
+						console.warn(data.error);
+					} else if (typeof success == 'function') {
+						success(data);
+					}
+				}
+			});
+		},
 		author: function() {
 			return board.author;
 		},
@@ -601,6 +740,26 @@
 					// TODO: event
 					return true;
 				}
+			}
+		},
+		library: function(forceReload) {
+			if (forceReload === true) {
+				options.library = null;
+			}
+			if (options.library === null) {
+				options.library = false;
+				ajaxRequest({
+					method: 'getLibrary'
+				}, function(data) {
+					if (data !== null) {
+						options.library = data;
+					} else {
+						options.library = null;
+					}
+				});
+				return false;
+			} else {
+				return $.extend(true, {}, options.library);
 			}
 		},
 		line: function(x1, y1, x2, y2) {
@@ -778,6 +937,34 @@
 			});
 			// EVENT
 			$('html').trigger('pcb-saving');
+		},
+		testParts: function() {
+			// TODO: remove
+			var elem = $('<input type="file">');
+			$(elem).on('change', function(e) {
+				$.pcb.addDrawing('dip28', this.files[0], function(data) {
+					console.log('added drawing');
+					console.log(data);
+					$.pcb.addPart('dip28', 'DIP28', null, { description: 'Generic DIP 28 IC' }, function(data) {
+						console.log('added dip28');
+						console.log(data);
+					});
+					$.pcb.addPart('atmega168-dip28', 'Atmega 168 (DIP28)', 'dip28', { description: 'Microcontroller', drills: { 'pin1': { description: 'PC6' } } }, function(data) {
+						console.log('added atmega168-dip28');
+						console.log(data);
+					});
+					$.pcb.addPartComment('atmega168-dip28', 'Nice chip', function(data) {
+						console.log('added comment');
+						console.log(data);
+					});
+					$.pcb.addPartSupplier('atmega168-dip28', 'DigiKey', '123', '456', function(data) {
+						console.log('added supplier');
+						console.log(data);
+					});
+				});
+				$(this).remove();
+			});
+			$('body').append(elem);
 		},
 		text: function(parent, string) {
 			if (typeof parent == 'object' && typeof parent.x == 'number' && typeof parent.y == 'number') {

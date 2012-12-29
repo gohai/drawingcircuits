@@ -6,8 +6,9 @@
 3	Switch tp bottom layer
 [	Decrease tool diameter
 ]	Increase tool diameter
-B	Switch to draw ("brush") tool
-D	Switch to drill tool
-E	Switch to erase tool
-R	Toggle ruler
-S	Save board
+b	Switch to draw ("brush") tool
+d	Switch to drill tool
+e	Switch to erase tool
+r	Toggle ruler
+s	Save board
+t	Add a text annotation

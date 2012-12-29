@@ -1,0 +1,11 @@
+Parts can be added as SVG files. Make sure your file looks like this:
+
+Add a group named "outline" to the root of the SVG file. In Illustrator this is done by creating a group in the default layer ("Layer 1"). This is where the part's outline ends up. We're currently using a 2pt black stroke and a transparent fill. Align the stroke to the inside of the shape (Illustrator: Stroke > Align Stroke).
+
+Add a group named "drills" to the root of the SVG file. Add circles for the drill holes there, and give them meaningful names (e.g. "pin1"). It is suggested to use a 0.001pt black stroke and a transparent fill.
+
+Move the entire drawing so that the top-left corner (including drill holes etc) ends up at coordinates 0, 0. Resize the artboard to the size of the drawing (Illustrator: Object > Artboards > Fit to Artwork Bounds).
+
+Minor notes: We place Pin 1 of ICs on the bottom-left side of the drawing. If datasheets don't include "typical" measurements, we use the average between minimum and maximum.
+
+Save the resulting file as a SVG. The default options in Illustrator seem to work fine (SVG Profile: SVG 1.1). The resulting files seem to have an implicit 72 DPI resolution - this is what our backend expects.

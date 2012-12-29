@@ -10,6 +10,156 @@
  */
 
 /**
+ *	check an optional request argument
+ *
+ *	this function sanitizes the value of $var as well as returns it.
+ *	@param mixed &$var variable
+ *	@param mixed $type either a string holding a variable type or an array thereof (see gettype())
+ *	@param mixed $default default value to set if variable is not set or it is of an illegal type
+ *	@param boolean &$used_default being set to true if the default value was used, false if not
+ *	@return mixed sanitized value
+ */
+function arg_optional(&$var, $type, $default, &$used_default = NULL)
+{
+	if (gettype($type) == 'string') {
+		$type = array($type);
+	} elseif (gettype($type) == 'array') {
+		// nothing to do
+	} else {
+		return;
+	}
+
+	if (@is_null($var) && in_array('NULL', $type)) {
+		// NULL
+		if ($used_default !== NULL) {
+			$used_default = false;
+		}
+	} elseif (isset($var) && in_array(gettype($var), $type)) {
+		// all other types
+		if ($used_default !== NULL) {
+			$used_default = false;
+		}
+	} else {
+		$var = $default;
+		if ($used_default !== NULL) {
+			$used_default = true;
+		}
+	}
+
+	return $var;
+}
+
+
+/**
+ *	check a required request argument
+ *
+ *	if the variable is not set or it is of an illegal type the function will output a 400 HTTP error and not return.
+ *	@param mixed &$var variable
+ *	@param mixed $type either a string holding a variable type or an array thereof (see gettype())
+ *	@return mixed sanitized value
+ */
+function arg_required(&$var, $type)
+{
+	if (gettype($type) == 'string') {
+		$type = array($type);
+	} elseif (gettype($type) == 'array') {
+		// nothing to do
+	} else {
+		return;
+	}
+
+	if (@is_null($var) && in_array('NULL', $type)) {
+		// NULL
+		return $var;
+	} elseif (isset($var) && in_array(gettype($var), $type)) {
+		// all other types
+		return $var;
+	} else {
+		http_error(400, false);
+		die();
+	}
+}
+
+
+/**
+ *	filter an associative array by a blacklist of keys
+ *
+ *	@param array @a input array
+ *	@param array @keys blacklist
+ *	@return array filtered array
+ */
+function array_key_blacklist($a, $keys)
+{
+	$ret = array();
+	foreach ($a as $key=>$val) {
+		if (!in_array($key, $keys)) {
+			$ret[$key] = $val;
+		}
+	}
+	return $ret;
+}
+
+
+/**
+ *	filter an associative array by a whitelist of keys
+ *
+ *	@param array @a input array
+ *	@param array @keys whitelist
+ *	@return array filtered array
+ */
+function array_key_whitelist($a, $keys)
+{
+	$ret = array();
+	foreach ($a as $key=>$val) {
+		if (in_array($key, $keys)) {
+			$ret[$key] = $val;
+		}
+	}
+	return $ret;
+}
+
+
+/**
+ *	recursively merge two arrays
+ *
+ *	@param array $a first array
+ *	@param array $b second array, takes precedence
+ *	@return array merged array
+ */
+function array_merge_deep($a, $b)
+{
+	$ret = array();
+	$curNum = 0;
+
+	foreach ($a as $key=>$val) {
+		if (is_integer($key)) {
+			$ret[$curNum] = $val;
+			$curNum++;
+		} elseif (is_string($key)) {
+			if (!isset($b[$key])) {
+				$ret[$key] = $a[$key];
+			}
+		}
+	}
+
+	foreach ($b as $key=>$val) {
+		if (is_integer($key)) {
+			$ret[$curNum] = $val;
+			$curNum++;
+		} elseif (is_string($key)) {
+			if (isset($a[$key]) && is_array($a[$key]) && is_array($b[$key])) {
+				$ret[$key] = array_merge_deep($a[$key], $b[$key]);
+			} else {
+				$ret[$key] = $b[$key];
+			}
+		}
+	}
+
+	return $ret;
+}
+
+
+/**
  *	convert an associative array to a javascript block
  *
  *	@param array $container container array
@@ -54,7 +204,7 @@ function array_unique_element(&$a, $key)
 	for ($cur=0; $cur < count($a); $cur++) {
 		// look in every row further down
 		for ($i=$cur+1; $i < count($a); $i++) {
-			// to see if the value of a key in the array is the same as in the 
+			// to see if the value of a key in the array is the same as in the
 			// current row
 			if ($a[$i][$key] == $a[$cur][$key]) {
 				// delete the row further down
@@ -72,7 +222,7 @@ function array_unique_element(&$a, $key)
  *	@param string $dir directory to check
  *	@param string $fn file to look for
  *	@param string $orig_fn first check this filename (optional)
- *	@return (basename) filename of identical file in $dir or false if 
+ *	@return (basename) filename of identical file in $dir or false if
  *	there is none
  */
 function dir_has_same_file($dir, $fn, $orig_fn = '')
@@ -86,7 +236,7 @@ function dir_has_same_file($dir, $fn, $orig_fn = '')
 	} else {
 		$orig_fn = basename($orig_fn);
 	}
-	
+
 	if (($dir_fns = @scandir($dir)) === false) {
 		return false;
 	}
@@ -122,13 +272,13 @@ function dir_is_different($a, $b)
 	if (substr($b, -1) == '/') {
 		$b = substr($b, 0, -1);
 	}
-	
+
 	$a_fns = @scandir($a);
 	$b_fns = @scandir($b);
 	if ($a_fns !== $b_fns) {
 		return true;
 	}
-	
+
 	foreach ($a_fns as $fn) {
 		if ($fn == '.' || $fn == '..') {
 			continue;
@@ -143,7 +293,7 @@ function dir_is_different($a, $b)
 			}
 		}
 	}
-	
+
 	return false;
 }
 
@@ -183,7 +333,7 @@ function expl_whitesp($s, $honor_quot = false)
 
 	$prev = -1;
 	$cur_quot = false;
-	
+
 	for ($i=0; $i < strlen($s); $i++) {
 		if ($honor_quot && in_array($s[$i], $quot)) {
 			if ($cur_quot === false) {
@@ -210,7 +360,7 @@ function expl_whitesp($s, $honor_quot = false)
 	if ($prev+2 < $i) {
 		$ret[] = substr($s, $prev+1);
 	}
-	
+
 	return $ret;
 }
 
@@ -255,11 +405,11 @@ function filext($s)
 /**
  *	return a http error message to the client
  *
- *	if $header_only is false (the default), the function doesn't 
+ *	if $header_only is false (the default), the function doesn't
  *	return if successful.
  *	@param int $code error code
  *	@param bool $header_only only output the header and return
- *	@return bool true if successful (only if $header_only is true), false 
+ *	@return bool true if successful (only if $header_only is true), false
  *	if not
  */
 function http_error($code, $header_only = false)
@@ -291,7 +441,7 @@ function http_error($code, $header_only = false)
 /**
  *	check if the user is http digest authenticated
  *
- *	@param array $users array of possible users (usernames as keys, 
+ *	@param array $users array of possible users (usernames as keys,
  *	password as values)
  *	@param string $realm realm (e.g. name of the site)
  *	@retval 0 authenticated
@@ -308,7 +458,7 @@ function http_digest_check($users, $realm = '')
 	} else {
 		$auth = $_SERVER['PHP_AUTH_DIGEST'];
 	}
-	
+
 	// taken from one of the comments
 	$data = array();
 	preg_match("/username=\"([^\"]+)\"/i", $auth, $match);
@@ -355,17 +505,17 @@ function http_digest_check($users, $realm = '')
 	} else {
 		return -2;
 	}
-	
+
 	// check username
 	if (!array_key_exists($data['username'], $users)) {
 		return -3;
 	}
-	
+
 	// generate the valid response
 	$a1 = md5($data['username'].':'.str_replace("\"", '', $realm).':'.$users[$data['username']]);
 	$a2 = md5($_SERVER['REQUEST_METHOD'].':'.$data['uri']);
 	$valid_response = md5($a1.':'.$data['nonce'].':'.$data['nc'].':'.$data['cnonce'].':'.$data['qop'].':'.$a2);
-	
+
 	if ($data['response'] != $valid_response) {
 		return -4;
 	} else {
@@ -401,6 +551,31 @@ function is_url($s)
 	} else {
 		return false;
 	}
+}
+
+
+/**
+ *	decode request arguments JSON data
+ */
+function json_request()
+{
+	foreach ($_REQUEST as $key=>$val) {
+		$_REQUEST[$key] = @json_decode($val, true);
+	}
+}
+
+
+/**
+ *	output a JSON encoded response
+ *
+ *	this function does not return.
+ *	@param array $data array to encode
+ */
+function json_response($data)
+{
+	header('Content-type: application/json');
+	echo @json_encode($data, JSON_FORCE_OBJECT);
+	die();
 }
 
 
@@ -497,13 +672,13 @@ function serve_file($fn, $dl, $mime = '')
 		// fall back to octet-stream
 		$mime = 'application/octet-stream';
 	}
-	
+
 	// TODO (later): optionally set the mime type based on the file extension only
 	// see http://www.php.net/manual/en/function.readfile.php#52722
 	// TODO (later): handle byte range
 	// TODO (later): handle if-modified-since etc
 	// TODO (later): also check apache_request_headers()
-	
+
 	if ($dl) {
 		// these are taken from the php documentation (on readfile())
 		header('Content-Description: File Transfer');
@@ -549,13 +724,13 @@ function unique_filename($dir, $orig_fn)
 	if (substr($dir, -1) == '/') {
 		$dir = substr($dir, 0, -1);
 	}
-	
+
 	$fn = basename($orig_fn);
 	$num = 1;
 	// is_link() is there to catch dangling symlinks
 	while (is_file($dir.'/'.$fn) || is_dir($dir.'/'.$fn) || is_link($dir.'/'.$fn)) {
 		// find first dot and prepend _$num there
-		// TODO (later): we could handle the case where $orig_fn is already 
+		// TODO (later): we could handle the case where $orig_fn is already
 		// something like foo_2.bar
 		$fn = basename($orig_fn);
 		if (($p = strpos($fn, '.')) !== false) {
@@ -564,7 +739,7 @@ function unique_filename($dir, $orig_fn)
 			$fn .= '_'.(++$num);
 		}
 	}
-	
+
 	return $fn;
 }
 
@@ -584,7 +759,7 @@ function var_dump_inl($var)
 	} elseif (is_bool($var)) {
 		return 'false';
 	}
-	
+
 	$ret = print_r($var, true);
 	// remove control characters
 	$ret = str_replace("\n", ' ', $ret);

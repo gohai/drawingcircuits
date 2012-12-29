@@ -31,17 +31,17 @@ function db_delete($table, $where, $ctx = array())
 	if (empty($ctx)) {
 		$ctx = db_default_ctx();
 	}
-	
+
 	if (!@mysql_connect($ctx['host'], $ctx['user'], $ctx['pass'])) {
 		return false;
 	}
 	@mysql_set_charset('utf8');
 	@mysql_select_db($ctx['db']);
-	
+
 	if (!@mysql_query('DELETE FROM `'.$table.'` WHERE '.$where)) {
 		return false;
 	}
-	
+
 	return @mysql_affected_rows();
 }
 
@@ -69,13 +69,13 @@ function db_esc($s, $ctx = array())
 	if (empty($ctx)) {
 		$ctx = db_default_ctx();
 	}
-	
+
 	if (!@mysql_connect($ctx['host'], $ctx['user'], $ctx['pass'])) {
 		return '';
 	}
 	@mysql_set_charset('utf8');
 	@mysql_select_db($ctx['db']);
-	
+
 	if (!($ret = @mysql_real_escape_string($s))) {
 		return '';
 	} else {
@@ -129,23 +129,23 @@ function db_fetch_raw($query, $ctx = array())
 	if (empty($ctx)) {
 		$ctx = db_default_ctx();
 	}
-	
+
 	if (!@mysql_connect($ctx['host'], $ctx['user'], $ctx['pass'])) {
 		return false;
 	}
 	@mysql_set_charset('utf8');
 	@mysql_select_db($ctx['db']);
-	
+
 	if (!($q = @mysql_query($query))) {
 		return false;
 	}
-	
+
 	// fetch result
 	$ret = array();
 	while ($r = @mysql_fetch_assoc($q)) {
 		$ret[] = db_type_dec($q, $r);
 	}
-	
+
 	return $ret;
 }
 
@@ -158,18 +158,18 @@ function db_fetch_raw($query, $ctx = array())
  *	@param $ctx		(array) database context to use (see db_default_ctx())
  *	@return			(int) new id (or false)
  */
-function db_insert($table, $fields = array(), $ctx = array()) 
+function db_insert($table, $fields = array(), $ctx = array())
 {
 	if (empty($ctx)) {
 		$ctx = db_default_ctx();
 	}
-	
+
 	if (!@mysql_connect($ctx['host'], $ctx['user'], $ctx['pass'])) {
 		return false;
 	}
 	@mysql_set_charset('utf8');
 	@mysql_select_db($ctx['db']);
-	
+
 	$col = '';
 	$val = '';
 	foreach($fields as $c=>$v) {
@@ -183,11 +183,11 @@ function db_insert($table, $fields = array(), $ctx = array())
 	// remove last ', '
 	$col = substr($col, 0, -2);
 	$val = substr($val, 0, -2);
-	
+
 	if (!@mysql_query('INSERT INTO `'.$table.'` ('.$col.') VALUES ('.$val.')')) {
 		return false;
 	}
-	
+
 	return @mysql_insert_id();
 }
 
@@ -204,17 +204,17 @@ function db_truncate($table, $ctx = array())
 	if (empty($ctx)) {
 		$ctx = db_default_ctx();
 	}
-	
+
 	if (!@mysql_connect($ctx['host'], $ctx['user'], $ctx['pass'])) {
 		return false;
 	}
 	@mysql_set_charset('utf8');
 	@mysql_select_db($ctx['db']);
-	
+
 	if (!@mysql_query('TRUNCATE TABLE `'.$table.'`')) {
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -256,7 +256,7 @@ function db_type_dec($q, $r)
 		}
 		$i++;
 	}
-	
+
 	return $r;
 }
 
@@ -306,13 +306,13 @@ function db_update($table, $where, $values, $limit = 0, $ctx = array())
 	if (empty($ctx)) {
 		$ctx = db_default_ctx();
 	}
-	
+
 	if (!@mysql_connect($ctx['host'], $ctx['user'], $ctx['pass'])) {
 		return false;
 	}
 	@mysql_set_charset('utf8');
 	@mysql_select_db($ctx['db']);
-	
+
 	// setup string
 	$set = '';
 	foreach ($values as $col=>$val) {
@@ -324,17 +324,17 @@ function db_update($table, $where, $values, $limit = 0, $ctx = array())
 	}
 	// remove last ', '
 	$set = substr($set, 0, -2);
-	
+
 	// setup limit
 	if ($limit == 0) {
 		$limit = '';
 	} else {
 		$limit = ' LIMIT '.intval($limit);
 	}
-	
+
 	if (!@mysql_query('UPDATE `'.$table.'` SET '.$set.' WHERE '.$where.$limit)) {
 		return false;
 	}
-	
+
 	return @mysql_affected_rows();
 }
