@@ -51,6 +51,12 @@
 	var view = {};
 
 	// Helper functions
+	var addPartsDrills = function(parts, drills) {
+		// add parts' drill holes
+		for (var p in parts) {
+			drills = $.extend(true, drills, drillsFromObject(parts[p], p));
+		}
+	};
 	var ajaxRequest = function(data, success) {
 		// setup shim success function
 		var shimSuccess = function(data) {
@@ -97,6 +103,74 @@
 		$(iframe).prop('src', options.baseUrl+'ajax.php'+arg);
 		// TODO: set and check for cookie (see jquery.fileDownload.js)
 		$('body').append(iframe);
+	};
+	var drawDrill = function(ctx, x, y, diameter, opt) {
+		if (typeof opt != 'object') {
+			opt = {};
+		}
+
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.fillStyle = '#fff'
+		ctx.beginPath();
+		ctx.arc(0, 0, mmToPx(diameter/2, true), 0, 2*Math.PI);
+		ctx.fill();
+		// via
+		if (opt.via === true) {
+			ctx.fillStyle = '#ff0';
+			ctx.beginPath();
+			ctx.arc(0, 0, mmToPx(diameter/4, true), 0, 2*Math.PI);
+			ctx.fill();
+		}
+		ctx.restore();
+	};
+	var drawPart = function(ctx, part, x, y, rot, opt) {
+		if (typeof rot != 'number') {
+			rot = 0;
+		}
+		if (typeof opt != 'object') {
+			opt = {};
+		}
+
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.rotate(rot*Math.PI/180);
+		// drill holes
+		for (var d in options.library[part].drills) {
+			var drill = options.library[part].drills[d];
+			drawDrill(ctx, mmToPx(drill.x, true), mmToPx(drill.y, true), drill.diameter);
+		}
+		// outline
+		var img = requestPart(part);
+		if (img !== null) {
+			var w = mmToPx(options.library[part].width, true);
+			var h = mmToPx(options.library[part].height, true);
+			// I don't really know where the +1 comes from, but it is off-center without it
+			ctx.drawImage(img, (-w/2)+1, (-h/2)+1, w, h);
+		}
+		ctx.restore();
+	};
+	var drillsFromObject = function(obj, name) {
+		// get the part
+		var part = options.library[obj.part];
+		if (part === undefined) {
+			return {};
+		}
+		// calculate the drills, taking into account the object rotation
+		var ret = {};
+		for (var d in part.drills) {
+			var drill = part.drills[d];
+			var c = Math.cos(-obj.rot*Math.PI/180);
+			var s = Math.sin(-obj.rot*Math.PI/180);
+			ret[name+'-'+d] = {
+				x: obj.x+(drill.x*c+drill.y*s),
+				y: obj.y+(-drill.x*s+drill.y*c),
+				diameter: drill.diameter,
+				parent: name,
+				via: false
+			};
+		}
+		return ret;
 	};
 	var fillCanvas = function(cvs, color) {
 		var ctx = cvs.getContext('2d');
@@ -245,26 +319,20 @@
 		ctx.restore();
 
 		// drill holes
-		ctx.save();
 		for (var d in board.drills) {
-			ctx.fillStyle = '#000';
-			ctx.beginPath();
-			ctx.arc(mmToPx(board.drills[d].x, true), mmToPx(board.drills[d].y, true), mmToPx(board.drills[d].diameter/2, true), 0, 2*Math.PI);
-			ctx.fill();
-			// vias
-			if (board.drills[d].via == true) {
-				ctx.fillStyle = '#ff0'
-				ctx.beginPath();
-				ctx.arc(mmToPx(board.drills[d].x, true), mmToPx(board.drills[d].y, true), mmToPx(board.drills[d].diameter*0.5/2, true), 0, 2*Math.PI);
-				ctx.fill();
-			}
+			var drill = board.drills[d];
+			drawDrill(ctx, mmToPx(drill.x, true), mmToPx(drill.y, true), drill.diameter, {via: drill.via});
 		}
-		ctx.restore();
 
 		// parts
-		ctx.save();
-		// TODO
-		ctx.restore();
+		for (var p in board.parts) {
+			var part = board.parts[p];
+			if (part.layer != view.layer) {
+				continue;
+			} else {
+				drawPart(ctx, part.part, mmToPx(part.x, true), mmToPx(part.y, true), part.rot);
+			}
+		}
 
 		// texts
 		// TODO: handle mirrored text
@@ -304,18 +372,7 @@
 				ctx.lineTo(view.lastMouseX+5.5, view.lastMouseY+0.5);
 				ctx.stroke();
 			} else if (view.tool == 'part' && view.part !== null) {
-				var part = requestPart(view.part);
-				if (part !== null) {
-					var w = mmToPx(options.library[view.part].width, true);
-					var h = mmToPx(options.library[view.part].height, true);
-					ctx.save();
-					ctx.translate(view.lastMouseX, view.lastMouseY);
-					if (view.toolData.rot !== undefined) {
-						ctx.rotate(view.toolData.rot*Math.PI/180);
-					}
-					ctx.drawImage(part, -w/2, -h/2, w, h);
-					ctx.restore();
-				}
+				drawPart(ctx, view.part, view.lastMouseX, view.lastMouseY, view.toolData.rot);
 			} else {
 				ctx.strokeStyle = '#f00';
 				ctx.beginPath();
@@ -360,6 +417,14 @@
 		}
 
 		ctx.restore();
+	};
+	var removePartsDrills = function(drills) {
+		// remove parts' drill holes
+		for (var d in drills) {
+			if (drills[d].parent !== null) {
+				delete drills[d];
+			}
+		}
 	};
 	var requestPart = function(part) {
 		if (view.parts[part] === undefined) {
@@ -464,6 +529,7 @@
 						if (!$.pcb.requestPending()) {
 							if (origBoard !== $.pcb.board()) {
 								// redirect
+								view.allowNavigation = true;
 								window.location = $.pcb.baseUrl()+$.pcb.board();
 							}
 						} else {
@@ -548,6 +614,12 @@
 			// sanity check
 			if (view.ajaxPending < 0) {
 				view.ajaxPending = 0;
+			}
+		});
+		$(window).on('beforeunload', function(e) {
+			if (view.allowNavigation !== true) {
+				// show a message before navigating away
+				return 'You might have unsaved changes';
 			}
 		});
 
@@ -731,7 +803,7 @@
 				}
 			}
 		},
-		drill: function(x, y, diameter, parent, pin) {
+		drill: function(x, y, diameter, parent) {
 			if (typeof x != 'number' || typeof y != 'number') {
 				return false;
 			}
@@ -743,9 +815,6 @@
 			if (parent === undefined) {
 				parent = null;
 			}
-			if (typeof pin != 'number') {
-				pin = null;
-			}
 			// get key for new object
 			var key = getFirstAvailableKey(board.drills, 'drill');
 			board.drills[key] = {
@@ -753,8 +822,7 @@
 				y: y,
 				diameter: diameter,
 				parent: parent,
-				pin: pin,
-				via: false,
+				via: false
 			};
 			requestRedraw();
 			return key;
@@ -864,6 +932,7 @@
 								if (view.layersToLoad == 0) {
 									// done: setup board & view
 									board = $.extend(true, defaultBoard, data);
+									removePartsDrills(board.drills);
 									view = $.extend(true, {}, defaultView);
 									invalidateView();
 									// EVENT
@@ -876,6 +945,7 @@
 					if (!hasLayers) {
 						// done: setup board & view
 						board = $.extend(true, defaultBoard, data);
+						removePartsDrills(board.drills);
 						view = $.extend(true, {}, defaultView);
 						invalidateView();
 						// EVENT
@@ -886,10 +956,14 @@
 			// EVENT
 			$('html').trigger('pcb-loading');
 		},
-		objects: function() {
+		objects: function(withPartDrills) {
 			var ret = {};
 			ret.drills = $.extend(true, {}, board.drills);
 			ret.texts = $.extend(true, {}, board.texts);
+			ret.parts = $.extend(true, {}, board.parts);
+			if (withPartDrills === true) {
+				addPartsDrills(ret.parts, ret.drills);
+			}
 			return ret;
 		},
 		parentBoard: function() {
@@ -975,7 +1049,7 @@
 			}
 		},
 		removeObject: function(name) {
-			var scope = [ board.drills, board.texts ];
+			var scope = [ board.drills, board.texts, board.parts ];
 			for (s in scope) {
 				for (o in scope[s]) {
 					if (name === o) {
@@ -985,6 +1059,9 @@
 							delete board.drills[name];
 						} else if (scope[s] == board.texts) {
 							delete board.texts[name];
+						} else if (scope[s] == board.parts) {
+							// TODO: also remove connected jumpers, texts
+							delete board.parts[name];
 						}
 						requestRedraw();
 						return true;
@@ -1033,6 +1110,7 @@
 					png: png
 				};
 			}
+			addPartsDrills(boardCopy.parts, boardCopy.drills);
 			ajaxRequest({
 				method: 'save',
 				board: boardCopy,
@@ -1108,6 +1186,7 @@
 				requestRedraw();
 				return key;
 			}
+			// TODO: other parents
 			return false;
 		},
 		tool: function(t) {

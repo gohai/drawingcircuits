@@ -11,7 +11,7 @@ json_request();
 
 if (empty($_REQUEST['method'])) {
 	// method argument missing
-	http_error(400, false);
+	http_error(400, true);
 	die();
 } elseif ($_REQUEST['method'] == 'addDrawing') {
 	checkAuth();
@@ -33,6 +33,7 @@ if (empty($_REQUEST['method'])) {
 	if ($ret !== true) {
 		json_response(array('error'=>$ret));
 	}
+	$part['svg'] = stripComments($part['svg']);
 
 	// insert into database
 	$q = $part['json'] = @json_encode($part['json'], JSON_FORCE_OBJECT);
@@ -196,10 +197,10 @@ if (empty($_REQUEST['method'])) {
 	$rev = $_REQUEST['rev'];
 	$q = db_fetch('layers', 'board='.@intval($board).' AND rev='.@intval($rev).' AND layer="top"');
 	if ($q === false) {
-		http_error(500, false);
+		http_error(500, true);
 		die();
 	} elseif (empty($q)) {
-		http_error(404, false);
+		http_error(404, true);
 		die();
 	} else {
 		header('Content-type: application/octet-stream');
@@ -211,7 +212,7 @@ if (empty($_REQUEST['method'])) {
 	// sort it with revision ascending so that later entries overwrite prior ones
 	$q = db_fetch('parts', 'visible=1 ORDER BY title ASC, part ASC, rev ASC');
 	if ($q === false) {
-		http_error(500, false);
+		http_error(500, true);
 		die();
 	}
 	$ret = array();
@@ -230,11 +231,11 @@ if (empty($_REQUEST['method'])) {
 		// use the latest revision
 		$q = db_fetch_raw('SELECT rev FROM revisions WHERE board='.$board.' ORDER BY rev DESC LIMIT 1');
 		if ($q === false) {
-			http_error(500, false);
+			http_error(500, true);
 			die();
 		} elseif (empty($q)) {
 			// no revision for board
-			http_error(404, false);
+			http_error(404, true);
 			die();
 		} else {
 			$rev = $q[0]['rev'];
@@ -243,11 +244,11 @@ if (empty($_REQUEST['method'])) {
 
 	$q = db_fetch('revisions', 'board='.$board.' AND rev='.$rev);
 	if ($q === false) {
-		http_error(500, false);
+		http_error(500, true);
 		die();
 	} elseif (empty($q)) {
 		// revision not found
-		http_error(404, false);
+		http_error(404, true);
 		die();
 	} else {
 		$json = @json_decode($q[0]['json'], true);
@@ -275,11 +276,11 @@ if (empty($_REQUEST['method'])) {
 	if ($board['board'] !== NULL) {
 		$q = db_fetch('boards', 'board='.@intval($board['board']));
 		if ($q === false) {
-			http_error(500, false);
+			http_error(500, true);
 			die();
 		} elseif (empty($q)) {
 			// unknown board
-			http_error(400, false);
+			http_error(400, true);
 			die();
 		} elseif ($q[0]['owner'] !== NULL && $q[0]['owner'] !== $auth['uid']) {
 			// TODO: we might check for administrative role here as well
@@ -291,7 +292,7 @@ if (empty($_REQUEST['method'])) {
 		// create a new board
 		$id = db_insert('boards', array('owner'=>$auth['uid']));
 		if ($id === false) {
-			http_error(500, false);
+			http_error(500, true);
 			die();
 		} else {
 			$board['board'] = $id;
@@ -301,7 +302,7 @@ if (empty($_REQUEST['method'])) {
 		// create a new revision
 		$q = db_fetch_raw('SELECT rev FROM revisions WHERE board='.@intval($board['board']).' ORDER BY rev DESC LIMIT	1');
 		if ($q === false) {
-			http_error(500, false);
+			http_error(500, true);
 			die();
 		} elseif (empty($q)) {
 			// no revisions
@@ -330,6 +331,6 @@ if (empty($_REQUEST['method'])) {
 	json_response(array('board'=>$board['board'], 'rev'=>$board['rev']));
 } else {
 	// unsupported method
-	http_error(400, false);
+	http_error(400, true);
 	die();
 }

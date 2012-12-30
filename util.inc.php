@@ -696,6 +696,30 @@ function serve_file($fn, $dl, $mime = '')
 
 
 /**
+ *	strip HTML/XML comments from a string
+ *
+ *	@param string $s input
+ *	@return string output
+ */
+function stripComments($s)
+{
+	while (true) {
+		$start = strpos($s, '<!--');
+		if ($start !== false) {
+			$end = strpos($s, '-->', $start+4);
+			if ($end !== false) {
+				$s = substr_replace($s, '', $start, $end-$start+3);
+			} else {
+				return $s;
+			}
+		} else {
+			return $s;
+		}
+	}
+}
+
+
+/**
  *	return a number of tab characters
  *
  *	@param int $count count (one is default)
