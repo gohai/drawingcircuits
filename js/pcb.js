@@ -136,9 +136,11 @@
 		ctx.translate(x, y);
 		ctx.rotate(rot*Math.PI/180);
 		// drill holes
-		for (var d in options.library[part].drills) {
-			var drill = options.library[part].drills[d];
-			drawDrill(ctx, mmToPx(drill.x, true), mmToPx(drill.y, true), drill.diameter);
+		if (opt.noDrillHoles !== true) {
+			for (var d in options.library[part].drills) {
+				var drill = options.library[part].drills[d];
+				drawDrill(ctx, mmToPx(drill.x, true), mmToPx(drill.y, true), drill.diameter);
+			}
 		}
 		// outline
 		var img = requestPart(part);
@@ -162,8 +164,14 @@
 			var drill = part.drills[d];
 			var c = Math.cos(-obj.rot*Math.PI/180);
 			var s = Math.sin(-obj.rot*Math.PI/180);
+			// coordinate origin is the top-left corner of the _top_ layer
+			if (obj.layer == 'bottom') {
+				var x = obj.x-(drill.x*c+drill.y*s);
+			} else {
+				var x = obj.x+(drill.x*c+drill.y*s);
+			}
 			ret[name+'-'+d] = {
-				x: obj.x+(drill.x*c+drill.y*s),
+				x: x,
 				y: obj.y+(-drill.x*s+drill.y*c),
 				diameter: drill.diameter,
 				parent: name,
@@ -305,13 +313,40 @@
 		//ctx.mozImageSmoothingEnabled = true;
 		//ctx.webkitImageSmoothingEnabled = true;
 
+		// parts on the inactive layer
+		ctx.save();
+		ctx.globalAlpha = 0.1;
+		// TODO: there must be a better way to do this
+		ctx.globalCompositeOperation = 'lighter';
+		for (var p in board.parts) {
+			var part = board.parts[p];
+			if (part.layer == view.layer) {
+				continue;
+			} else {
+				ctx.save();
+				ctx.translate(mmToPx(part.x, true), mmToPx(part.y, true));
+				if (part.layer == 'bottom') {
+					ctx.scale(-1, 1);
+				}
+				drawPart(ctx, part.part, 0, 0, part.rot, { noDrillHoles: true });
+				drawPart(ctx, part.part, 0, 0, part.rot, { noDrillHoles: true });
+				drawPart(ctx, part.part, 0, 0, part.rot, { noDrillHoles: true });
+				drawPart(ctx, part.part, 0, 0, part.rot, { noDrillHoles: true });
+				drawPart(ctx, part.part, 0, 0, part.rot, { noDrillHoles: true });
+				ctx.restore();
+			}
+		}
+		ctx.restore();
+
 		// layers
 		ctx.save();
 		ctx.globalAlpha = 0.5;
-		if (view.layer == 'top' || view.layer == 'substrate') {
-			var order = ['bottom', 'substrate', 'top'];
-		} else {
+		if (view.layer == 'bottom') {
 			var order = ['top', 'substrate', 'bottom'];
+		} else if (view.layer == 'substrate') {
+			var order = ['bottom', 'top', 'substrate'];
+		} else {
+			var order = ['bottom', 'substrate', 'top'];
 		}
 		for (var l in order) {
 			ctx.drawImage(view.layers[order[l]], 0, 0);
@@ -323,6 +358,14 @@
 			var drill = board.drills[d];
 			drawDrill(ctx, mmToPx(drill.x, true), mmToPx(drill.y, true), drill.diameter, {via: drill.via});
 		}
+		for (var p in board.parts) {
+			var part = board.parts[p];
+			var drills = drillsFromObject(part, p);
+			for (var d in drills) {
+				var drill = drills[d];
+				drawDrill(ctx, mmToPx(drill.x, true), mmToPx(drill.y, true), drill.diameter);				
+			}
+		}
 
 		// parts
 		for (var p in board.parts) {
@@ -330,7 +373,13 @@
 			if (part.layer != view.layer) {
 				continue;
 			} else {
-				drawPart(ctx, part.part, mmToPx(part.x, true), mmToPx(part.y, true), part.rot);
+				ctx.save();
+				ctx.translate(mmToPx(part.x, true), mmToPx(part.y, true));
+				if (part.layer == 'bottom') {
+					ctx.scale(-1, 1);
+				}
+				drawPart(ctx, part.part, 0, 0, part.rot, { noDrillHoles: true });
+				ctx.restore();
 			}
 		}
 
@@ -372,7 +421,11 @@
 				ctx.lineTo(view.lastMouseX+5.5, view.lastMouseY+0.5);
 				ctx.stroke();
 			} else if (view.tool == 'part' && view.part !== null) {
-				drawPart(ctx, view.part, view.lastMouseX, view.lastMouseY, view.toolData.rot);
+				ctx.translate(view.lastMouseX, view.lastMouseY);
+				if (view.layer == 'bottom') {
+					ctx.scale(-1, 1);
+				}
+				drawPart(ctx, view.part, 0, 0, view.toolData.rot);
 			} else {
 				ctx.strokeStyle = '#f00';
 				ctx.beginPath();
@@ -516,6 +569,8 @@
 			} else if (e.keyCode == 112) {
 				// p
 				$.pcb.tool('part');
+				// TODO: remove
+				$.pcb.selectPart('atmega168-dip28');
 			} else if (e.keyCode == 114) {
 				// r
 				$.pcb.ruler(!$.pcb.ruler());
