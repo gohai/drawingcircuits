@@ -104,50 +104,86 @@
 		// TODO: set and check for cookie (see jquery.fileDownload.js)
 		$('body').append(iframe);
 	};
-	var drawDrill = function(ctx, x, y, diameter, opt) {
-		if (typeof opt != 'object') {
-			opt = {};
-		}
-
+	var drawDrill = function(ctx, obj) {
+		// TODO: reimplement via
 		ctx.save();
-		ctx.translate(x, y);
-		ctx.fillStyle = '#fff'
+		ctx.translate(mmToPx(obj.x, true), mmToPx(obj.y, true));
+		drawDrillGfx(ctx, obj.diameter);
+		ctx.restore();
+	};
+	var drawDrillGfx = function(ctx, diameter) {
+		ctx.save();
+		ctx.fillStyle = '#fff';
 		ctx.beginPath();
 		ctx.arc(0, 0, mmToPx(diameter/2, true), 0, 2*Math.PI);
 		ctx.fill();
-		// via
-		if (opt.via === true) {
-			ctx.fillStyle = '#ff0';
+		ctx.restore();
+	};
+	var drawMouseCursor = function(ctx, x, y) {
+		ctx.save();
+		ctx.translate(x, y);
+		// TODO: reimplement text
+		if (view.tool == 'part' && view.part !== null) {
+			// parts on the bottom layer are being drawn inverted (so that pin 1 is 
+			// still at the bottom left corner by default)
+			if (view.layer == 'bottom') {
+				ctx.scale(-1, 1);
+			}
+			drawPartOutlineGfx(ctx, view.part, view.toolData.rot);
+			drawPartDrillsGfx(ctx, view.part, view.toolData.rot);
+		} else {
+			// default
+			ctx.strokeStyle = '#f00';
 			ctx.beginPath();
-			ctx.arc(0, 0, mmToPx(diameter/4, true), 0, 2*Math.PI);
-			ctx.fill();
+			ctx.arc(0, 0, mmToPx($.pcb.diameter()/2, true), 0, 2*Math.PI);
+			ctx.stroke();
 		}
 		ctx.restore();
 	};
-	var drawPart = function(ctx, part, x, y, rot, opt) {
-		if (typeof rot != 'number') {
-			rot = 0;
-		}
-		if (typeof opt != 'object') {
-			opt = {};
-		}
-
+	var drawPartDrills = function(ctx, obj) {
 		ctx.save();
-		ctx.translate(x, y);
-		ctx.rotate(rot*Math.PI/180);
-		// drill holes
-		if (opt.noDrillHoles !== true) {
-			for (var d in options.library[part].drills) {
-				var drill = options.library[part].drills[d];
-				drawDrill(ctx, mmToPx(drill.x, true), mmToPx(drill.y, true), drill.diameter);
-			}
+		// parts on the bottom layer are being drawn inverted (so that pin 1 is 
+		// still at the bottom left corner by default)
+		ctx.translate(mmToPx(obj.x, true), mmToPx(obj.y, true));
+		if (obj.layer == 'bottom') {
+			ctx.scale(-1, 1);
 		}
-		// outline
+		drawPartDrillsGfx(ctx, obj.part, obj.rot);
+		ctx.restore();
+	};
+	var drawPartDrillsGfx = function(ctx, part, rot) {
+		var part = options.library[part];
+		ctx.save();
+		ctx.rotate(rot*Math.PI/180);
+		for (var d in part.drills) {
+			var drill = part.drills[d];
+			var x = mmToPx(drill.x, true);
+			var y = mmToPx(drill.y, true);
+			ctx.translate(x, y);
+			drawDrillGfx(ctx, drill.diameter);
+			ctx.translate(-x, -y);
+		}
+		ctx.restore();
+	};
+	var drawPartOutline = function(ctx, obj) {
+		ctx.save();
+		ctx.translate(mmToPx(obj.x, true), mmToPx(obj.y, true));
+		// parts on the bottom layer are being drawn inverted (so that pin 1 is 
+		// still at the bottom left corner by default)
+		if (obj.layer == 'bottom') {
+			ctx.scale(-1, 1);
+		}
+		drawPartOutlineGfx(ctx, obj.part, obj.rot);
+		ctx.restore();
+	};
+	var drawPartOutlineGfx = function(ctx, part, rot) {
+		ctx.save();
+		ctx.rotate(rot*Math.PI/180);
 		var img = requestPart(part);
 		if (img !== null) {
 			var w = mmToPx(options.library[part].width, true);
 			var h = mmToPx(options.library[part].height, true);
-			// I don't really know where the +1 comes from, but it is off-center without it
+			// TODO: off by one?
 			ctx.drawImage(img, (-w/2)+1, (-h/2)+1, w, h);
 		}
 		ctx.restore();
@@ -307,36 +343,17 @@
 		if (isLayerMirrored()) {
 			mirrorContext(ctx);
 		}
-		// enable better quality interpolation
-		// TODO: doesn't seem to work on Chrome atm
-		//ctx.imageSmoothingEnabled = true;
-		//ctx.mozImageSmoothingEnabled = true;
-		//ctx.webkitImageSmoothingEnabled = true;
 
 		// parts on the inactive layer
-		ctx.save();
-		ctx.globalAlpha = 0.1;
-		// TODO: there must be a better way to do this
-		ctx.globalCompositeOperation = 'lighter';
 		for (var p in board.parts) {
 			var part = board.parts[p];
 			if (part.layer == view.layer) {
 				continue;
 			} else {
-				ctx.save();
-				ctx.translate(mmToPx(part.x, true), mmToPx(part.y, true));
-				if (part.layer == 'bottom') {
-					ctx.scale(-1, 1);
-				}
-				drawPart(ctx, part.part, 0, 0, part.rot, { noDrillHoles: true });
-				drawPart(ctx, part.part, 0, 0, part.rot, { noDrillHoles: true });
-				drawPart(ctx, part.part, 0, 0, part.rot, { noDrillHoles: true });
-				drawPart(ctx, part.part, 0, 0, part.rot, { noDrillHoles: true });
-				drawPart(ctx, part.part, 0, 0, part.rot, { noDrillHoles: true });
-				ctx.restore();
+				// TODO: change color
+				drawPartOutline(ctx, part);
 			}
 		}
-		ctx.restore();
 
 		// layers
 		ctx.save();
@@ -355,35 +372,24 @@
 
 		// drill holes
 		for (var d in board.drills) {
-			var drill = board.drills[d];
-			drawDrill(ctx, mmToPx(drill.x, true), mmToPx(drill.y, true), drill.diameter, {via: drill.via});
+			drawDrill(ctx, board.drills[d]);
 		}
 		for (var p in board.parts) {
-			var part = board.parts[p];
-			var drills = drillsFromObject(part, p);
-			for (var d in drills) {
-				var drill = drills[d];
-				drawDrill(ctx, mmToPx(drill.x, true), mmToPx(drill.y, true), drill.diameter);				
-			}
+			drawPartDrills(ctx, board.parts[p]);
 		}
 
-		// parts
+		// parts on the active layer
 		for (var p in board.parts) {
 			var part = board.parts[p];
 			if (part.layer != view.layer) {
 				continue;
 			} else {
-				ctx.save();
-				ctx.translate(mmToPx(part.x, true), mmToPx(part.y, true));
-				if (part.layer == 'bottom') {
-					ctx.scale(-1, 1);
-				}
-				drawPart(ctx, part.part, 0, 0, part.rot, { noDrillHoles: true });
-				ctx.restore();
+				drawPartOutline(ctx, part);
 			}
 		}
 
 		// texts
+		// TODO: rework
 		// TODO: handle mirrored text
 		// TODO: handle zoom
 		// TODO: always draw crosshair if we have no parent
@@ -408,34 +414,12 @@
 		ctx.restore();
 
 		// mouse cursor
-		ctx.save();
 		if (view.lastMouseX !== null && view.lastMouseY !== null) {
-			if (view.tool == 'text') {
-				ctx.strokeStyle = '#ff0';
-				ctx.beginPath();
-				ctx.moveTo(view.lastMouseX+0.5, view.lastMouseY-4.5);
-				ctx.lineTo(view.lastMouseX+0.5, view.lastMouseY+4.5);
-				ctx.stroke();
-				ctx.beginPath();
-				ctx.moveTo(view.lastMouseX-3.5, view.lastMouseY+0.5);
-				ctx.lineTo(view.lastMouseX+5.5, view.lastMouseY+0.5);
-				ctx.stroke();
-			} else if (view.tool == 'part' && view.part !== null) {
-				ctx.translate(view.lastMouseX, view.lastMouseY);
-				if (view.layer == 'bottom') {
-					ctx.scale(-1, 1);
-				}
-				drawPart(ctx, view.part, 0, 0, view.toolData.rot);
-			} else {
-				ctx.strokeStyle = '#f00';
-				ctx.beginPath();
-				ctx.arc(view.lastMouseX, view.lastMouseY, mmToPx($.pcb.diameter()/2, true), 0, 2*Math.PI);
-				ctx.stroke();
-			}
+			drawMouseCursor(ctx, view.lastMouseX, view.lastMouseY);
 		}
-		ctx.restore();
 
 		// ruler
+		// TODO: rework
 		// TODO: have it always visible
 		if (view.ruler == true) {
 			ctx.save();
