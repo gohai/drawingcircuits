@@ -223,6 +223,20 @@
 		ctx.fillRect(0, 0, cvs.width, cvs.height);
 		ctx.restore();
 	};
+	var findObject = function(name, brd, types) {
+		if (typeof brd != 'object') {
+			brd = board;
+		}
+		if (typeof types != 'array') {
+			types = [ 'drills', 'jumpers', 'parts', 'texts' ];
+		}
+		for (var t in types) {
+			if (brd[types[t]][name] !== undefined) {
+				return { type: types[t], obj: brd[types[t]][name] };
+			}
+		}
+		return false;
+	};
 	var getFirstAvailableKey = function(object, prefix, start) {
 		if (start === undefined) {
 			// start with index zero
@@ -344,6 +358,8 @@
 			mirrorContext(ctx);
 		}
 
+		// TODO: draw jumpers
+
 		// parts on the inactive layer
 		for (var p in board.parts) {
 			var part = board.parts[p];
@@ -401,6 +417,7 @@
 				if (board.texts[t].parent.layer != view.layer) {
 					continue;
 				}
+				// TODO: handle other parents
 				var lines = board.texts[t].text.split('\\n');
 				var lineHeight = 30;
 				ctx.fillStyle = '#ff0';
@@ -412,6 +429,8 @@
 			}
 		}
 		ctx.restore();
+
+		// TODO: draw jumpers
 
 		// mouse cursor
 		if (view.lastMouseX !== null && view.lastMouseY !== null) {
@@ -902,6 +921,51 @@
 			};
 			setTimeout(retry, 100);
 		},
+		jumper: function(from, to) {
+			var jumper = {};
+			// from
+			if (typeof from == 'object' && typeof from.x == 'number' && typeof from.y == 'number') {
+				jumper.from = { x: from.x, y: from.y };
+				if (from.layer !== undefined) {
+					jumper.from.layer = from.layer;
+				} else {
+					jumper.from.layer = $.pcb.layer();
+				}
+			} else if (typeof from == 'string') {
+				// jumpers can be added to drills
+				var obj = findObject(from, board, [ 'drills' ]);
+				if (obj !== false) {
+					jumper.from = from;
+				} else {
+					return false;
+				}
+			} else {
+				return false;
+			}
+			// to
+			if (typeof to == 'object' && typeof to.x == 'number' && typeof to.y == 'number') {
+				jumper.to = { x: to.x, y: to.y };
+				if (to.layer !== undefined) {
+					jumper.to.layer = to.layer;
+				} else {
+					jumper.to.layer = $.pcb.layer();
+				}
+			} else if (typeof to == 'string') {
+				var obj = findObject(to, board, [ 'drills' ]);
+				if (obj !== false) {
+					jumper.to = to;
+				} else {
+					return false;
+				}
+			} else {
+				return false;
+			}
+			// get key for new object
+			var key = getFirstAvailableKey(board.jumpers, 'jumper');
+			board.jumpers[key] = jumper;
+			requestRedraw();
+			return key;
+		},
 		layer: function(l) {
 			if (l === undefined) {
 				return view.layer;
@@ -995,11 +1059,46 @@
 			// EVENT
 			$('html').trigger('pcb-loading');
 		},
+		moveObject: function(name, x, y) {
+			if (typeof x != 'number' || typeof y != 'number') {
+				return false;
+			}
+			if (x < 0 || board.width < x || y < 0 || board.height < y) {
+				console.warn('Coordinates exceed board dimensions');
+				return false;
+			}
+
+			var ret = false;
+			if (board.drills[name] !== undefined) {
+				// move drills
+				board.drills[name].x = x;
+				board.drills[name].y = y;
+				ret = true;
+			} else if (board.parts[name] !== undefined) {
+				// move parts
+				board.parts[name].x = x;
+				board.parts[name].y = y;
+				ret = true;
+			} else if (board.texts[name] !== undefined) {
+				// move texts
+				if (typeof board.texts[name].parent == 'object') {
+					board.texts[name].parent.x = x;
+					board.texts[name].parent.y = y;
+					ret = true;
+				}
+			}
+			if (ret) {
+				requestRedraw();
+				// TODO: event
+			}
+			return ret;
+		},
 		objects: function(withPartDrills) {
 			var ret = {};
 			ret.drills = $.extend(true, {}, board.drills);
 			ret.texts = $.extend(true, {}, board.texts);
 			ret.parts = $.extend(true, {}, board.parts);
+			ret.jumpers = $.extend(true, {}, board.jumpers);
 			if (withPartDrills === true) {
 				addPartsDrills(ret.parts, ret.drills);
 			}
@@ -1011,7 +1110,7 @@
 		part: function(part, x, y, rot, layer) {
 			var l = $.pcb.library();
 			if (l === false) {
-				console.log('Library not available yet');
+				console.warn('Library not yet available');
 				return false;
 			} else if (l[part] === undefined) {
 				return false;
@@ -1088,32 +1187,55 @@
 			}
 		},
 		removeObject: function(name) {
-			var scope = [ board.drills, board.texts, board.parts ];
-			for (s in scope) {
-				for (o in scope[s]) {
-					if (name === o) {
-						// TODO: event
-						if (scope[s] == board.drills) {
-							// TODO: also remove connected jumpers, texts
-							delete board.drills[name];
-						} else if (scope[s] == board.texts) {
-							delete board.texts[name];
-						} else if (scope[s] == board.parts) {
-							// TODO: also remove connected jumpers, texts
-							delete board.parts[name];
-						}
-						requestRedraw();
-						return true;
-					}
-				}
+			var ret = false;
+			if (board.drills[name] !== undefined) {
+				// remove drills
+				// TODO: also remove connected jumpers, texts
+				delete board.drills[name];
+				ret = true;
+			} else if (board.jumpers[name] !== undefined) {
+				// remove jumpers
+				// TODO: also remove connected texts
+				delete board.jumpers[name];
+				ret = true;
+			} else if (board.parts[name] !== undefined) {
+				// remove parts
+				// TODO: also remove connected texts
+				delete board.parts[name];
+				ret = true;
+			} else if (board.texts[name] !== undefined) {
+				// remove texts
+				delete board.texts[name];
+				ret = true;
 			}
-			return false;
+			if (ret) {
+				requestRedraw();
+				// TODO: event
+			}
+			return ret;
 		},
 		requestPending: function() {
 			return (0 < view.ajaxPending);
 		},
 		rev: function() {
 			return board.rev;
+		},
+		rotateObject: function(name, deg) {
+			if (typeof deg != 'number') {
+				return false;
+			} else {
+				deg = normalizeAngle(deg);
+			}
+			var obj = findObject(name, board, [ 'parts' ]);
+			if (obj !== false) {
+				if (obj.obj.rot != deg) {
+					obj.obj.rot = deg;
+					requestRedraw();
+					return true;
+				}
+			} else {
+				return false;
+			}
 		},
 		ruler: function(enable) {
 			if (enable === undefined) {
@@ -1169,7 +1291,7 @@
 		selectPart: function(part) {
 			var l = $.pcb.library();
 			if (l === false) {
-				console.log('Library not available yet');
+				console.warn('Library not yet available');
 				return false;
 			} else if (l[part] === undefined) {
 				return false;
@@ -1208,25 +1330,35 @@
 			$('body').append(elem);
 		},
 		text: function(parent, string) {
+			var text = {};
 			if (typeof parent == 'object' && typeof parent.x == 'number' && typeof parent.y == 'number') {
-				if (parent.layer === undefined) {
-					parent.layer = view.layer;
+				text.parent = { x: parent.x, y: parent.y };
+				if (parent.layer !== undefined) {
+					text.parent.layer = parent.layer;
+				} else {
+					text.parent.layer = $.pcb.layer();
 				}
-				// get key for new object
-				var key = getFirstAvailableKey(board.texts, 'text');
-				board.texts[key] = {
-					parent: {
-						x: parent.x,
-						y: parent.y,
-						layer: parent.layer
-					},
-					text: string
-				};
-				requestRedraw();
-				return key;
+			} else if (typeof parent == 'string') {
+				// texts can be added to drills, jumpers, parts
+				var obj = findObject(parent, board, [ 'drills', 'jumpers', 'parts' ]);
+				if (obj !== false) {
+					text.parent = parent;
+				} else {
+					return false;
+				}
+			} else {
+				return false;
 			}
-			// TODO: other parents
-			return false;
+			if (typeof string == 'string') {
+				text.text = string;
+			} else {
+				return false;
+			}
+			// get key for new object
+			var key = getFirstAvailableKey(board.texts, 'text');
+			board.texts[key] = text;
+			requestRedraw();
+			return key;
 		},
 		tool: function(t) {
 			if (t === undefined) {
