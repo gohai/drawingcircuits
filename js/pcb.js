@@ -96,6 +96,12 @@
 		}
 		return a;
 	};
+	var createCanvas = function(width, height) {
+		var cvs = $('<canvas></canvas>');
+		$(cvs).prop('width', mmToPx(width));
+		$(cvs).prop('height', mmToPx(height));
+		return $(cvs).get(0);
+	};
 	var downloadRequest = function(data) {
 		var arg = '';
 		// encode request data
@@ -116,10 +122,12 @@
 		$('body').append(iframe);
 	};
 	var drawDrill = function(ctx, obj) {
-		// TODO: reimplement via
 		ctx.save();
 		ctx.translate(mmToPx(obj.x, true), mmToPx(obj.y, true));
 		drawDrillGfx(ctx, obj.diameter);
+		if (obj.via === true) {
+			drawViaGfx(ctx, obj.diameter);
+		}
 		ctx.restore();
 	};
 	var drawDrillGfx = function(ctx, diameter) {
@@ -144,7 +152,6 @@
 	var drawMouseCursor = function(ctx, x, y) {
 		ctx.save();
 		ctx.translate(x, y);
-		// TODO: reimplement text
 		if (view.tool == 'part' && view.part !== null) {
 			// parts on the bottom layer are being drawn inverted (so that pin 1 is 
 			// still at the bottom left corner by default)
@@ -153,6 +160,14 @@
 			}
 			drawPartOutlineGfx(ctx, view.part, view.toolData.rot);
 			drawPartDrillsGfx(ctx, view.part, view.toolData.rot);
+		} else if (view.tool == 'text') {
+			ctx.strokeStyle = '#f00';
+			ctx.beginPath();
+			ctx.moveTo(-5, 0);
+			ctx.lineTo(5, 0);
+			ctx.moveTo(0, -5);
+			ctx.lineTo(0, 5);
+			ctx.stroke();
 		} else {
 			// default
 			ctx.strokeStyle = '#f00';
@@ -224,6 +239,14 @@
 		ctx.font = 'caption';
 		ctx.textBaseline = 'middle';
 		ctx.fillText(text, -ctx.measureText(text).width/2, 0);
+		ctx.restore();
+	};
+	var drawViaGfx = function(ctx, diameter) {
+		ctx.save();
+		ctx.fillStyle = '#ff0';
+		ctx.beginPath();
+		ctx.arc(0, 0, mmToPx(diameter/3, true), 0, 2*Math.PI);
+		ctx.fill();
 		ctx.restore();
 	};
 	var drillsFromObject = function(obj, name) {
@@ -322,8 +345,7 @@
 		} else {
 			var obj = findObject(jumper.from, board);
 			ret.from = { x: obj.obj.x, y: obj.obj.y };
-			ret.layers.push('top');
-			ret.layers.push('bottom');
+			ret.layers.push('both');
 		}
 		if (typeof jumper.to == 'object') {
 			ret.to = { x: jumper.to.x, y: jumper.to.y, layer: jumper.to.layer };
@@ -331,8 +353,7 @@
 		} else {
 			var obj = findObject(jumper.to, board);
 			ret.to = { x: obj.obj.x, y: obj.obj.y };
-			ret.layers.push('top');
-			ret.layers.push('bottom');
+			ret.layers.push('both');
 		}
 		ret.layers = arrayUnique(ret.layers);
 		return ret;
@@ -445,6 +466,7 @@
 		for (var j in board.jumpers) {
 			var jumper = board.jumpers[j];
 			var coords = getJumperCoords(jumper);
+			// TODO: bug
 			if (1 < coords.layers.length || (coords.layers.length == 1 && coords.layers[0] != view.layer)) {
 				drawJumperGfx(ctx, coords.from.x, coords.from.y, coords.to.x, coords.to.y);
 			}
@@ -948,23 +970,20 @@
 		clear: function(width, height) {
 			// setup board & view
 			board = $.extend(true, {}, defaultBoard);
-			if (width !== undefined) {
+			if (typeof width == 'number' && 0 < width) {
 				board.width = width;
 			}
-			if (height !== undefined) {
+			if (typeof height == 'number' && 0 < height) {
 				board.height = height;
 			}
 			// create high DPI canvas elements
 			for (var l in board.layers) {
-				// TODO: replace by function (that fills substrate etc)
-				var cvs = $('<canvas></canvas>');
-				$(cvs).prop('width', mmToPx(board.width));
-				$(cvs).prop('height', mmToPx(board.height));
-				board.layers[l] = $(cvs).get(0);
+				var cvs = createCanvas(board.width, board.height);
 				// substrate is filled by default
 				if (l == 'substrate') {
-					fillCanvas(board.layers[l], '#000');
+					fillCanvas(cvs, '#000');
 				}
+				board.layers[l] = cvs;
 			}
 			view = $.extend(true, {}, defaultView);
 			invalidateView();
@@ -1322,6 +1341,95 @@
 		},
 		requestPending: function() {
 			return (0 < view.ajaxPending);
+		},
+		resize: function(width, height, anchor) {
+			if (typeof width != 'number' || width < 0 || typeof height != 'number' || height < 0) {
+				return false;
+			}
+			if (typeof anchor != 'string') {
+				anchor = '';
+			}
+
+			// calculate offsets
+			if (anchor == 'nw' || anchor == 'w' || anchor == 'sw') {
+				var offsetX = 0;
+			} else if (anchor == 'ne' || anchor == 'e' || anchor == 'se') {
+				var offsetX = width-board.width;
+			} else {
+				var offsetX = (width-board.width)/2;
+			}
+			if (anchor == 'nw' || anchor == 'n' || anchor == 'ne') {
+				var offsetY = 0;
+			} else if (anchor == 'sw' || anchor == 's' || anchor == 'se') {
+				var offsetY = height-board.height;
+			} else {
+				var offsetY = (height-board.height)/2;
+			}
+
+			// handle layers
+			for (var l in board.layers) {
+				var cvs = createCanvas(width, height);
+				// substrate is filled by default
+				if (l == 'substrate') {
+					fillCanvas(cvs, '#000');
+				}
+				var ctx = cvs.getContext('2d');
+				ctx.save();
+				ctx.drawImage(board.layers[l], 0, 0, board.layers[l].width, board.layers[l].height, mmToPx(offsetX), mmToPx(offsetY), board.layers[l].width, board.layers[l].height);
+				ctx.restore();
+				board.layers[l] = cvs;
+			}
+
+			// handle objects
+			for (var d in board.drills) {
+				var drill = board.drills[d];
+				drill.x += offsetX;
+				drill.y += offsetY;
+				if (drill.x < 0 || width < drill.x || drill.y < 0 || height < drill.y) {
+					removeObject(d, board);
+				}
+			}
+			for (var j in board.jumpers) {
+				var jumper = board.jumpers[j];
+				if (typeof jumper.from == 'object') {
+					jumper.from.x += offsetX;
+					jumper.from.y += offsetY;
+					if (jumper.from.x < 0 || width < jumper.from.x || jumper.from.y < 0 || height < jumper.from.y) {
+						removeObject(j, board);
+						continue;
+					}
+				}
+				if (typeof jumper.to == 'object') {
+					jumper.to.x += offsetX;
+					jumper.to.y += offsetY;
+					if (jumper.to.x < 0 || width < jumper.to.x || jumper.to.y < 0 || height < jumper.to.y) {
+						removeObject(j, board);
+					}
+				}
+			}
+			for (var p in board.parts) {
+				var part = board.parts[p];
+				part.x += offsetX;
+				part.y += offsetY;
+				if (part.x < 0 || width < part.x || part.y < 0 || height < part.y) {
+					removeObject(p, board);
+				}
+			}
+			for (var t in board.texts) {
+				var text = board.texts[t];
+				if (typeof text.parent == 'object') {
+					text.parent.x += offsetX;
+					text.parent.y += offsetY;
+					if (text.parent.x < 0 || width < text.parent.x || text.parent.y < 0 || height < text.parent.y) {
+						removeObject(t, board);
+					}
+				}
+			}
+
+			board.width = width;
+			board.height = height;
+			invalidateView();
+			return true;
 		},
 		rev: function() {
 			return board.rev;
