@@ -85,6 +85,17 @@
 			success: shimSuccess
 		});
 	};
+	var arrayUnique = function(a) {
+		var o = {};
+		for (var i=0; i < a.length; i++) {
+			o[a[i]] = 1;
+		}
+		a = [];
+		for (var l in o) {
+			a.push(l);
+		}
+		return a;
+	};
 	var downloadRequest = function(data) {
 		var arg = '';
 		// encode request data
@@ -119,6 +130,17 @@
 		ctx.fill();
 		ctx.restore();
 	};
+	var drawJumperGfx = function(ctx, x1, y1, x2, y2) {
+		ctx.save();
+		ctx.lineCap = 'round';
+		ctx.lineWidth = mmToPx(1, true);
+		ctx.strokeStyle = '#ff0';
+		ctx.beginPath()
+		ctx.moveTo(mmToPx(x1, true), mmToPx(y1, true));
+		ctx.lineTo(mmToPx(x2, true), mmToPx(y2, true));
+		ctx.stroke();
+		ctx.restore();
+	}
 	var drawMouseCursor = function(ctx, x, y) {
 		ctx.save();
 		ctx.translate(x, y);
@@ -183,9 +205,25 @@
 		if (img !== null) {
 			var w = mmToPx(options.library[part].width, true);
 			var h = mmToPx(options.library[part].height, true);
-			// TODO: off by one?
 			ctx.drawImage(img, (-w/2)+1, (-h/2)+1, w, h);
 		}
+		ctx.restore();
+	};
+	var drawText = function(ctx, x, y, text) {
+		ctx.save();
+		ctx.translate(mmToPx(x, true), mmToPx(y, true));
+		if (isLayerMirrored()) {
+			ctx.scale(-1, 1);
+		}
+		drawTextGfx(ctx, text);
+		ctx.restore();
+	};
+	var drawTextGfx = function(ctx, text) {
+		ctx.save();
+		ctx.fillStyle = '#ff0';
+		ctx.font = 'caption';
+		ctx.textBaseline = 'middle';
+		ctx.fillText(text, -ctx.measureText(text).width/2, 0);
 		ctx.restore();
 	};
 	var drillsFromObject = function(obj, name) {
@@ -237,6 +275,27 @@
 		}
 		return false;
 	};
+	var findObjectRefs = function(name, brd, types) {
+		if (typeof brd != 'object') {
+			brd = board;
+		}
+		if (typeof types != 'array') {
+			types = [ 'drills', 'jumpers', 'parts', 'texts' ];
+		}
+		var ret = [];
+		for (var t in types) {
+			var type = types[t];
+			for (var o in brd[type]) {
+				var obj = brd[type][o];
+				if (type == 'jumpers' && (obj.from === name || obj.to === name)) {
+					ret.push({ type: type, name: o, obj: obj });
+				} else if (type == 'texts' && obj.parent === name) {
+					ret.push({ type: type, name: o, obj: obj });
+				}
+			}
+		}
+		return ret;
+	};
 	var getFirstAvailableKey = function(object, prefix, start) {
 		if (start === undefined) {
 			// start with index zero
@@ -253,6 +312,30 @@
 			}
 		}
 		return prefix+(max+1);
+	};
+	var getJumperCoords = function(jumper) {
+		ret = {};
+		ret.layers = [];
+		if (typeof jumper.from == 'object') {
+			ret.from = { x: jumper.from.x, y: jumper.from.y, layer: jumper.from.layer };
+			ret.layers.push(jumper.from.layer);
+		} else {
+			var obj = findObject(jumper.from, board);
+			ret.from = { x: obj.obj.x, y: obj.obj.y };
+			ret.layers.push('top');
+			ret.layers.push('bottom');
+		}
+		if (typeof jumper.to == 'object') {
+			ret.to = { x: jumper.to.x, y: jumper.to.y, layer: jumper.to.layer };
+			ret.layers.push(jumper.to.layer);
+		} else {
+			var obj = findObject(jumper.to, board);
+			ret.to = { x: obj.obj.x, y: obj.obj.y };
+			ret.layers.push('top');
+			ret.layers.push('bottom');
+		}
+		ret.layers = arrayUnique(ret.layers);
+		return ret;
 	};
 	var imgToCanvas = function(src, callback) {
 		var img = new Image();
@@ -358,7 +441,14 @@
 			mirrorContext(ctx);
 		}
 
-		// TODO: draw jumpers
+		// jumpers on the inactive layer
+		for (var j in board.jumpers) {
+			var jumper = board.jumpers[j];
+			var coords = getJumperCoords(jumper);
+			if (1 < coords.layers.length || (coords.layers.length == 1 && coords.layers[0] != view.layer)) {
+				drawJumperGfx(ctx, coords.from.x, coords.from.y, coords.to.x, coords.to.y);
+			}
+		}
 
 		// parts on the inactive layer
 		for (var p in board.parts) {
@@ -404,33 +494,50 @@
 			}
 		}
 
-		// texts
-		// TODO: rework
-		// TODO: handle mirrored text
+		// text
 		// TODO: handle zoom
-		// TODO: always draw crosshair if we have no parent
-		// TODO: right-align text if close to the right border
-		// TODO: top to bottom (optional)
-		ctx.save();
+		// TODO: reintroduce crosshair?
+		// TODO: more intelligent alignment (e.g. when close to the right border)
+		// TODO: multiline support
+		// TODO: top to bottom support?
 		for (var t in board.texts) {
-			if (typeof board.texts[t].parent == 'object') {
-				if (board.texts[t].parent.layer != view.layer) {
+			var text = board.texts[t];
+			if (typeof text.parent == 'object') {
+				if (text.parent.layer != view.layer) {
 					continue;
 				}
-				// TODO: handle other parents
-				var lines = board.texts[t].text.split('\\n');
-				var lineHeight = 30;
-				ctx.fillStyle = '#ff0';
-				ctx.font = 'caption';
-				ctx.textBaseline = 'top';
-				for (var l in lines) {
-					ctx.fillText(lines[l], mmToPx(board.texts[t].parent.x, true)+5, mmToPx(board.texts[t].parent.y, true)+5+l*lineHeight);
+				var x = text.parent.x;
+				var y = text.parent.y;
+			} else {
+				var parent = findObject(text.parent, board);
+				if (parent.type == 'drills' && view.layer != 'substrate') {
+					var x = parent.obj.x;
+					var y = parent.obj.y;
+				} else if (parent.type == 'jumpers') {
+					var coords = getJumperCoords(parent.obj);
+					if ($.inArray(view.layer, coords.layers) == -1) {
+						continue;
+					} else {
+						var x = (coords.from.x+coords.to.x)/2;
+						var y = (coords.from.y+coords.to.y)/2;
+						// TODO: maybe rotate and offset
+					}
+				} else if (parent.type == 'parts' && view.layer == parent.obj.layer) {
+					var x = parent.obj.x;
+					var y = parent.obj.y;
 				}
 			}
+			drawText(ctx, x, y, text.text);
 		}
-		ctx.restore();
 
-		// TODO: draw jumpers
+		// jumpers on the active layer
+		for (var j in board.jumpers) {
+			var jumper = board.jumpers[j];
+			var coords = getJumperCoords(jumper);
+			if (coords.layers.length == 1 && coords.layers[0] == view.layer) {
+				drawJumperGfx(ctx, coords.from.x, coords.from.y, coords.to.x, coords.to.y);
+			}
+		}
 
 		// mouse cursor
 		if (view.lastMouseX !== null && view.lastMouseY !== null) {
@@ -474,6 +581,25 @@
 
 		ctx.restore();
 	};
+	var removeObject = function(name, brd) {
+		if (typeof brd != 'object') {
+			brd = board;
+		}
+		// delete the object itself
+		var obj = findObject(name, brd);
+		if (obj === false) {
+			return false;
+		} else {
+			// TODO: event
+			delete brd[obj.type][name];
+		}
+		// find and delete objects that had a reference
+		var refs = findObjectRefs(name, brd);
+		for (var r in refs) {
+			removeObject(refs[r].name, brd);
+		}
+		return true;
+	};
 	var removePartsDrills = function(drills) {
 		// remove parts' drill holes
 		for (var d in drills) {
@@ -488,6 +614,7 @@
 			view.parts[part] = false;
 			var img = new Image();
 			img.onload = function() {
+				// TODO: evaluate performance later (we could convert it to a canvas element here as well)
 				view.parts[part] = img;
 			}
 			img.src = 'data:image/svg+xml;utf8,'+options.library[part].svg;
@@ -1187,30 +1314,9 @@
 			}
 		},
 		removeObject: function(name) {
-			var ret = false;
-			if (board.drills[name] !== undefined) {
-				// remove drills
-				// TODO: also remove connected jumpers, texts
-				delete board.drills[name];
-				ret = true;
-			} else if (board.jumpers[name] !== undefined) {
-				// remove jumpers
-				// TODO: also remove connected texts
-				delete board.jumpers[name];
-				ret = true;
-			} else if (board.parts[name] !== undefined) {
-				// remove parts
-				// TODO: also remove connected texts
-				delete board.parts[name];
-				ret = true;
-			} else if (board.texts[name] !== undefined) {
-				// remove texts
-				delete board.texts[name];
-				ret = true;
-			}
+			var ret = removeObject(name);
 			if (ret) {
 				requestRedraw();
-				// TODO: event
 			}
 			return ret;
 		},
@@ -1282,7 +1388,6 @@
 					board.rev = data.rev;
 					// EVENT
 					$('html').trigger('pcb-saved');
-					// TODO: have redirect in UI code
 				}
 			});
 			// EVENT
