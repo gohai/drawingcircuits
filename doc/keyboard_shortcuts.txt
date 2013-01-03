@@ -10,6 +10,7 @@ b	Switch to draw ("brush") tool
 d	Switch to drill tool
 e	Switch to erase tool
 p	Place a part
+P	Place a pattern
 r	Toggle ruler
 s	Save board
 t	Add a text annotation

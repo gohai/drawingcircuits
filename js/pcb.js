@@ -86,6 +86,13 @@
 			success: shimSuccess
 		});
 	};
+	var arrayKeys = function(a) {
+		var ret = [];
+		for (var k in a) {
+			ret.push(k);
+		}
+		return ret;
+	};
 	var arrayUnique = function(a) {
 		var o = {};
 		for (var i=0; i < a.length; i++) {
@@ -340,6 +347,10 @@
 		return ret;
 	};
 	var getFirstAvailableKey = function(object, prefix, start) {
+		// add a dash if the prefix ends with a digit
+		if (48 <= prefix.charCodeAt(prefix.length-1) && prefix.charCodeAt(prefix.length-1) <= 57) {
+			prefix += '-';
+		}
 		if (start === undefined) {
 			// start with index zero
 			var max = -1;
@@ -377,6 +388,20 @@
 		}
 		ret.layers = arrayUnique(ret.layers);
 		return ret;
+	};
+	var getPrefixFromKey = function(key) {
+		for (var i=key.length-1; 0 <= i; i--) {
+			if (key.charCodeAt(i) < 48 || 57 < key.charCodeAt(i)) {
+				var ret = key.substr(0, i+1);
+				// remove tailing dash
+				if (ret.substr(-1) == '-') {
+					return ret.substr(0, ret.length-1);
+				} else {
+					return ret;
+				}
+			}
+		}
+		return '';
 	};
 	var imgToCanvas = function(src, callback) {
 		var img = new Image();
@@ -426,6 +451,9 @@
 						data.layers[l] = cvs;
 						layersToLoad--;
 						if (layersToLoad == 0 && typeof success == 'function') {
+								// merge board with default
+								data = $.extend(true, defaultBoard, data);
+								removePartsDrills(data.drills);
 								success(data);
 						}
 					});
@@ -433,6 +461,9 @@
 			}
 			// fallback if we don't have any layers at all
 			if (layersToLoad == 0 && typeof success == 'function') {
+					// merge board with default
+					data = $.extend(true, defaultBoard, data);
+					removePartsDrills(data.drills);
 					success(data);
 			}
 		});
@@ -456,7 +487,69 @@
 			ctx.drawImage(src.layers[l], mmToPx(srcX)-src.layers[l].width/2, mmToPx(srcY)-src.layers[l].height/2);
 			ctx.restore();
 		}
-		// TODO: objects
+
+		// objects
+		// operate on a local copy of src
+		var src = $.extend(true, {}, src);
+		var offsetX = srcX-src.width/2;
+		var offsetY = srcY-src.height/2;
+		var scopes = [ 'drills', 'jumpers', 'parts', 'texts' ];
+		for (var s in scopes) {
+			var scope = scopes[s];
+			var objs = arrayKeys(src[scope]);
+			for (var o in objs) {
+				var o = objs[o];
+				// move object
+				// TODO: convert into function
+				var obj = src[scope][o];
+				if (scope == 'drills') {
+					obj.x += offsetX;
+					obj.y += offsetY;
+				} else if (scope == 'jumpers') {
+					if (typeof obj.from == 'object') {
+						obj.from.x += offsetX;
+						obj.from.y += offsetY;
+					}
+					if (typeof obj.to == 'object') {
+						obj.to.x += offsetX;
+						obj.to.y += offsetY;
+					}
+				} else if (scope == 'parts') {
+					obj.x += offsetX;
+					obj.y += offsetY;
+				} else if (scope == 'texts') {
+					if (typeof obj.parent == 'object') {
+						obj.parent.x += offsetX;
+						obj.parent.y += offsetY;
+					}
+				}
+				// rename objects
+				if (dest[scope][o] !== undefined) {
+					var oldName = o;
+					var newName = getFirstAvailableKey(dest[scope], getPrefixFromKey(oldName));
+					// find references to the old name
+					var refs = findObjectRefs(oldName, src);
+					for (var r in refs) {
+						var ref = refs[r];
+						if (ref.type == 'jumpers') {
+							if (ref.obj.from === oldName) {
+								ref.obj.from = newName;
+							}
+							if (ref.obj.to == oldName) {
+								ref.obj.to = newName;
+							}
+						} else if (ref.type == 'texts') {
+							ref.obj.parent = newName;
+						}
+					}
+					// add to dest
+					dest[scope][newName] = src[scope][oldName];
+				} else {
+					dest[scope][o] = src[scope][o];
+				}
+			}
+		}
+		// TODO: merge BOMs
 	};
 	var mirrorContext = function(ctx) {
 		ctx.translate(ctx.canvas.width/2, 0);
@@ -572,7 +665,7 @@
 	var removePartsDrills = function(drills) {
 		// remove parts' drill holes
 		for (var d in drills) {
-			if (drills[d].parent !== null) {
+			if (typeof drills[d].parent == 'string') {
 				delete drills[d];
 			}
 		}
@@ -670,7 +763,10 @@
 						var y = (coords.from.y+coords.to.y)/2;
 						// TODO: maybe rotate and offset
 					}
-				} else if (parent.type == 'parts' && opt.layer == parent.obj.layer) {
+				} else if (parent.type == 'parts') {
+					if (opt.layer != parent.obj.layer) {
+						continue;
+					}
 					var x = parent.obj.x;
 					var y = parent.obj.y;
 				}
@@ -1103,7 +1199,7 @@
 		dimensions: function() {
 			return { width: board.width, height: board.height };
 		},
-		drill: function(x, y, diameter, parent) {
+		drill: function(x, y, diameter) {
 			if (typeof x != 'number' || typeof y != 'number') {
 				return false;
 			}
@@ -1112,16 +1208,12 @@
 			} else if (typeof diameter != 'number') {
 				return false;
 			}
-			if (parent === undefined) {
-				parent = null;
-			}
 			// get key for new object
 			var key = getFirstAvailableKey(board.drills, 'drill');
 			board.drills[key] = {
 				x: x,
 				y: y,
 				diameter: diameter,
-				parent: parent,
 				via: false
 			};
 			requestRedraw();
@@ -1259,8 +1351,7 @@
 				rev = null;
 			}
 			loadBoard(brd, rev, function(newBoard) {
-				board = $.extend(true, defaultBoard, newBoard);
-				removePartsDrills(board.drills);
+				board = newBoard;
 				view = $.extend(true, {}, defaultView);
 				invalidateView();
 				// EVENT
@@ -1338,17 +1429,7 @@
 				return false;
 			}
 
-			// get a unique name
-			var i = 0;
-			var name = part;
-			if (48 <= name.charCodeAt(name.length-1) && name.charCodeAt(name.length-1) <= 57) {
-				name += '-';
-			}
-			while (board.parts[name+i] !== undefined) {
-				i++;
-			}
-			name += i;
-
+			var name = getFirstAvailableKey(board.parts, part);
 			board.parts[name] = {
 				part: part,
 				x: x,
@@ -1359,6 +1440,7 @@
 				width: options.library[part].width,
 				height: options.library[part].height
 			};
+			requestRedraw();
 			return name;
 		},
 		pattern: function(x, y, rot) {
