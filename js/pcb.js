@@ -39,9 +39,9 @@
 		lastMouseY: null,
 		layer: 'top',
 		layers: {},
-		layersToLoad: 0,
 		part: null,
 		parts: {},
+		pattern: null,
 		redrawPending: false,
 		ruler: false,
 		tool: 'draw',
@@ -51,6 +51,7 @@
 	var view = {};
 
 	// Helper functions
+	// TODO: revisit variable names, document functions, mark static functions, emphasize units, draw vs render
 	var addPartsDrills = function(parts, drills) {
 		// add parts' drill holes
 		for (var p in parts) {
@@ -121,35 +122,37 @@
 		// TODO: set and check for cookie (see jquery.fileDownload.js)
 		$('body').append(iframe);
 	};
-	var drawDrill = function(ctx, obj) {
+	// draw functions need to be static (use opt instead of the global view)
+	var drawDrill = function(ctx, obj, opt) {
 		ctx.save();
-		ctx.translate(mmToPx(obj.x, true), mmToPx(obj.y, true));
-		drawDrillGfx(ctx, obj.diameter);
+		ctx.translate(mmToPx(obj.x, opt.zoom), mmToPx(obj.y, opt.zoom));
+		drawDrillGfx(ctx, obj.diameter, opt);
 		if (obj.via === true) {
-			drawViaGfx(ctx, obj.diameter);
+			drawViaGfx(ctx, obj.diameter, opt);
 		}
 		ctx.restore();
 	};
-	var drawDrillGfx = function(ctx, diameter) {
+	var drawDrillGfx = function(ctx, diameter, opt) {
 		ctx.save();
 		ctx.fillStyle = '#fff';
 		ctx.beginPath();
-		ctx.arc(0, 0, mmToPx(diameter/2, true), 0, 2*Math.PI);
+		ctx.arc(0, 0, mmToPx(diameter/2, opt.zoom), 0, 2*Math.PI);
 		ctx.fill();
 		ctx.restore();
 	};
-	var drawJumperGfx = function(ctx, x1, y1, x2, y2) {
+	var drawJumper = function(ctx, coords, opt) {
 		ctx.save();
 		ctx.lineCap = 'round';
-		ctx.lineWidth = mmToPx(1, true);
+		ctx.lineWidth = mmToPx(1, opt.zoom);
 		ctx.strokeStyle = '#ff0';
 		ctx.beginPath()
-		ctx.moveTo(mmToPx(x1, true), mmToPx(y1, true));
-		ctx.lineTo(mmToPx(x2, true), mmToPx(y2, true));
+		ctx.moveTo(mmToPx(coords.from.x, opt.zoom), mmToPx(coords.from.y, opt.zoom));
+		ctx.lineTo(mmToPx(coords.to.x, opt.zoom), mmToPx(coords.to.y, opt.zoom));
 		ctx.stroke();
 		ctx.restore();
-	}
+	};
 	var drawMouseCursor = function(ctx, x, y) {
+		// drawMouseCursor can access view directly
 		ctx.save();
 		ctx.translate(x, y);
 		if (view.tool == 'part' && view.part !== null) {
@@ -158,8 +161,26 @@
 			if (view.layer == 'bottom') {
 				ctx.scale(-1, 1);
 			}
-			drawPartOutlineGfx(ctx, view.part, view.toolData.rot);
-			drawPartDrillsGfx(ctx, view.part, view.toolData.rot);
+			if (view.toolData.rot === undefined) {
+				view.toolData.rot = 0;
+			}
+			drawPartOutlineGfx(ctx, view.part, view.toolData.rot, view);
+			drawPartDrillsGfx(ctx, view.part, view.toolData.rot, view);
+		} else if (view.tool == 'pattern' && view.pattern !== null) {
+			var w = mmToPx(view.pattern.width, true);
+			var h = mmToPx(view.pattern.height, true);
+			var cvs = $('<canvas></canvas>');
+			$(cvs).prop('width', w);
+			$(cvs).prop('height', h);
+			cvs = $(cvs).get(0);
+			renderBoard(cvs, view.pattern, view);
+			if (view.layer == 'bottom') {
+				ctx.scale(-1, 1);
+			}
+			// TODO: rotation
+			// TODO: cache board
+			ctx.drawImage(cvs, -cvs.width/2, -cvs.height/2);
+			ctx.strokeRect(-w/2, -h/2, w, h);
 		} else if (view.tool == 'text') {
 			ctx.strokeStyle = '#f00';
 			ctx.beginPath();
@@ -177,57 +198,57 @@
 		}
 		ctx.restore();
 	};
-	var drawPartDrills = function(ctx, obj) {
+	var drawPartDrills = function(ctx, obj, opt) {
 		ctx.save();
 		// parts on the bottom layer are being drawn inverted (so that pin 1 is 
 		// still at the bottom left corner by default)
-		ctx.translate(mmToPx(obj.x, true), mmToPx(obj.y, true));
+		ctx.translate(mmToPx(obj.x, opt.zoom), mmToPx(obj.y, opt.zoom));
 		if (obj.layer == 'bottom') {
 			ctx.scale(-1, 1);
 		}
-		drawPartDrillsGfx(ctx, obj.part, obj.rot);
+		drawPartDrillsGfx(ctx, obj.part, obj.rot, opt);
 		ctx.restore();
 	};
-	var drawPartDrillsGfx = function(ctx, part, rot) {
+	var drawPartDrillsGfx = function(ctx, part, rot, opt) {
 		var part = options.library[part];
 		ctx.save();
 		ctx.rotate(rot*Math.PI/180);
 		for (var d in part.drills) {
 			var drill = part.drills[d];
-			var x = mmToPx(drill.x, true);
-			var y = mmToPx(drill.y, true);
+			var x = mmToPx(drill.x, opt.zoom);
+			var y = mmToPx(drill.y, opt.zoom);
 			ctx.translate(x, y);
-			drawDrillGfx(ctx, drill.diameter);
+			drawDrillGfx(ctx, drill.diameter, opt);
 			ctx.translate(-x, -y);
 		}
 		ctx.restore();
 	};
-	var drawPartOutline = function(ctx, obj) {
+	var drawPartOutline = function(ctx, obj, opt) {
 		ctx.save();
-		ctx.translate(mmToPx(obj.x, true), mmToPx(obj.y, true));
+		ctx.translate(mmToPx(obj.x, opt.zoom), mmToPx(obj.y, opt.zoom));
 		// parts on the bottom layer are being drawn inverted (so that pin 1 is 
 		// still at the bottom left corner by default)
 		if (obj.layer == 'bottom') {
 			ctx.scale(-1, 1);
 		}
-		drawPartOutlineGfx(ctx, obj.part, obj.rot);
+		drawPartOutlineGfx(ctx, obj.part, obj.rot, opt);
 		ctx.restore();
 	};
-	var drawPartOutlineGfx = function(ctx, part, rot) {
+	var drawPartOutlineGfx = function(ctx, part, rot, opt) {
 		ctx.save();
 		ctx.rotate(rot*Math.PI/180);
 		var img = requestPart(part);
 		if (img !== null) {
-			var w = mmToPx(options.library[part].width, true);
-			var h = mmToPx(options.library[part].height, true);
+			var w = mmToPx(options.library[part].width, opt.zoom);
+			var h = mmToPx(options.library[part].height, opt.zoom);
 			ctx.drawImage(img, (-w/2)+1, (-h/2)+1, w, h);
 		}
 		ctx.restore();
 	};
-	var drawText = function(ctx, x, y, text) {
+	var drawText = function(ctx, x, y, text, opt) {
 		ctx.save();
-		ctx.translate(mmToPx(x, true), mmToPx(y, true));
-		if (isLayerMirrored()) {
+		ctx.translate(mmToPx(x, opt.zoom), mmToPx(y, opt.zoom));
+		if (opt.layer == 'bottom') {
 			ctx.scale(-1, 1);
 		}
 		drawTextGfx(ctx, text);
@@ -241,11 +262,11 @@
 		ctx.fillText(text, -ctx.measureText(text).width/2, 0);
 		ctx.restore();
 	};
-	var drawViaGfx = function(ctx, diameter) {
+	var drawViaGfx = function(ctx, diameter, opt) {
 		ctx.save();
 		ctx.fillStyle = '#ff0';
 		ctx.beginPath();
-		ctx.arc(0, 0, mmToPx(diameter/3, true), 0, 2*Math.PI);
+		ctx.arc(0, 0, mmToPx(diameter/3, opt.zoom), 0, 2*Math.PI);
 		ctx.fill();
 		ctx.restore();
 	};
@@ -377,26 +398,8 @@
 		if (l === undefined) {
 			// all layers
 			view.layers = {};
-		} else if (l !== false) {
-			// a specific layer
-			delete view.layers[l];
 		} else {
 			// none (only call redraw())
-		}
-
-		// recreate them if needed
-		for (var l in board.layers) {
-			if (view.layers[l] === undefined) {
-				var cvs = $('<canvas></canvas>');
-				$(cvs).prop('width', mmToPx(board.width, true));
-				$(cvs).prop('height', mmToPx(board.height, true));
-				view.layers[l] = $(cvs).get(0);
-				// copy
-				var ctx = view.layers[l].getContext('2d');
-				ctx.save();
-				ctx.drawImage(board.layers[l], 0, 0, board.layers[l].width, board.layers[l].height, 0, 0, view.layers[l].width, view.layers[l].height);
-				ctx.restore();
-			}
 		}
 
 		// try to cancel outstanding requests
@@ -406,25 +409,47 @@
 		}
 		redraw();
 	}
-	var isLayerMirrored = function(l) {
-		if (l === undefined) {
-			l = view.layer;
-		}
-		if (l == 'bottom') {
-			return true;
-		} else {
-			return false;
-		}
-	}
+	var loadBoard = function(brd, rev, success) {
+		ajaxRequest({
+			method: 'load',
+			board: brd,
+			rev: rev
+		}, function(data) {
+			if (data === null) {
+				return;
+			}
+			// decode layers
+			var layersToLoad = 0;
+			for (var l in data.layers) {
+				layersToLoad++;
+				(function(l){
+					imgToCanvas(data.layers[l].png, function(cvs) {
+						data.layers[l] = cvs;
+						layersToLoad--;
+						if (layersToLoad == 0 && typeof success == 'function') {
+								success(data);
+						}
+					});
+				}(l));
+			}
+			// fallback if we don't have any layers at all
+			if (layersToLoad == 0 && typeof success == 'function') {
+					success(data);
+			}
+		});
+	};
 	var mirrorContext = function(ctx) {
-		ctx.translate(mmToPx(board.width, true)/2, 0);
+		ctx.translate(ctx.canvas.width/2, 0);
 		ctx.scale(-1, 1);
-		ctx.translate(-mmToPx(board.width, true)/2, 0);
+		ctx.translate(-ctx.canvas.width/2, 0);
 	};
 	var mmToPx = function(mm, handleZoom) {
 		if (handleZoom === false || handleZoom === undefined) {
 			// high DPI
 			return Math.floor(mm*options.highDpi/25.4);
+		} else if (typeof handleZoom == 'number') {
+			// variable DPI with custom zoom factor
+			return Math.floor(mm*options.highDpi/25.4/handleZoom);
 		} else {
 			// variable DPI
 			return Math.floor(mm*options.highDpi/25.4/view.zoom);
@@ -451,121 +476,24 @@
 	var redraw = function() {
 		// clear flag (see requestRedraw())
 		view.redrawPending = false;
-		// clear canvas
+		// setup canvas
 		$('#pcb-canvas').prop('width', mmToPx(board.height, true));
 		$('#pcb-canvas').prop('height', mmToPx(board.width, true));
-		// draw to screen
 		var cvs = $('#pcb-canvas').get(0);
+
+		// render board
+		renderBoard(cvs, board, view);
+
+		// render additional elements
 		var ctx = cvs.getContext('2d');
 		ctx.save();
-		if (isLayerMirrored()) {
+		if (view.layer == 'bottom') {
 			mirrorContext(ctx);
 		}
-
-		// jumpers on the inactive layer
-		for (var j in board.jumpers) {
-			var jumper = board.jumpers[j];
-			var coords = getJumperCoords(jumper);
-			// TODO: bug
-			if (1 < coords.layers.length || (coords.layers.length == 1 && coords.layers[0] != view.layer)) {
-				drawJumperGfx(ctx, coords.from.x, coords.from.y, coords.to.x, coords.to.y);
-			}
-		}
-
-		// parts on the inactive layer
-		for (var p in board.parts) {
-			var part = board.parts[p];
-			if (part.layer == view.layer) {
-				continue;
-			} else {
-				// TODO: change color
-				drawPartOutline(ctx, part);
-			}
-		}
-
-		// layers
-		ctx.save();
-		ctx.globalAlpha = 0.5;
-		if (view.layer == 'bottom') {
-			var order = ['top', 'substrate', 'bottom'];
-		} else if (view.layer == 'substrate') {
-			var order = ['bottom', 'top', 'substrate'];
-		} else {
-			var order = ['bottom', 'substrate', 'top'];
-		}
-		for (var l in order) {
-			ctx.drawImage(view.layers[order[l]], 0, 0);
-		}
-		ctx.restore();
-
-		// drill holes
-		for (var d in board.drills) {
-			drawDrill(ctx, board.drills[d]);
-		}
-		for (var p in board.parts) {
-			drawPartDrills(ctx, board.parts[p]);
-		}
-
-		// parts on the active layer
-		for (var p in board.parts) {
-			var part = board.parts[p];
-			if (part.layer != view.layer) {
-				continue;
-			} else {
-				drawPartOutline(ctx, part);
-			}
-		}
-
-		// text
-		// TODO: handle zoom
-		// TODO: reintroduce crosshair?
-		// TODO: more intelligent alignment (e.g. when close to the right border)
-		// TODO: multiline support
-		// TODO: top to bottom support?
-		for (var t in board.texts) {
-			var text = board.texts[t];
-			if (typeof text.parent == 'object') {
-				if (text.parent.layer != view.layer) {
-					continue;
-				}
-				var x = text.parent.x;
-				var y = text.parent.y;
-			} else {
-				var parent = findObject(text.parent, board);
-				if (parent.type == 'drills' && view.layer != 'substrate') {
-					var x = parent.obj.x;
-					var y = parent.obj.y;
-				} else if (parent.type == 'jumpers') {
-					var coords = getJumperCoords(parent.obj);
-					if ($.inArray(view.layer, coords.layers) == -1) {
-						continue;
-					} else {
-						var x = (coords.from.x+coords.to.x)/2;
-						var y = (coords.from.y+coords.to.y)/2;
-						// TODO: maybe rotate and offset
-					}
-				} else if (parent.type == 'parts' && view.layer == parent.obj.layer) {
-					var x = parent.obj.x;
-					var y = parent.obj.y;
-				}
-			}
-			drawText(ctx, x, y, text.text);
-		}
-
-		// jumpers on the active layer
-		for (var j in board.jumpers) {
-			var jumper = board.jumpers[j];
-			var coords = getJumperCoords(jumper);
-			if (coords.layers.length == 1 && coords.layers[0] == view.layer) {
-				drawJumperGfx(ctx, coords.from.x, coords.from.y, coords.to.x, coords.to.y);
-			}
-		}
-
 		// mouse cursor
 		if (view.lastMouseX !== null && view.lastMouseY !== null) {
 			drawMouseCursor(ctx, view.lastMouseX, view.lastMouseY);
 		}
-
 		// ruler
 		// TODO: rework
 		// TODO: have it always visible
@@ -600,7 +528,6 @@
 			}
 			ctx.restore();
 		}
-
 		ctx.restore();
 	};
 	var removeObject = function(name, brd) {
@@ -629,6 +556,118 @@
 				delete drills[d];
 			}
 		}
+	};
+	var renderBoard = function(cvs, brd, opt) {
+		var ctx = cvs.getContext('2d');
+
+		ctx.save();
+		if (opt.layer == 'bottom') {
+			mirrorContext(ctx);
+		}
+
+		// jumpers on the inactive layer
+		for (var j in brd.jumpers) {
+			var jumper = brd.jumpers[j];
+			var coords = getJumperCoords(jumper);
+			// TODO: bug
+			if (1 < coords.layers.length || (coords.layers.length == 1 && coords.layers[0] != opt.layer)) {
+				drawJumper(ctx, coords, opt);
+			}
+		}
+
+		// parts on the inactive layer
+		for (var p in brd.parts) {
+			var part = brd.parts[p];
+			if (part.layer == opt.layer) {
+				continue;
+			} else {
+				// TODO: change color
+				drawPartOutline(ctx, part, opt);
+			}
+		}
+
+		// layers
+		ctx.save();
+		ctx.globalAlpha = 0.5;
+		if (opt.layer == 'bottom') {
+			var order = ['top', 'substrate', 'bottom'];
+		} else if (opt.layer == 'substrate') {
+			var order = ['bottom', 'top', 'substrate'];
+		} else {
+			var order = ['bottom', 'substrate', 'top'];
+		}
+		for (var l in order) {
+			ctx.drawImage(requestViewLayer(brd, order[l], opt), 0, 0);
+		}
+		ctx.restore();
+
+		// drill holes
+		for (var d in brd.drills) {
+			drawDrill(ctx, brd.drills[d], opt);
+		}
+		for (var p in brd.parts) {
+			drawPartDrills(ctx, brd.parts[p], opt);
+		}
+
+		// parts on the active layer
+		for (var p in brd.parts) {
+			var part = brd.parts[p];
+			if (part.layer != opt.layer) {
+				continue;
+			} else {
+				drawPartOutline(ctx, part, opt);
+			}
+		}
+
+		// text
+		// TODO: handle zoom
+		// TODO: reintroduce crosshair?
+		// TODO: more intelligent alignment (e.g. when close to the right border)
+		// TODO: multiline support
+		// TODO: top to bottom support?
+		for (var t in brd.texts) {
+			var text = brd.texts[t];
+			if (typeof text.parent == 'object') {
+				if (text.parent.layer != opt.layer) {
+					continue;
+				}
+				var x = text.parent.x;
+				var y = text.parent.y;
+			} else {
+				var parent = findObject(text.parent, brd);
+				if (parent.type == 'drills') {
+					if (opt.layer == 'substrate') {
+						continue;
+					}
+					var x = parent.obj.x;
+					var y = parent.obj.y;
+				} else if (parent.type == 'jumpers') {
+					var coords = getJumperCoords(parent.obj);
+					if ($.inArray(opt.layer, coords.layers) == -1) {
+						continue;
+					} else {
+						var x = (coords.from.x+coords.to.x)/2;
+						var y = (coords.from.y+coords.to.y)/2;
+						// TODO: maybe rotate and offset
+					}
+				} else if (parent.type == 'parts' && opt.layer == parent.obj.layer) {
+					var x = parent.obj.x;
+					var y = parent.obj.y;
+				}
+			}
+			drawText(ctx, x, y, text.text, opt);
+		}
+
+		// jumpers on the active layer
+		for (var j in brd.jumpers) {
+			var jumper = brd.jumpers[j];
+			var coords = getJumperCoords(jumper);
+			if (coords.layers.length == 1 && coords.layers[0] == opt.layer) {
+				drawJumper(ctx, coords, opt);
+			}
+		}
+
+		ctx.restore();
 	};
 	var requestPart = function(part) {
 		if (view.parts[part] === undefined) {
@@ -663,8 +702,30 @@
 			return false;
 		}
 	};
+	var requestViewLayer = function(brd, l, opt) {
+		if (brd == board) {
+			var prefix = '';
+		} else {
+			var prefix = 'board'+brd.board+'-';
+		}
+
+		// create them if needed
+		if (view.layers[prefix+l] === undefined) {
+			var cvs = $('<canvas></canvas>');
+			$(cvs).prop('width', mmToPx(brd.width, opt.zoom));
+			$(cvs).prop('height', mmToPx(brd.height, opt.zoom));
+			view.layers[prefix+l] = $(cvs).get(0);
+			// copy
+			var ctx = view.layers[prefix+l].getContext('2d');
+			ctx.save();
+			ctx.drawImage(brd.layers[l], 0, 0, brd.layers[l].width, brd.layers[l].height, 0, 0, view.layers[prefix+l].width, view.layers[prefix+l].height);
+			ctx.restore();
+		}
+
+		return view.layers[prefix+l];
+	};
 	var screenPxToCanvas = function(x, y) {
-		if (isLayerMirrored()) {
+		if (view.layer == 'bottom') {
 			x = mmToPx(board.width, true)-x;
 		}
 		return { x: x, y: y };
@@ -703,6 +764,11 @@
 				$.pcb.layer('substrate');
 			} else if (e.keyCode == 51) {
 				$.pcb.layer('bottom');
+			} else if (e.keyCode == 80) {
+				// P
+				$.pcb.tool('pattern');
+				// TODO: remove
+				$.pcb.selectPattern(10);
 			} else if (e.keyCode == 91) {
 				// [
 				$.pcb.diameter($.pcb.diameter()-1);
@@ -755,21 +821,18 @@
 		});
 		$('html').on('mousedown', '#pcb-canvas', function(e) {
 			var p = screenPxToCanvas(e.offsetX, e.offsetY);
-			if (view.tool == 'draw' || view.tool == 'erase' || view.tool == 'drill') {
+			if (view.tool == 'draw' || view.tool == 'drill' || view.tool == 'erase') {
 				$.pcb.point(pxToMm(p.x, true), pxToMm(p.y, true));
 				view.toolData.usingTool = true;
-			} else if (view.tool == 'text') {
-				var text = prompt("Enter text");
-				if (text !== null) {
-					$.pcb.text({
-						x: pxToMm(p.x, true),
-						y: pxToMm(p.y, true)
-					}, text);
-				}
-			} else if (view.tool == 'part') {
+			} else if (view.tool == 'part' || view.tool == 'pattern') {
 				if (view.part !== null & e.which == 1) {
 					// place a part
-					$.pcb.part(view.part, pxToMm(p.x, true), pxToMm(p.y, true), view.toolData.rot);
+					if (view.toolData.rot === undefined) {
+						view.toolData.rot = 0;
+					}
+					if (view.tool == 'part') {
+						$.pcb.part(view.part, pxToMm(p.x, true), pxToMm(p.y, true), view.toolData.rot);
+					}
 				} else if (view.part !== null & e.which == 3) {
 					// rotate part
 					if (view.toolData.rot === undefined) {
@@ -779,6 +842,14 @@
 					}
 					view.toolData.rot = normalizeAngle(view.toolData.rot);
 					requestRedraw();
+				}
+			} else if (view.tool == 'text') {
+				var text = prompt("Enter text");
+				if (text !== null) {
+					$.pcb.text({
+						x: pxToMm(p.x, true),
+						y: pxToMm(p.y, true)
+					}, text);
 				}
 			}
 			return false;
@@ -1007,6 +1078,9 @@
 				}
 			}
 		},
+		dimensions: function() {
+			return { width: board.width, height: board.height };
+		},
 		drill: function(x, y, diameter, parent) {
 			if (typeof x != 'number' || typeof y != 'number') {
 				return false;
@@ -1162,45 +1236,13 @@
 			if (typeof rev != 'number') {
 				rev = null;
 			}
-			ajaxRequest({
-				method: 'load',
-				board: brd,
-				rev: rev
-			}, function(data) {
-				if (data !== null) {
-					// decode layers
-					view.layersToLoad = 0;
-					var hasLayers = false;
-					for (var l in data.layers) {
-						view.layersToLoad++;
-						hasLayers = true;
-						(function(l){
-							imgToCanvas(data.layers[l].png, function(cvs) {
-								data.layers[l] = cvs;
-								view.layersToLoad--;
-								if (view.layersToLoad == 0) {
-									// done: setup board & view
-									board = $.extend(true, defaultBoard, data);
-									removePartsDrills(board.drills);
-									view = $.extend(true, {}, defaultView);
-									invalidateView();
-									// EVENT
-									$('html').trigger('pcb-loaded');
-								}
-							});
-						}(l));
-					}
-					// fallback if we don't have any layers at all
-					if (!hasLayers) {
-						// done: setup board & view
-						board = $.extend(true, defaultBoard, data);
-						removePartsDrills(board.drills);
-						view = $.extend(true, {}, defaultView);
-						invalidateView();
-						// EVENT
-						$('html').trigger('pcb-loaded');
-					}
-				}
+			loadBoard(brd, rev, function(newBoard) {
+				board = $.extend(true, defaultBoard, newBoard);
+				removePartsDrills(board.drills);
+				view = $.extend(true, {}, defaultView);
+				invalidateView();
+				// EVENT
+				$('html').trigger('pcb-loaded');
 			});
 			// EVENT
 			$('html').trigger('pcb-loading');
@@ -1304,7 +1346,7 @@
 						var cvs = board.layers[view.layer];
 						var zoom = false;
 					} else {
-						var cvs = view.layers[view.layer];
+						var cvs = requestViewLayer(board, view.layer, view);
 						var zoom = true;
 					}
 					var ctx = cvs.getContext('2d');
@@ -1510,9 +1552,17 @@
 				return false;
 			} else if (part !== view.part) {
 				view.part = part;
-				view.toolData.rot = 0;
 				requestRedraw();
 			}
+		},
+		selectPattern: function(brd) {
+			if (typeof brd !== 'number') {
+				return false;
+			}
+			loadBoard(brd, null, function(patternBoard) {
+				view.pattern = patternBoard;
+				requestRedraw();
+			});
 		},
 		testParts: function() {
 			// TODO: remove
