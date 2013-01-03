@@ -73,7 +73,7 @@
 		};
 
 		// encode request data
-		for (key in data) {
+		for (var key in data) {
 			data[key] = JSON.stringify(data[key]);
 		}
 		// reference counting
@@ -106,7 +106,7 @@
 	var downloadRequest = function(data) {
 		var arg = '';
 		// encode request data
-		for (key in data) {
+		for (var key in data) {
 			if (arg.length == 0) {
 				arg = '?';
 			} else {
@@ -180,7 +180,6 @@
 			// TODO: rotation
 			// TODO: cache board
 			ctx.drawImage(cvs, -cvs.width/2, -cvs.height/2);
-			ctx.strokeRect(-w/2, -h/2, w, h);
 		} else if (view.tool == 'text') {
 			ctx.strokeStyle = '#f00';
 			ctx.beginPath();
@@ -408,7 +407,7 @@
 			view.redrawPending = false;
 		}
 		redraw();
-	}
+	};
 	var loadBoard = function(brd, rev, success) {
 		ajaxRequest({
 			method: 'load',
@@ -437,6 +436,27 @@
 					success(data);
 			}
 		});
+	};
+	var mergeBoards = function(dest, src, srcX, srcY, srcRot) {
+		// TODO: rotation
+		// layers
+		for (var l in src.layers) {
+			if (dest.layers[l] === undefined) {
+				continue;
+			}
+			var ctx = dest.layers[l].getContext('2d');
+			ctx.save();
+			// mask everything except the source
+			ctx.beginPath();
+			ctx.rect(mmToPx(srcX)-src.layers[l].width/2, mmToPx(srcY)-src.layers[l].height/2, src.layers[l].width, src.layers[l].height);
+			ctx.closePath();
+			ctx.clip();
+			// copy image
+			ctx.globalCompositeOperation = 'copy';
+			ctx.drawImage(src.layers[l], mmToPx(srcX)-src.layers[l].width/2, mmToPx(srcY)-src.layers[l].height/2);
+			ctx.restore();
+		}
+		// TODO: objects
 	};
 	var mirrorContext = function(ctx) {
 		ctx.translate(ctx.canvas.width/2, 0);
@@ -825,16 +845,18 @@
 				$.pcb.point(pxToMm(p.x, true), pxToMm(p.y, true));
 				view.toolData.usingTool = true;
 			} else if (view.tool == 'part' || view.tool == 'pattern') {
-				if (view.part !== null & e.which == 1) {
-					// place a part
+				if (e.which == 1) {
+					// place a part or pattern
 					if (view.toolData.rot === undefined) {
 						view.toolData.rot = 0;
 					}
-					if (view.tool == 'part') {
+					if (view.tool == 'part' && view.part !== null) {
 						$.pcb.part(view.part, pxToMm(p.x, true), pxToMm(p.y, true), view.toolData.rot);
+					} else if (view.tool == 'pattern' && view.pattern !== null) {
+						$.pcb.pattern(pxToMm(p.x, true), pxToMm(p.y, true), view.toolData.rot);
 					}
-				} else if (view.part !== null & e.which == 3) {
-					// rotate part
+				} else if (e.which == 3) {
+					// rotate a part or pattern
 					if (view.toolData.rot === undefined) {
 						view.toolData.rot = 22.5;
 					} else {
@@ -1338,6 +1360,19 @@
 				height: options.library[part].height
 			};
 			return name;
+		},
+		pattern: function(x, y, rot) {
+			if (view.pattern === null) {
+				return false;
+			}
+			if (typeof x != 'number' || typeof y != 'number') {
+				return false;
+			}
+			if (typeof rot != 'number') {
+				rot = 0;
+			}
+			mergeBoards(board, view.pattern, x, y, rot);
+			invalidateView();
 		},
 		point: function(x, y) {
 			if (view.tool == 'draw' || view.tool == 'erase') {
