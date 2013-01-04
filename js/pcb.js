@@ -350,6 +350,12 @@
 		}
 		return ret;
 	};
+	var fitZoomToViewport = function() {
+		$('meta[name=viewport]').attr('content', 'initial-scale='+(1/window.devicePixelRatio)+', maximum-scale='+(1/window.devicePixelRatio)+', minimum-scale='+(1/window.devicePixelRatio)+', user-scalable=no, width=device-width');
+		var zoomWidth = mmToPx(board.width)/$(window).width();
+		var zoomHeight = mmToPx(board.height)/$(window).height();
+		$.pcb.zoom(Math.max(zoomWidth, zoomHeight));
+	};
 	var getFirstAvailableKey = function(object, prefix, start) {
 		// add a dash if the prefix ends with a digit
 		if (48 <= prefix.charCodeAt(prefix.length-1) && prefix.charCodeAt(prefix.length-1) <= 57) {
@@ -436,6 +442,10 @@
 			view.redrawPending = false;
 		}
 		redraw();
+	};
+	var isTouchDevice = function() {
+		// taken from Modernizr
+		return !!('ontouchstart' in window) || !!('onmsgesturechange' in window);
 	};
 	var loadBoard = function(brd, rev, success) {
 		ajaxRequest({
@@ -994,7 +1004,7 @@
 			var p = screenPxToCanvas(e.offsetX, e.offsetY);
 			if (view.tool == 'draw' || view.tool == 'erase') {
 				if (view.toolData.usingTool === true) {
-					$.pcb.point(pxToMm(p.x, true), pxToMm(p.y, true));
+					$.pcb.line(pxToMm(view.lastMouseX, true), pxToMm(view.lastMouseY, true), pxToMm(p.x, true), pxToMm(p.y, true));
 				}
 			}
 			// track mouse
@@ -1020,6 +1030,38 @@
 			requestRedraw();
 			return false;
 		});
+		// TODO: this is not quite working right
+		$('html').on('touchstart', '#pcb-canvas', function(e) {
+			for (var t in e.originalEvent.targetTouches) {
+				var touch = e.originalEvent.targetTouches[t];
+				if (typeof touch != 'object' || typeof touch.pageX != 'number') {
+					continue;
+				}
+				$.pcb.point(pxToMm(touch.pageX), pxToMm(touch.pageY));
+			}
+			return false;
+		});
+		$('html').on('touchmove', '#pcb-canvas', function(e) {
+			for (var t in e.originalEvent.targetTouches) {
+				var touch = e.originalEvent.targetTouches[t];
+				if (typeof touch != 'object' || typeof touch.pageX != 'number') {
+					continue;
+				}
+				$.pcb.point(pxToMm(touch.pageX), pxToMm(touch.pageY));
+			}
+			return false;
+		});
+		$('html').on('touchstop', '#pcb-canvas', function(e) {
+			var canvasOffset = $(this).offset();
+			for (var t in e.originalEvent.targetTouches) {
+				var touch = e.originalEvent.targetTouches[t];
+				if (typeof touch != 'object' || typeof touch.pageX != 'number') {
+					continue;
+				}
+				$.pcb.point(pxToMm(touch.pageX), pxToMm(touch.pageY));
+			}
+			return false;
+		});
 		$('html').ajaxError(function(e, jqxhr, settings, exception) {
 			// DEBUG
 			console.warn('ajaxError: '+exception);
@@ -1034,6 +1076,11 @@
 			if (view.allowNavigation !== true) {
 				// show a message before navigating away
 				return 'You might have unsaved changes';
+			}
+		});
+		$(window).on('resize', function(e) {
+			if (isTouchDevice()) {
+				fitZoomToViewport();
 			}
 		});
 
@@ -1193,6 +1240,9 @@
 				board.layers[l] = cvs;
 			}
 			view = $.extend(true, {}, defaultView);
+			if (isTouchDevice()) {
+				fitZoomToViewport();
+			}
 			invalidateView();
 		},
 		diameter: function(mm) {
@@ -1371,6 +1421,9 @@
 			loadBoard(brd, rev, function(newBoard) {
 				board = newBoard;
 				view = $.extend(true, {}, defaultView);
+				if (isTouchDevice()) {
+					fitZoomToViewport();
+				}
 				invalidateView();
 				// EVENT
 				$('html').trigger('pcb-loaded');

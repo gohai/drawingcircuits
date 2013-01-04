@@ -7,6 +7,7 @@
 <head>
 <title>Drawing Circuits</title>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
 <link rel="stylesheet" href="<?php echo base_url(); ?>css/bootstrap.min.css" type="text/css">
 <link rel="stylesheet" href="<?php echo base_url(); ?>css/pcb.css" type="text/css">
 <link rel="stylesheet" href="<?php echo base_url(); ?>css/ui.css" type="text/css">
