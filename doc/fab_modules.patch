@@ -11,23 +11,6 @@ index 0c28774..e144246 100644
  endforeach(program)
  
  if( ${CMAKE_PROJECT_NAME} MATCHES fabmod )
-diff --git a/src/core/fab.c b/src/core/fab.c
-index f433cee..b2fae37 100644
---- a/src/core/fab.c
-+++ b/src/core/fab.c
-@@ -157,9 +157,9 @@ void fab_read_png(struct fab_vars *v, char *input_file_name) {
-       v->dy = 1000 * v->ny / ((float) res_y);
-    }
-    else {
--      printf("fab.c: don't recognize PNG units, assuming 72/inch\n");
--      res_x = (72*1000.0)/(25.4);
--      res_y = (72*1000.0)/(25.4);
-+      printf("fab.c: don't recognize PNG units, assuming 300/inch\n");
-+      res_x = (300*1000.0)/(25.4);
-+      res_y = (300*1000.0)/(25.4);
-       v->dx = 1000 * v->nx / ((float) res_x);
-       v->dy = 1000 * v->ny / ((float) res_y);
-       }
 diff --git a/src/core/path_rml.c b/src/core/path_rml.c
 index 6c5d027..8a0ecc0 100644
 --- a/src/core/path_rml.c

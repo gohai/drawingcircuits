@@ -853,6 +853,17 @@
 			var ctx = view.layers[prefix+l].getContext('2d');
 			ctx.save();
 			ctx.drawImage(brd.layers[l], 0, 0, brd.layers[l].width, brd.layers[l].height, 0, 0, view.layers[prefix+l].width, view.layers[prefix+l].height);
+			ctx.globalCompositeOperation = 'source-in';
+			if (l == 'top') {
+				ctx.fillStyle = '#f00';
+			} else if (l == 'substrate') {
+				// not really necessary
+				ctx.fillStlye = '#000';
+			} else if (l == 'bottom') {
+				ctx.fillStyle = '#00f';
+			}
+			ctx.rect(0, 0, view.layers[prefix+l].width, view.layers[prefix+l].height);
+			ctx.fill();
 			ctx.restore();
 		}
 
@@ -1540,13 +1551,17 @@
 					var ctx = cvs.getContext('2d');
 					ctx.save();
 					if (view.tool == 'draw') {
-						if (view.layer == 'top') {
-							// TODO: change color for high DPI
-							ctx.fillStyle = '#f00';
-						} else if (view.layer == 'substrate') {
+						if (zoom == false) {
+							// the high DPI board is b/w
 							ctx.fillStyle = '#000';
 						} else {
-							ctx.fillStyle = '#00f';
+							if (view.layer == 'top') {
+								ctx.fillStyle = '#f00';
+							} else if (view.layer == 'substrate') {
+								ctx.fillStyle = '#000';
+							} else {
+								ctx.fillStyle = '#00f';
+							}
 						}
 					} else {
 						ctx.fillStyle = '#000';

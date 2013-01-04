@@ -1,0 +1,1 @@
+This software is known to work best with Google Chrome (23). Safari should also work. There are currently some issues with Firefox (17).

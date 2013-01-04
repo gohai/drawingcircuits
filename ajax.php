@@ -193,21 +193,33 @@ if (empty($_REQUEST['method'])) {
 		// TODO: email notification if not visible
 	}
 } elseif ($_REQUEST['method'] == 'export') {
-	$board = $_REQUEST['board'];
-	$rev = $_REQUEST['rev'];
-	$q = db_fetch('layers', 'board='.@intval($board).' AND rev='.@intval($rev).' AND layer="top"');
-	if ($q === false) {
-		http_error(500, true);
-		die();
-	} elseif (empty($q)) {
-		http_error(404, true);
+	$board = arg_required($_REQUEST['board'], 'integer');
+
+	if (@is_int($_REQUEST['rev'])) {
+		$rev = $_REQUEST['rev'];
+	} else {
+		$rev = getLatestBoardRev($board);
+		if ($rev === false) {
+			http_error(500, true);
+			die();
+		}
+	}
+
+	$ret = loadBoard($board, $rev);
+	if (@is_int($ret)) {
+		http_error($ret, true);
 		die();
 	} else {
-		header('Content-type: application/octet-stream');
-		header('Content-Disposition: attachment; filename="board'.$board.'_rev'.$rev.'_top.png"');
-		echo $q[0]['png'];
-		die();
+		$board = $ret;
+		foreach ($board['layers'] as &$l) {
+			$l['png'] = @imagecreatefromstring($l['png']);
+		}
 	}
+
+	header('Content-type: application/octet-stream');
+	header('Content-Disposition: attachment; filename="board'.$board['board'].'_rev'.$rev.'_top.png"');
+	echo @imagepng($board['layers']['top']['png'], NULL, 9);
+	die();
 } elseif ($_REQUEST['method'] == 'getLibrary') {
 	// sort it with revision ascending so that later entries overwrite prior ones
 	$q = db_fetch('parts', 'visible=1 ORDER BY title ASC, part ASC, rev ASC');
@@ -228,44 +240,23 @@ if (empty($_REQUEST['method'])) {
 	if (@is_int($_REQUEST['rev'])) {
 		$rev = $_REQUEST['rev'];
 	} else {
-		// use the latest revision
-		$q = db_fetch_raw('SELECT rev FROM revisions WHERE board='.$board.' ORDER BY rev DESC LIMIT 1');
-		if ($q === false) {
+		$rev = getLatestBoardRev($board);
+		if ($rev === false) {
 			http_error(500, true);
 			die();
-		} elseif (empty($q)) {
-			// no revision for board
-			http_error(404, true);
-			die();
-		} else {
-			$rev = $q[0]['rev'];
 		}
 	}
 
-	$q = db_fetch('revisions', 'board='.$board.' AND rev='.$rev);
-	if ($q === false) {
-		http_error(500, true);
-		die();
-	} elseif (empty($q)) {
-		// revision not found
-		http_error(404, true);
+	$ret = loadBoard($board, $rev);
+	if (@is_int($ret)) {
+		http_error($ret, true);
 		die();
 	} else {
-		$json = @json_decode($q[0]['json'], true);
-		$json['board'] = $board;
-		$json['rev'] = $rev;
-		$json['author'] = $q[0]['author'];
-		$json['parentBoard'] = $q[0]['parentBoard'];
-		$json['parentRev'] = $q[0]['parentRev'];
-		// load layers
-		$json['layers'] = array();
-		$q = db_fetch('layers', 'board='.$board.' AND rev='.$rev);
-		if ($q !== false) {
-			foreach ($q as $l) {
-				$json['layers'][$l['layer']] = array('width'=>$l['width'], 'height'=>$l['height'], 'png'=>'data:image/png;base64,'.@base64_encode($l['png']));
-			}
+		// encode the image data
+		foreach ($ret['layers'] as &$l) {
+			$l['png'] = 'data:image/png;base64,'.@base64_encode($l['png']);
 		}
-		json_response($json);
+		json_response($ret);
 	}
 } elseif ($_REQUEST['method'] == 'save') {
 	checkAuth();

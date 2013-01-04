@@ -39,11 +39,25 @@ function checkCreds($uid, $secret)
 }
 
 
-function databaseError() {
+function databaseError()
+{
 	if (SHOW_DATABASE_ERRORS) {
 		return db_error();
 	} else {
 		return 'Database error';
+	}
+}
+
+
+function getLatestBoardRev($board)
+{
+	$q = db_fetch_raw('SELECT rev FROM revisions WHERE board='.@intval($board).' ORDER BY rev DESC LIMIT 1');
+	if ($q === false) {
+		return false;
+	} elseif (empty($q)) {
+		return 0;
+	} else {
+		return $q[0]['rev'];
 	}
 }
 
@@ -57,6 +71,34 @@ function getLatestPartRev($part)
 		return 0;
 	} else {
 		return $q[0]['rev'];
+	}
+}
+
+
+function loadBoard($board, $rev)
+{
+	$q = db_fetch('revisions', 'board='.$board.' AND rev='.$rev);
+	if ($q === false) {
+		return 500;
+	} elseif (empty($q)) {
+		// revision not found
+		return 404;
+	} else {
+		$ret = @json_decode($q[0]['json'], true);
+		$ret['board'] = $board;
+		$ret['rev'] = $rev;
+		$ret['author'] = $q[0]['author'];
+		$ret['parentBoard'] = $q[0]['parentBoard'];
+		$ret['parentRev'] = $q[0]['parentRev'];
+		// load layers
+		$ret['layers'] = array();
+		$q = db_fetch('layers', 'board='.$board.' AND rev='.$rev);
+		if ($q !== false) {
+			foreach ($q as $l) {
+				$ret['layers'][$l['layer']] = array('width'=>$l['width'], 'height'=>$l['height'], 'png'=>$l['png']);
+			}
+		}
+		return $ret;
 	}
 }
 
