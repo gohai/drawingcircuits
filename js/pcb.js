@@ -184,7 +184,10 @@
 			if (view.layer == 'bottom') {
 				ctx.scale(-1, 1);
 			}
-			// TODO: rotation
+			if (view.toolData.rot === undefined) {
+				view.toolData.rot = 0;
+			}
+			ctx.rotate(view.toolData.rot*Math.PI/180);
 			// TODO: cache board
 			ctx.drawImage(cvs, -cvs.width/2, -cvs.height/2);
 		} else if (view.tool == 'text') {
@@ -367,14 +370,14 @@
 		}
 		return prefix+(max+1);
 	};
-	var getJumperCoords = function(jumper) {
-		ret = {};
+	var getJumperCoords = function(jumper, brd) {
+		var ret = {};
 		ret.layers = [];
 		if (typeof jumper.from == 'object') {
 			ret.from = { x: jumper.from.x, y: jumper.from.y, layer: jumper.from.layer };
 			ret.layers.push(jumper.from.layer);
 		} else {
-			var obj = findObject(jumper.from, board);
+			var obj = findObject(jumper.from, brd);
 			ret.from = { x: obj.obj.x, y: obj.obj.y };
 			ret.layers.push('both');
 		}
@@ -382,7 +385,7 @@
 			ret.to = { x: jumper.to.x, y: jumper.to.y, layer: jumper.to.layer };
 			ret.layers.push(jumper.to.layer);
 		} else {
-			var obj = findObject(jumper.to, board);
+			var obj = findObject(jumper.to, brd);
 			ret.to = { x: obj.obj.x, y: obj.obj.y };
 			ret.layers.push('both');
 		}
@@ -469,7 +472,6 @@
 		});
 	};
 	var mergeBoards = function(dest, src, srcX, srcY, srcRot) {
-		// TODO: rotation
 		// layers
 		for (var l in src.layers) {
 			if (dest.layers[l] === undefined) {
@@ -477,19 +479,23 @@
 			}
 			var ctx = dest.layers[l].getContext('2d');
 			ctx.save();
+			ctx.translate(mmToPx(srcX), mmToPx(srcY));
+			ctx.rotate(srcRot*Math.PI/180);
 			// mask everything except the source
+			// TODO: off-by-one on Firefox
 			ctx.beginPath();
-			ctx.rect(mmToPx(srcX)-src.layers[l].width/2, mmToPx(srcY)-src.layers[l].height/2, src.layers[l].width, src.layers[l].height);
+			ctx.rect(-src.layers[l].width/2, -src.layers[l].height/2, src.layers[l].width, src.layers[l].height);
 			ctx.closePath();
 			ctx.clip();
 			// copy image
 			ctx.globalCompositeOperation = 'copy';
-			ctx.drawImage(src.layers[l], mmToPx(srcX)-src.layers[l].width/2, mmToPx(srcY)-src.layers[l].height/2);
+			ctx.drawImage(src.layers[l], -src.layers[l].width/2, -src.layers[l].height/2);
 			ctx.restore();
 		}
 
 		// objects
 		// operate on a local copy of src
+		// TODO: rotation
 		var src = $.extend(true, {}, src);
 		var offsetX = srcX-src.width/2;
 		var offsetY = srcY-src.height/2;
@@ -681,7 +687,7 @@
 		// jumpers on the inactive layer
 		for (var j in brd.jumpers) {
 			var jumper = brd.jumpers[j];
-			var coords = getJumperCoords(jumper);
+			var coords = getJumperCoords(jumper, brd);
 			// TODO: bug
 			if (1 < coords.layers.length || (coords.layers.length == 1 && coords.layers[0] != opt.layer)) {
 				drawJumper(ctx, coords, opt);
@@ -755,7 +761,7 @@
 					var x = parent.obj.x;
 					var y = parent.obj.y;
 				} else if (parent.type == 'jumpers') {
-					var coords = getJumperCoords(parent.obj);
+					var coords = getJumperCoords(parent.obj, brd);
 					if ($.inArray(opt.layer, coords.layers) == -1) {
 						continue;
 					} else {
@@ -777,7 +783,7 @@
 		// jumpers on the active layer
 		for (var j in brd.jumpers) {
 			var jumper = brd.jumpers[j];
-			var coords = getJumperCoords(jumper);
+			var coords = getJumperCoords(jumper, brd);
 			if (coords.layers.length == 1 && coords.layers[0] == opt.layer) {
 				drawJumper(ctx, coords, opt);
 			}
@@ -864,51 +870,51 @@
 			if (!$(e.target).is('body')) {
 				return;
 			}
-			if (e.keyCode == 43 || e.keyCode == 61) {
+			if (e.charCode == 43 || e.charCode == 61) {
 				// + or =
 				$.pcb.zoom($.pcb.zoom()*0.8);
-			} else if (e.keyCode == 45) {
+			} else if (e.charCode == 45) {
 				// -
 				$.pcb.zoom($.pcb.zoom()*1.2);
-			} else if (e.keyCode == 48) {
+			} else if (e.charCode == 48) {
 				// 0
 				$.pcb.zoom(defaultView.zoom);
-			} else if (e.keyCode == 49) {
+			} else if (e.charCode == 49) {
 				// 1
 				$.pcb.layer('top');
-			} else if (e.keyCode == 50) {
+			} else if (e.charCode == 50) {
 				$.pcb.layer('substrate');
-			} else if (e.keyCode == 51) {
+			} else if (e.charCode == 51) {
 				$.pcb.layer('bottom');
-			} else if (e.keyCode == 80) {
+			} else if (e.charCode == 80) {
 				// P
 				$.pcb.tool('pattern');
 				// TODO: remove
 				$.pcb.selectPattern(10);
-			} else if (e.keyCode == 91) {
+			} else if (e.charCode == 91) {
 				// [
 				$.pcb.diameter($.pcb.diameter()-1);
-			} else if (e.keyCode == 93) {
+			} else if (e.charCode == 93) {
 				// ]
 				$.pcb.diameter($.pcb.diameter()+1);
-			} else if (e.keyCode == 98) {
+			} else if (e.charCode == 98) {
 				// b
 				$.pcb.tool('draw');
-			} else if (e.keyCode == 100) {
+			} else if (e.charCode == 100) {
 				// d
 				$.pcb.tool('drill');
-			} else if (e.keyCode == 101) {
+			} else if (e.charCode == 101) {
 				// e
 				$.pcb.tool('erase');
-			} else if (e.keyCode == 112) {
+			} else if (e.charCode == 112) {
 				// p
 				$.pcb.tool('part');
 				// TODO: remove
 				$.pcb.selectPart('atmega168-dip28');
-			} else if (e.keyCode == 114) {
+			} else if (e.charCode == 114) {
 				// r
 				$.pcb.ruler(!$.pcb.ruler());
-			} else if (e.keyCode == 115) {
+			} else if (e.charCode == 115) {
 				// s
 				if (!$.pcb.requestPending()) {
 					var origBoard = $.pcb.board();
@@ -927,15 +933,20 @@
 					};
 					setTimeout(retry, 100);
 				}
-			} else if (e.keyCode == 116) {
+			} else if (e.charCode == 116) {
 				// t
 				$.pcb.tool('text');
 			} else {
 				// DEBUG
-				//console.log(e.keyCode);
+				//console.log(e.charCode);
 			}
 		});
 		$('html').on('mousedown', '#pcb-canvas', function(e) {
+			if ($.browser.mozilla) {
+				var o = $(this).offset();
+				e.offsetX = e.pageX-o.left;
+				e.offsetY = e.pageY-o.top;
+			}
 			var p = screenPxToCanvas(e.offsetX, e.offsetY);
 			if (view.tool == 'draw' || view.tool == 'drill' || view.tool == 'erase') {
 				$.pcb.point(pxToMm(p.x, true), pxToMm(p.y, true));
@@ -973,6 +984,11 @@
 			return false;
 		});
 		$('html').on('mousemove', '#pcb-canvas', function(e) {
+			if ($.browser.mozilla) {
+				var o = $(this).offset();
+				e.offsetX = e.pageX-o.left;
+				e.offsetY = e.pageY-o.top;
+			}
 			var p = screenPxToCanvas(e.offsetX, e.offsetY);
 			if (view.tool == 'draw' || view.tool == 'erase') {
 				if (view.toolData.usingTool === true) {
