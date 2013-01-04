@@ -250,6 +250,7 @@
 		if (img !== null) {
 			var w = mmToPx(options.library[part].width, opt.zoom);
 			var h = mmToPx(options.library[part].height, opt.zoom);
+			// TODO: this is low-res on Firefox
 			ctx.drawImage(img, (-w/2)+1, (-h/2)+1, w, h);
 		}
 		ctx.restore();
@@ -482,8 +483,8 @@
 			ctx.translate(mmToPx(srcX), mmToPx(srcY));
 			ctx.rotate(srcRot*Math.PI/180);
 			// mask everything except the source
-			// TODO: off-by-one on Firefox
 			ctx.beginPath();
+			// TODO: this leaves a mark on Safari & Firefox
 			ctx.rect(-src.layers[l].width/2, -src.layers[l].height/2, src.layers[l].width, src.layers[l].height);
 			ctx.closePath();
 			ctx.clip();
@@ -800,7 +801,8 @@
 				// TODO: evaluate performance later (we could convert it to a canvas element here as well)
 				view.parts[part] = img;
 			}
-			img.src = 'data:image/svg+xml;utf8,'+options.library[part].svg;
+			// encodeURIComponent() fixes Mozilla (would error out on #)
+			img.src = 'data:image/svg+xml;utf8,'+encodeURIComponent(options.library[part].svg);
 			return null;
 		} else if (view.parts[part] === false) {
 			// still loading
