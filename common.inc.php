@@ -49,6 +49,96 @@ function databaseError()
 }
 
 
+function filterFabmodulesColor(&$layer)
+{
+	$w = @imagesx($layer['png']);
+	$h = @imagesy($layer['png']);
+	$white = @imagecolorallocate($layer['png'], 255, 255, 255);
+	$black = @imagecolorallocate($layer['png'], 0, 0, 0);
+	for ($x = 0; $x < $w; $x++) {
+		for ($y = 0; $y < $h; $y++) {
+			$color = @imagecolorat($layer['png'], $x, $y);
+			if ($color != (127 << 24)) {
+				@imagesetpixel($layer['png'], $x, $y, $white);
+			} else {
+				@imagesetpixel($layer['png'], $x, $y, $black);
+			}
+		}
+	}
+}
+
+
+function filterFabmodulesPath(&$layer, $key, $opts = array())
+{
+	// TODO: check against source
+	$default_args = array(
+		'error' => 1.1,
+		'offset_diameter' => 0,
+		'offset_number' => 1,
+		'offset_overlap' => 0.5,
+		'intensity_top' => 0.5,
+		'intensity_bottom' => 0.5,	// default: intensity_top
+		'z_top' => 0,
+		'z_bottom' => 0,			// default: z_top
+		'z_thickness' => 0,			// default: z_top-z_bottom
+		'xz' => 0,
+		'yz' => 0,
+		'xy' => 1
+	);
+	$args = array();
+	// TODO: encode parameter in filename
+	@exec('./bin/png_path /tmp/'.$layer['fn'].' /tmp/'.basename($layer['fn'], '.png').'.path');
+}
+
+
+function filterFabmodulesPng(&$layer)
+{
+	@exec('./bin/path_png /tmp/'.basename($layer['fn'], '.png').'.path /tmp/'.basename($layer['fn'], '.png').'-toolpath.png');
+}
+
+
+function filterFabmodulesRml(&$layer, $key, $opts = array())
+{
+	// TODO: check against source
+	$default_args = array(
+		'speed' => 4,
+		'xmin' => 0,	// default: path value
+		'ymin' => 0,	// default: path value
+		'zmin' => 0,	// default: path value
+		'z_up' => 1,
+		'direction' => 1
+	);
+	$args = array();
+	// TODO: encode parameters in filename
+	@exec('./bin/path_rml /tmp/'.basename($layer['fn'], '.png').'.path /tmp/'.basename($layer['fn'], '.png').'.rml');
+}
+
+
+function filterFixDpi(&$layer)
+{
+	@exec('./bin/png_size /tmp/'.$layer['fn'].' '.($layer['width']/(300.0/25.4)).' '.($layer['height']/(300.0/25.4)));
+}
+
+
+function filterRotate(&$layer, $rot)
+{
+	$transparent = @imagecolorallocatealpha($layer['png'], 0, 0, 0, 127);
+	$layer['png'] = @imagerotate($layer['png'], -$rot, $transparent);
+	$layer['width'] = @imagesx($layer['png']);
+	$layer['height'] = @imagesy($layer['png']);
+}
+
+
+function filterToFile(&$layer, $fn)
+{
+	if (@imagepng($layer['png'], '/tmp/'.$fn)) {
+		$layer['fn'] = $fn;
+	} else {
+		$layer['fn'] = NULL;
+	}
+}
+
+
 function getLatestBoardRev($board)
 {
 	$q = db_fetch_raw('SELECT rev FROM revisions WHERE board='.@intval($board).' ORDER BY rev DESC LIMIT 1');

@@ -211,14 +211,32 @@ if (empty($_REQUEST['method'])) {
 		die();
 	} else {
 		$board = $ret;
-		foreach ($board['layers'] as &$l) {
-			$l['png'] = @imagecreatefromstring($l['png']);
+		foreach (array_keys($board['layers']) as $key) {
+			$board['layers'][$key]['png'] = @imagecreatefromstring($board['layers'][$key]['png']);
+			// alpha is not needed for fab modules
+			//@imagesavealpha($board['layers'][$key]['png'], true);
 		}
 	}
 
+	$prefix = 'b'.$board['board'].'r'.$board['rev'].'-'.date('YmdHis').'-';
+	$opts = arg_optional($_REQUEST['opts'], 'array', array());
+	foreach (array_keys($board['layers']) as $key) {
+		// TODO: safety
+		// TODO: drills, drills isolation
+		filterRotate($board['layers'][$key], -90.0);
+		filterFabmodulesColor($board['layers'][$key]);
+		filterToFile($board['layers'][$key], $prefix.$key.'.png');
+		filterFixDpi($board['layers'][$key]);
+		filterFabmodulesPath($board['layers'][$key], $key, $opts);
+		filterFabmodulesRml($board['layers'][$key], $key, $opts);
+		filterFabmodulesPng($board['layers'][$key]);
+		// TODO: compress and send
+		// TODO: cleanup
+	}
+
 	header('Content-type: application/octet-stream');
-	header('Content-Disposition: attachment; filename="board'.$board['board'].'_rev'.$rev.'_top.png"');
-	echo @imagepng($board['layers']['top']['png'], NULL, 9);
+	header('Content-Disposition: attachment; filename="'.$prefix.'top.png"');
+	echo @imagepng($board['layers']['top']['png']);
 	die();
 } elseif ($_REQUEST['method'] == 'getLibrary') {
 	// sort it with revision ascending so that later entries overwrite prior ones
