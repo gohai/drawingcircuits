@@ -4,5 +4,6 @@ Set window title in .load()
 
 -- later
 Tablet compatibility
+checkMillability (drill hole diameter including parts, too narrow traces)
 Try a steady redraw
 Make it possible to flip layers when applying a pattern

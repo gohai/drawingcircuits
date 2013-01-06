@@ -218,11 +218,17 @@ if (empty($_REQUEST['method'])) {
 		}
 	}
 
-	$prefix = 'b'.$board['board'].'r'.$board['rev'].'-'.date('YmdHis').'-';
+	$prefix = 'board'.$board['board'].'rev'.$board['rev'].'-'.date('YmdHis').'-';
 	$opts = arg_optional($_REQUEST['opts'], 'array', array());
+	@umask(0111);
+	filterDrillLayer($board);
 	foreach (array_keys($board['layers']) as $key) {
-		// TODO: safety
-		// TODO: drills, drills isolation
+		if ($key == 'top' || $key == 'bottom') {
+			filterDrillIsolation($board['layers'][$key], $board, $opts);
+		}
+		if ($key == 'bottom') {
+			filterFlipX($board['layers'][$key]);
+		}
 		filterRotate($board['layers'][$key], -90.0);
 		filterFabmodulesColor($board['layers'][$key]);
 		filterToFile($board['layers'][$key], $prefix.$key.'.png');
@@ -230,13 +236,33 @@ if (empty($_REQUEST['method'])) {
 		filterFabmodulesPath($board['layers'][$key], $key, $opts);
 		filterFabmodulesRml($board['layers'][$key], $key, $opts);
 		filterFabmodulesPng($board['layers'][$key]);
-		// TODO: compress and send
-		// TODO: cleanup
 	}
 
+	// compress
+	$zip = new ZipArchive();
+	$zipFn = '/tmp/'.$prefix.'modela40a.zip';
+	$zip->open($zipFn, ZIPARCHIVE::CREATE);
+	$dir = scandir('/tmp');
+	foreach ($dir as $f) {
+		if (substr($f, 0, strlen($prefix)) != $prefix) {
+			continue;
+		}
+		if (substr($f, -5) == '.path') {
+			continue;
+		}
+		$zip->addFile('/tmp/'.$f, $f);
+	}
+	$zip->close();
+
+	// send
 	header('Content-type: application/octet-stream');
-	header('Content-Disposition: attachment; filename="'.$prefix.'top.png"');
-	echo @imagepng($board['layers']['top']['png']);
+	header('Content-Disposition: attachment; filename="'.basename($zipFn).'"');
+	@readfile($zipFn);
+
+	// cleanup
+	foreach (glob('/tmp/'.$prefix.'*') as $f) {
+		@unlink($f);
+	}
 	die();
 } elseif ($_REQUEST['method'] == 'getLibrary') {
 	// sort it with revision ascending so that later entries overwrite prior ones

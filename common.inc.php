@@ -49,6 +49,32 @@ function databaseError()
 }
 
 
+function filterDrillIsolation(&$layer, $board, $opts)
+{
+	$black = @imagecolorallocatealpha($layer['png'], 0, 0, 0, 0);
+	foreach ($board['drills'] as $drill) {
+		@imagefilledellipse($layer['png'], mmToPx($drill['x']), mmToPx($drill['y']), mmToPx($drill['diameter']), mmToPx($drill['diameter']), $black);
+	}
+}
+
+
+function filterDrillLayer(&$board)
+{
+	$w = $board['layers']['top']['width'];
+	$h = $board['layers']['top']['height'];
+	$board['layers']['drills'] = array();
+	$board['layers']['drills']['png'] = @imagecreatetruecolor($w, $h);
+	$board['layers']['drills']['width'] = $w;
+	$board['layers']['drills']['height'] = $h;
+
+	$transparent = @imagecolorallocatealpha($board['layers']['drills']['png'], 0, 0, 0, 127);
+	@imagealphablending($board['layers']['drills']['png'], false);
+	foreach ($board['drills'] as $drill) {
+		@imagefilledellipse($board['layers']['drills']['png'], mmToPx($drill['x']), mmToPx($drill['y']), mmToPx($drill['diameter']), mmToPx($drill['diameter']), $transparent);
+	}
+}
+
+
 function filterFabmodulesColor(&$layer)
 {
 	$w = @imagesx($layer['png']);
@@ -85,9 +111,32 @@ function filterFabmodulesPath(&$layer, $key, $opts = array())
 		'yz' => 0,
 		'xy' => 1
 	);
-	$args = array();
-	// TODO: encode parameter in filename
-	@exec('./bin/png_path /tmp/'.$layer['fn'].' /tmp/'.basename($layer['fn'], '.png').'.path');
+	$args = $default_args;
+	if (@is_array($opts['png_path'])) {
+		foreach ($opts['png_path'] as $key=>$val) {
+			if (isset($args[$key])) {
+				$args[$key] = $val;
+			}
+		}
+	}
+	if (@is_array($opts[$key]['png_path'])) {
+		foreach ($opts[$key]['png_path'] as $key=>$val) {
+			if (isset($args[$key])) {
+				$args[$key] = $val;
+			}
+		}
+	}
+	$s = '';
+	for ($i=count(array_keys($default_args))-1; 0 <= $i; $i--) {
+		$argKey = array_pop(array_slice(array_keys($default_args), $i, 1));
+		if ($default_args[$argKey] !== $args[$argKey]) {
+			for ($j=0; $j<=$i; $j++) {
+				$argKey = array_pop(array_slice(array_keys($default_args), $j, 1));
+				$s .= ' '.$args[$argKey];
+			}
+		}
+	}
+	@exec('./bin/png_path /tmp/'.$layer['fn'].' /tmp/'.basename($layer['fn'], '.png').'.path'.$s);
 }
 
 
@@ -108,15 +157,54 @@ function filterFabmodulesRml(&$layer, $key, $opts = array())
 		'z_up' => 1,
 		'direction' => 1
 	);
-	$args = array();
-	// TODO: encode parameters in filename
-	@exec('./bin/path_rml /tmp/'.basename($layer['fn'], '.png').'.path /tmp/'.basename($layer['fn'], '.png').'.rml');
+	$args = $default_args;
+	if (@is_array($opts['path_rml'])) {
+		foreach ($opts['path_rml'] as $key=>$val) {
+			if (isset($args[$key])) {
+				$args[$key] = $val;
+			}
+		}
+	}
+	if (@is_array($opts[$key]['path_rml'])) {
+		foreach ($opts[$key]['path_rml'] as $key=>$val) {
+			if (isset($args[$key])) {
+				$args[$key] = $val;
+			}
+		}
+	}
+	$s = '';
+	for ($i=count(array_keys($default_args))-1; 0 <= $i; $i--) {
+		$argKey = array_pop(array_slice(array_keys($default_args), $i, 1));
+		if ($default_args[$argKey] !== $args[$argKey]) {
+			for ($j=0; $j<=$i; $j++) {
+				$argKey = array_pop(array_slice(array_keys($default_args), $j, 1));
+				$s .= ' '.$args[$argKey];
+			}
+		}
+	}
+	@exec('./bin/path_rml /tmp/'.basename($layer['fn'], '.png').'.path /tmp/'.basename($layer['fn'], '.png').'.rml'.$s);
 }
 
 
 function filterFixDpi(&$layer)
 {
 	@exec('./bin/png_size /tmp/'.$layer['fn'].' '.($layer['width']/(300.0/25.4)).' '.($layer['height']/(300.0/25.4)));
+}
+
+
+function filterFlipX(&$layer)
+{
+	@imagealphablending($layer['png'], false);
+	$w = @imagesx($layer['png']);
+	$h = @imagesy($layer['png']);
+	for ($x = 0; $x < ceil(($w-1)/2); $x++) {
+		for ($y = 0; $y < $h; $y++) {
+			$left = @imagecolorat($layer['png'], $x, $y);
+			$right = @imagecolorat($layer['png'], $w-1-$x, $y);
+			@imagesetpixel($layer['png'], $x, $y, $right);
+			@imagesetpixel($layer['png'], $w-1-$x, $y, $left);
+		}
+	}
 }
 
 
@@ -190,6 +278,12 @@ function loadBoard($board, $rev)
 		}
 		return $ret;
 	}
+}
+
+
+function mmToPx($mm)
+{
+	return floor($mm*300.0/25.4);
 }
 
 
