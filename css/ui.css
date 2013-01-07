@@ -1,3 +1,34 @@
+.pcb-tool {
+	border-radius: 2px;
+	border-style: solid;
+	border-width: 1px;
+	cursor: pointer;
+	height: 30px;
+	left: 5px;
+	position: fixed;
+	width: 30px;
+}
+
+#pcb-tool-draw {
+	background-image: url("../img/icon-draw-bg.png");
+	top: 5px;
+}
+
+#pcb-tool-erase {
+	background-image: url("../img/icon-erase-bg.png");
+	top: 40px;
+}
+
+#pcb-tool-drill {
+	background-image: url("../img/icon-drill-bg.png");
+	top: 75px;
+}
+
+#pcb-tool-part {
+	background-image: url("../img/icon-part-bg.png");
+	top: 110px;
+}
+
 .pcb-ui {
 }
 

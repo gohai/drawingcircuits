@@ -1,4 +1,6 @@
 -- 0.1
+Implement object rotation for patterns
+Bug: Pattern rotation on bottom layer
 Bug: resize
 Bug: Jumper drawing
 Bug: Part drills vs outline zoomed?
@@ -10,6 +12,7 @@ Implement highlight
 Milling: safety, multiple steps for drills and substrate, figure out toolchange command and concatenate .rml files, encode tool parameters in filenames and in a .txt file, make drill order apparent through filenames, multiple passes
 Implements parts UI: Add drawing > name, file, [upload]; Add variant > name, parent, pins (with title, mark, description), title, description, longDescription, datasheet, datasheetPage, [commit]; Add comment > part, comment, [commit]; Add supplier > part, supplier, partNumber, url, [commit]; provide feedback whether contribution it is visible or not
 Rework colors
+Fix SVG rendering on Firefox
 Implement annotations toggle (also show pin names)
 Implement users (localStorage, .input-block-level, .btn, salt the hash)
 Implement metadata: title, description, bom, isPattern
@@ -32,6 +35,7 @@ Segmentation & show connections
 Smooth drawing using paper.js
 Try bmp2cnc (0.22)
 Export: Per-device quirks, PDF for etching, PDF for stencil, PDF for solder mask, PDF with build instructions
+Revisit variable names (emphasize units), mark static functions, document functions
 Make the canvas size static, introduce own viewport
 Try ctx.imageSmoothingEnabled
 Try a steady redraw

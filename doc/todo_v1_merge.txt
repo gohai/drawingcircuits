@@ -1,0 +1,438 @@
+	<div class="tool ui" id="tool-jumper" title="Place a jumper/via"></div>
+	<div class="tool ui" id="tool-sel" title="Select (shift to select multiple)"></div>
+	<div class="menu-slim ui" id="menu-del" title="Delete selected items"></div>
+	<div class="menu-slim ui" id="menu-rotate" title="Rotate selected items"></div>
+	<div class="ui" id="menu-zoomin" title="Zoom in"></div><div class="ui" id="menu-zoomout" title="Zoom out"></div>
+	<div class="ui" id="menu-ruler" title="Show/hide ruler"></div>
+	<div class="ui" id="menu-layers">
+		<div class="menu-layer-active menu-layer ui" id="menu-layer-top" title="Select layer">Top</div>
+		<div class="menu-layer ui" id="menu-layer-bottom" title="Select layer">Bottom</div>
+	</div>
+	<div class="menu-wide ui" id="menu-save" title="Save board on the server (shift to save as a new board, i.e. fork it)">Save</div>
+	<div class="menu-wide ui" id="menu-export" title="Export board for manufacturing">Export</div>
+	<div class="menu-wide ui" id="menu-clear" title="Draw a new board">Clear</div>
+
+
+html {
+	background-color: darkgrey;
+	cursor: crosshair;
+	font-family: "Open Sans", sans-serif;
+	font-size: 11px;
+	overflow: scroll;
+}
+
+/* UI */
+
+.ui {
+	z-index: 100;
+}
+
+.explain {
+	border-bottom-color: black;
+	border-bottom-width: 1px;
+	border-bottom-style: dashed;
+}
+
+.tool {
+	border-radius: 2px;
+	border-style: solid;
+	border-width: 1px;
+	cursor: pointer;
+	height: 30px;
+	left: 5px;
+	position: fixed;
+	width: 30px;
+}
+
+.tool-selected {
+	background-color: cyan;
+}
+
+#library {
+	background-color: white;
+	border-color: black;
+	border-radius: 2px;
+	border-style: solid;
+	border-width: 1px;
+	cursor: pointer;
+	height: 200px;
+	left: 46px;
+	overflow: hidden;
+	padding: 5px;
+	position: fixed;
+	top: 110px;
+	width: 140px;
+	z-index: 101;
+}
+
+#library-parts {
+	height: 100%;
+	overflow-x: hidden;
+	overflow-y: scroll;
+	width: 100%;
+}
+
+.library-part {
+	height: 20px;
+	line-height: 20px;
+	text-align: center;
+}
+
+.library-part:hover {
+	background-color: lightblue;
+}
+
+#tool-ratsnet {
+	background-image: url("../img/icon-ratsnet-bg.png");
+	display: none;
+	top: 145px;
+}
+
+#tool-fill {
+	background-image: url("../img/icon-fill-bg.png");
+	display: none;
+	top: 180px;
+}
+
+#tool-jumper {
+	background-image: url("../img/icon-jumper-bg.png");
+	display: none;
+	top: 215px;
+}
+
+#tool-sel {
+	background-image: url("../img/icon-sel-bg.png");
+	top: 260px;
+}
+
+.menu-slim {
+	border-radius: 2px;
+	border-style: solid;
+	border-width: 1px;
+	cursor: pointer;
+	height: 30px;
+	left: 5px;
+	position: fixed;
+	width: 30px;
+}
+
+#menu-del {
+	background-image: url("../img/icon-del-bg.png");
+	background-color: black;
+	top: 295px;
+}
+
+#menu-rotate {
+	background-image: url("../img/icon-rotate-bg.png");
+	background-color: black;
+	display: none;
+	top: 330px;
+}
+
+.menu-wide {
+	background-color: #ccc;
+	border-radius: 2px;
+	border-style: solid;
+	border-width: 1px;
+	cursor: pointer;
+	height: 18px;
+	line-height: 18px;
+	position: fixed;
+	right: 10px;
+	text-align: center;
+	width: 75px;
+}
+
+#menu-zoomin {
+	background-image: url("../img/icon-zoomin-bg.png");
+	border-radius: 2px;
+	border-style: solid;
+	border-width: 1px;
+	cursor: pointer;
+	height: 18px;
+	position: fixed;
+	right: 60px;
+	text-align: center;
+	top: 5px;
+	width: 25px;
+}
+
+#menu-zoomout {
+	background-image: url("../img/icon-zoomout-bg.png");
+	border-radius: 2px;
+	border-style: solid;
+	border-width: 1px;
+	cursor: pointer;
+	height: 18px;
+	position: fixed;
+	right: 10px;
+	text-align: center;
+	top: 5px;
+	width: 25px;
+}
+
+#menu-ruler {
+	background-image: url("../img/icon-ruler-bg.png");
+	border-radius: 2px;
+	border-style: solid;
+	border-width: 1px;
+	cursor: pointer;
+	display: none;
+	height: 18px;
+	position: fixed;
+	right: 10px;
+	text-align: center;
+	top: 28px;
+	width: 75px;
+}
+
+#menu-layers {
+	position: fixed;
+	height: 46px;
+	right: 10px;
+	top: 61px;
+	width: 75px;
+}
+
+.menu-layer {
+	border-radius: 2px;
+	cursor: pointer;
+	height: 18px;
+	line-height: 18px;
+	margin-bottom: 5px;
+	text-align: center;
+}
+
+.menu-layer-active {
+	background-color: lightblue;
+}
+
+.menu-layer:hover {
+}
+
+#menu-save {
+	top: 117px;
+}
+
+#menu-export {
+	top: 140px;
+}
+
+#menu-import {
+	top: 163px;
+}
+
+#add-part-to-library {
+	background-color: white;
+	border-color: black;
+	border-radius: 2px;
+	border-style: solid;
+	border-width: 1px;
+	cursor: pointer;
+	height: 200px;
+	overflow: hidden;
+	padding: 5px;
+	position: fixed;
+	right: 96px;
+	top: 162px;
+	width: 190px;
+	z-index: 101;
+}
+
+#add-part-to-library input,textarea {
+	width: 185px;
+}
+
+#add-part-to-library-description {
+	height: 80px;
+	max-height: 80px;
+	max-width: 185px;
+}
+
+#menu-clear {
+	top: 186px;
+}
+
+#menu-about {
+	display: none;
+	top: 209px;
+}
+
+/* Internals */
+
+#frame {
+	background-color: rgb(255, 255, 255);
+	/*background-color: rgb(253, 217, 129);*/
+	border-color: black;
+	border-style: solid;
+	border-width: 1px;
+	box-shadow:  3px 3px black;
+	left: 60px;
+	/* TODO: margin right & bottom 24px */
+	position: absolute;
+	top: 24px;
+}
+
+.ruler {
+	position: fixed;
+}
+
+#ruler-x {
+	height: 10px;
+	width: 200px;
+}
+
+#ruler-y {
+	height: 200px;
+	width: 10px;
+}
+
+.selectable {
+	border-color: transparent;
+	border-style: dashed;
+	border-width: 2px;
+}
+
+.selected {
+	border-color: red;
+}
+
+.layer {
+	position: absolute;
+	opacity: 0.9;
+}
+
+.layer-active {
+}
+
+.cursor {
+	cursor: none;
+	position: fixed;
+	z-index: 99;
+}
+
+.drill {
+	position: absolute;
+}
+
+.part {
+	position: absolute;
+}
+
+
+		$('.tool').on('click', function(e) {
+			var p = $(this).prop('id').lastIndexOf('-');
+			if (p === -1) {
+				return;
+			}
+			$.pcb.tool($(this).prop('id').substr(p+1));
+		});
+		$('#tool-draw').on('click', function(e) {
+			if (e.shiftKey || e.altKey) {
+				var s = prompt('Set diameter (mm)', $.pcb.diameter());
+				if (s === null) {
+					return;
+				}
+				$.pcb.diameter(parseFloat(s));
+			}
+			if (e.altKey) {
+				promptManualCoords();
+			}
+		});
+		$('#tool-erase').on('click', function(e) {
+			if (e.shiftKey || e.altKey) {
+				var s = prompt('Set diameter (mm)', $.pcb.diameter());
+				if (s === null) {
+					return;
+				}
+				$.pcb.diameter(parseFloat(s));	
+			}
+			if (e.altKey) {
+				promptManualCoords();
+			}
+		});
+		$('#tool-drill').on('click', function(e) {
+			if (e.shiftKey || e.altKey) {
+				var s = prompt('Set diameter (mm)', $.pcb.diameter());
+				if (s === null) {
+					return;
+				}
+				$.pcb.diameter(parseFloat(s));	
+			}
+			if (e.altKey) {
+				promptManualCoords();
+			}
+		});
+		$('#menu-del').on('click', function(e) {
+			$.pcb.remove();
+		});
+		$('#tool-parts').on('click', function(e) {
+			$.pcb.showLibrary();
+			return false;
+		});
+		$('#menu-zoomin').on('click', function(e) {
+			$.pcb.zoom($.pcb.zoom()-0.25);
+		});
+		$('#menu-zoomout').on('click', function(e) {
+			$.pcb.zoom($.pcb.zoom()+0.25);
+		});
+		$('#menu-ruler').on('click', function(e) {
+			$.pcb.ruler(!$.pcb.ruler());
+		});
+		$('.menu-layer').on('click', function(e) {
+			var p = $(this).prop('id').lastIndexOf('-');
+			if (p === -1) {
+				return;
+			}
+			$.pcb.layer($(this).prop('id').substr(p+1));
+		});
+		$('#menu-save').on('click', function(e) {
+			if (e.shiftKey) {
+				$.pcb.save(true);
+			} else {
+				$.pcb.save();
+			}
+			// visual feedback
+			$(this).css('background-color', 'lightblue');
+			var that = this;
+			var checkSave = function() {
+				if ($.pcb.requestDone()) {
+					$(that).css('background-color', '');
+				} else {
+					setTimeout(checkSave, 100);
+				}
+			};
+			// TODO: just checkSave()?
+			setTimeout(checkSave, 100);
+		});
+		$('#menu-export').on('click', function(e) {
+			window.location = options.baseUrl+'ajax.php?method=export&type=rml&board=5';
+			//+options.board+'&rev='+options.rev;
+		});
+		$('#menu-import').on('click', function(e) {
+			$.pcb.addPartToLibrary();
+			// prevent the dialog from closing right away
+			return false;
+		});
+		$('#menu-clear').on('click', function(e) {
+			if (confirm("Clear board?")) {
+				$.pcb.clear();
+			}
+		});
+
+
+var promptManualCoords = function() {
+		s = prompt('Set x coordinate (mm)', options.lastManualX);
+		if (s === null) {
+			return;
+		}
+		var x = parseFloat(s);
+		s = prompt('Set y coordinate (mm)', options.lastManualY);
+		if (s === null) {
+			return;
+		}
+		var y = parseFloat(s);
+		$.pcb.point(x, y);
+		lastManualX = x;
+		lastManualY = y;
+	}

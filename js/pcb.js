@@ -911,8 +911,6 @@
 			} else if (e.charCode == 80) {
 				// P
 				$.pcb.tool('pattern');
-				// TODO: remove
-				$.pcb.selectPattern(1);
 			} else if (e.charCode == 91) {
 				// [
 				$.pcb.diameter($.pcb.diameter()-1);
@@ -931,8 +929,6 @@
 			} else if (e.charCode == 112) {
 				// p
 				$.pcb.tool('part');
-				// TODO: remove
-				$.pcb.selectPart('atmega168-dip28');
 			} else if (e.charCode == 114) {
 				// r
 				$.pcb.ruler(!$.pcb.ruler());
@@ -1105,6 +1101,8 @@
 
 		$.pcb.clear();
 		$.pcb.library();
+		// TODO: remove
+		$.pcb.selectPattern(1);
 	});
 
 	// Interface
@@ -1413,6 +1411,8 @@
 				}, function(data) {
 					if (data !== null) {
 						options.library = data;
+						// TODO: remove
+						$.pcb.selectPart('atmega168-dip28');
 					} else {
 						options.library = null;
 					}

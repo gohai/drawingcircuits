@@ -21,4 +21,12 @@ $(document).ready(function() {
 	$('html').on('pcb-saved', function(e) {
 		$('#pcb-ui-banner-saving').remove();
 	});
+	$('.pcb-tool').on('click', function(e) {
+		var p = $(this).prop('id').lastIndexOf('-');
+		if (p === -1) {
+			return;
+		} else {
+			$.pcb.tool($(this).prop('id').substr(p+1));
+		}
+	});
 });
