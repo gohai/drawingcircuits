@@ -1,3 +1,7 @@
+// pcb.js
+// Copyright Gottfried Haider 2013.
+// This source code is licensed under the GNU General Public License. See the file COPYING for more details.
+ 
 (function($, window, document, undefined) {
 	var options = {
 		auth: {
@@ -51,7 +55,6 @@
 	var view = {};
 
 	// Helper functions
-	// TODO: revisit variable names, document functions, mark static functions, emphasize units, draw vs render
 	var addPartsDrills = function(parts, drills) {
 		// add parts' drill holes
 		for (var p in parts) {
@@ -124,9 +127,9 @@
 			arg += encodeURIComponent(JSON.stringify(data[key]));
 		}
 		var iframe = $('<iframe class="pcb-download" style="display: none;"></iframe>');
-		// TODO: Resource interpreted as Document but transferred with MIME type application/octet-stream
+		// TODO (later): Resource interpreted as Document but transferred with MIME type application/octet-stream
 		$(iframe).prop('src', options.baseUrl+'ajax.php'+arg);
-		// TODO: set and check for cookie (see jquery.fileDownload.js)
+		// TODO (later): set and check for cookie (see jquery.fileDownload.js)
 		$('body').append(iframe);
 	};
 	// draw functions need to be static (use opt instead of the global view)
@@ -188,7 +191,7 @@
 				view.toolData.rot = 0;
 			}
 			ctx.rotate(view.toolData.rot*Math.PI/180);
-			// TODO: cache board
+			// TODO (later): cache board
 			ctx.drawImage(cvs, -cvs.width/2, -cvs.height/2);
 		} else if (view.tool == 'text') {
 			ctx.strokeStyle = '#f00';
@@ -250,7 +253,6 @@
 		if (img !== null) {
 			var w = mmToPx(options.library[part].width, opt.zoom);
 			var h = mmToPx(options.library[part].height, opt.zoom);
-			// TODO: this is low-res on Firefox
 			ctx.drawImage(img, (-w/2)+1, (-h/2)+1, w, h);
 		}
 		ctx.restore();
@@ -506,7 +508,6 @@
 
 		// objects
 		// operate on a local copy of src
-		// TODO: rotation
 		var src = $.extend(true, {}, src);
 		var offsetX = srcX-src.width/2;
 		var offsetY = srcY-src.height/2;
@@ -517,7 +518,7 @@
 			for (var o in objs) {
 				var o = objs[o];
 				// move object
-				// TODO: convert into function
+				// TODO: consolidate with .moveObject
 				var obj = src[scope][o];
 				if (scope == 'drills') {
 					obj.x += offsetX;
@@ -566,7 +567,7 @@
 				}
 			}
 		}
-		// TODO: merge BOMs
+		// TODO (later): merge BOMs
 	};
 	var mirrorContext = function(ctx) {
 		ctx.translate(ctx.canvas.width/2, 0);
@@ -625,8 +626,7 @@
 			drawMouseCursor(ctx, view.lastMouseX, view.lastMouseY);
 		}
 		// ruler
-		// TODO: rework
-		// TODO: have it always visible
+		// TODO: rework (position fixed)
 		if (view.ruler == true) {
 			ctx.save();
 			ctx.strokeStyle = '#000';
@@ -699,7 +699,6 @@
 		for (var j in brd.jumpers) {
 			var jumper = brd.jumpers[j];
 			var coords = getJumperCoords(jumper, brd);
-			// TODO: bug
 			if (1 < coords.layers.length || (coords.layers.length == 1 && coords.layers[0] != opt.layer)) {
 				drawJumper(ctx, coords, opt);
 			}
@@ -913,7 +912,7 @@
 				// P
 				$.pcb.tool('pattern');
 				// TODO: remove
-				$.pcb.selectPattern(10);
+				$.pcb.selectPattern(1);
 			} else if (e.charCode == 91) {
 				// [
 				$.pcb.diameter($.pcb.diameter()-1);
@@ -1283,7 +1282,7 @@
 				return false;
 			}
 			if (diameter === undefined) {
-				diameter = $.pcb.diameter();
+				diameter = view.diameterDrill;
 			} else if (typeof diameter != 'number') {
 				return false;
 			}
@@ -1315,7 +1314,10 @@
 				}
 			}
 		},
-		export: function() {
+		export: function(options) {
+			if (typeof options != 'object') {
+				options = {};
+			}
 			// save board first
 			$.pcb.save();
 			var retry = function() {
@@ -1329,7 +1331,8 @@
 				downloadRequest({
 					method: 'export',
 					board: board.board,
-					rev: board.rev
+					rev: board.rev,
+					opts: options
 				});
 			};
 			setTimeout(retry, 100);
@@ -1343,6 +1346,9 @@
 					jumper.from.layer = from.layer;
 				} else {
 					jumper.from.layer = $.pcb.layer();
+				}
+				if (jumper.from.layer == 'substrate') {
+					return false;
 				}
 			} else if (typeof from == 'string') {
 				// jumpers can be added to drills
@@ -1362,6 +1368,9 @@
 					jumper.to.layer = to.layer;
 				} else {
 					jumper.to.layer = $.pcb.layer();
+				}
+				if (jumper.to.layer == 'substrate') {
+					return false;
 				}
 			} else if (typeof to == 'string') {
 				var obj = findObject(to, board, [ 'drills' ]);
@@ -1501,11 +1510,11 @@
 			if (typeof x != 'number' || typeof y != 'number') {
 				return false;
 			}
-			if (typeof layer != 'string') {
-				layer = $.pcb.layer();
-			}
 			if (typeof rot != 'number') {
 				rot = 0;
+			}
+			if (typeof layer != 'string') {
+				layer = $.pcb.layer();
 			}
 			if (layer != 'top' && layer != 'bottom') {
 				return false;
@@ -1782,14 +1791,14 @@
 						console.log('added atmega168-dip28');
 						console.log(data);
 					});
-					$.pcb.addPartComment('atmega168-dip28', 'Nice chip', function(data) {
-						console.log('added comment');
-						console.log(data);
-					});
-					$.pcb.addPartSupplier('atmega168-dip28', 'DigiKey', '123', '456', function(data) {
-						console.log('added supplier');
-						console.log(data);
-					});
+					//$.pcb.addPartComment('atmega168-dip28', 'Nice chip', function(data) {
+					//	console.log('added comment');
+					//	console.log(data);
+					//});
+					//$.pcb.addPartSupplier('atmega168-dip28', 'DigiKey', '123', '456', function(data) {
+					//	console.log('added supplier');
+					//	console.log(data);
+					//});
 				});
 				$(this).remove();
 			});

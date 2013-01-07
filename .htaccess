@@ -1,6 +1,7 @@
 RewriteEngine On
 RewriteRule ^(\d+)/*$ index.php?board=$1 [L]
 RewriteRule ^(\d+)/(\d+)/*$ index.php?board=$1&rev=$2 [L]
+RewriteRule ^COPYING/*$ - [F,L]
 RewriteRule ^forgot-password/*$ forgot-password.php [L]
 RewriteRule ^login/*$ login.php [L]
 RewriteRule ^logout/*$ logout.php [L]

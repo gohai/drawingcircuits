@@ -1,3 +1,7 @@
+// ui.js
+// Copyright Gottfried Haider 2013.
+// This source code is licensed under the GNU General Public License. See the file COPYING for more details.
+
 $(document).ready(function() {
 	$('html').on('pcb-loading', function(e) {
 		var elem = $('<div id="pcb-ui-banner-loading" class="pcb-ui-banner pcb-ui">Loading</div>');

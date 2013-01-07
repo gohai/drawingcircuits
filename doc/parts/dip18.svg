@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 15.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="64.432px" height="24.435px" viewBox="0 0 64.432 24.435" enable-background="new 0 0 64.432 24.435" xml:space="preserve">
+<g id="drills">
+	<circle id="pin9" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="61.017" cy="23.017" r="1.417"/>
+	<circle id="pin8" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="53.816" cy="23.017" r="1.417"/>
+	<circle id="pin7" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="46.616" cy="23.017" r="1.417"/>
+	<circle id="pin6" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="39.416" cy="23.017" r="1.417"/>
+	<circle id="pin5" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="32.216" cy="23.017" r="1.417"/>
+	<circle id="pin4" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="25.016" cy="23.017" r="1.418"/>
+	<circle id="pin3" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="17.815" cy="23.017" r="1.417"/>
+	<circle id="pin2" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="10.615" cy="23.017" r="1.418"/>
+	<circle id="pin1" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="3.415" cy="23.017" r="1.417"/>
+	<circle id="pin10" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="61.018" cy="1.417" r="1.417"/>
+	<circle id="pin11" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="53.817" cy="1.417" r="1.417"/>
+	<circle id="pin12" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="46.617" cy="1.417" r="1.417"/>
+	<circle id="pin13" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="39.417" cy="1.417" r="1.417"/>
+	<circle id="pin14" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="32.217" cy="1.417" r="1.418"/>
+	<circle id="pin15" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="25.017" cy="1.417" r="1.417"/>
+	<circle id="pin16" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="17.816" cy="1.417" r="1.418"/>
+	<circle id="pin17" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="10.616" cy="1.417" r="1.417"/>
+	<circle id="pin18" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="3.416" cy="1.417" r="1.418"/>
+</g>
+<g id="outline">
+	<g>
+		<path fill="#231F20" d="M62.432,5.217v14H2v-2.599c1.67-0.762,2.834-2.448,2.834-4.401S3.67,8.578,2,7.816V5.217H62.432
+			 M64.432,3.217H0v6.166c1.565,0,2.834,1.269,2.834,2.834S1.565,15.052,0,15.052v6.166h64.432V3.217L64.432,3.217z"/>
+	</g>
+</g>
+</svg>

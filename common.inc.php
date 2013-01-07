@@ -1,5 +1,14 @@
 <?php
 
+/*
+ *	common.inc.php
+ *	Shared functions specific to Drawing Circuits
+ *
+ *	Copyright Gottfried Haider 2013.
+ *	This source code is licensed under the GNU General Public License.
+ *	See the file COPYING for more details.
+ */
+
 @require_once('config.inc.php');
 @require_once('db.inc.php');
 @require_once('util.inc.php');

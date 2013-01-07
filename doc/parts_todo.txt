@@ -1,0 +1,11 @@
+Arduino shield
+Audio jack
+Capacitor
+Diode (1N4001)
+Fuse holder (5x20)
+ICs (DIP-8, DIP-16)
+Potentiometer
+Power jack
+Resistor
+Screw terminals (2, 3)
+Voltage regulator

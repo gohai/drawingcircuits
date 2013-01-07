@@ -1,0 +1,235 @@
+The JavaScript API to Drawing Circuits is still very much in flux. The authoritative source is therefore only the source file itself (../js/pcb.js).
+
+
+$.pcb.addDrawing(string part, File svg, function success)
+
+Uploads a SVG drawing to the server.
+part .. name of the part or footprint (e.g. "dip28")
+svg .. File object, from an <input> element
+success .. will be called with the (prototype) part object as an argument
+
+$.pcb.addPart(string part, string title, string parent, object overlay, function success)
+
+Adds a part (variant of a drawing) to the server.
+part .. name of the part (e.g. "atmega168")
+title .. human-readable name (e.g. "Atmega 168 (DIP 28)")
+parent .. name of the parent drawing or part (e.g. "dip28")
+overlay .. object that will overwrite some of the parent's properties
+success .. will be called with the part object as an argument
+
+$.pcb.addPartComment(string part, string comment, function success)
+
+Adds a comment to a part.
+part .. name of the part (e.g. "atmega168")
+success .. will be called with the comment object as an argument
+
+$.pcb.addPartSupplier(string part, string supplier, string partNumber, string url, function success)
+
+Adds a supplier to a part.
+part .. name of the part (e.g. "atmega168")
+partNumber .. supplier's part number
+url .. URL to order the part
+success .. will be called with the supplier object as an argument
+
+$.pcb.author()
+
+Returns the user id of the board's author. NULL means that the board has not been saved yet or that the user was not logged in.
+
+$.pcb.baseUrl()
+
+Returns the site's base URL.
+
+$.pcb.baseUrl(string url)
+
+Sets the site's base URL.
+
+$.pcb.board()
+
+Returns the board's id. NULL means that the board has not been saved yet.
+
+$.pcb.clear(number width, number height)
+
+Clears the board.
+width .. width of the new board in mm (default: current board width)
+height .. height of the new board in mm (default: current board height)
+
+$.pcb.diameter()
+
+Returns the diameter of the current tool in mm.
+
+$.pcb.diameter(number mm)
+
+Sets the diameter of the current tool in mm.
+
+$.pcb.dimensions()
+
+Returns an object with the board's dimensions in mm.
+
+$.pcb.drill(number x, number y, number diameter)
+
+Creates a drill hole.
+x, y .. center of the drill hole in mm
+diameter .. diameter in mm (default: current diameter for the drill tool)
+Returns the drill's object name.
+
+$.pcb.editText(string name, string string)
+
+Changes a text annotation.
+name .. text object name
+
+$.pcb.export(object options)
+
+Downloads an export version of the board.
+options .. options for the various steps (see filter* functions in ../common.inc.php, fab_modules.html)
+
+$.pcb.jumper(mixed from, mixed to)
+
+Create a jumper annotation.
+from .. either a drill object name or an {x: .., y: ..} object
+to .. either a drill object name or an {x: .., y: ..} object
+Returns the jumper's object name.
+
+$.pcb.layer()
+
+Returns the current layer.
+
+$.pcb.layer(string l)
+
+Sets the current layer.
+
+$.pcb.library(boolean forceReload)
+
+Returns an object holding all available parts.
+forceReload .. reload the library from the server (default: false)
+
+$.pcb.line(number x1, number y1, number x2, number y2)
+
+Draws a line using the currently set tool.
+x1, y1, x2, y2 .. coordinates in mm
+
+$.pcb.load(number brd, number rev)
+
+Loads a board.
+brd .. board id
+rev .. revision to load (default: latest revision)
+
+$.pcb.moveObject(string name, number x, number y)
+
+Moves an object (could be either a part, drill hole or annotation).
+name .. object name
+x,y .. absolute coordinates to move it to in mm
+
+$.pcb.objects(boolean withPartDrills)
+
+Returns an object holding all the board's objects.
+withPartDrills .. include parts' drill holes under .drills
+
+$.pcb.parentBoard()
+
+Returns the board's parent, i.e. the board the drawing started out from.
+
+$.pcb.part(string part, number x, number y, number rot, string layer)
+
+Places a part on the board.
+part .. name of the part (see $.pcb.library)
+x, y .. center of the part in mm
+rot .. part rotation in degrees, clockwise (default: 0)
+layer .. layer to place it on (default: current layer)
+Return the part name.
+
+$.pcb.pattern(number x, number y, number rot)
+
+Places the currently loaded pattern (i.e. another board) on the board. See $.pcb.setPattern.
+x, y .. center of the pattern in mm
+rot .. pattern rotation in degrees, clockwise (default: 0)
+
+$.pcb.point(number x, number y)
+
+Draws on the board using the currently selected tool.
+x, y .. coordinates in mm
+
+$.pcb.removeObject(string name)
+
+Remove an object (could be either a part, drill hole or annotation).
+name .. object name
+
+$.pcb.requestPending()
+
+Returns whether or not an AJAX request is pending.
+
+$.pcb.resize(number width, number height, string anchor)
+
+Resizes the board. Objects that are no longer visible after the operation will be removed.
+width .. width in mm
+height .. height in mm
+anchor .. where to place the existing board in relation to the new dimensions (e.g. "ne" for the top-left corner etc, default: "" - the center)
+
+$.pcb.rev()
+
+Returns the board's current revision. This number changes after each save.
+
+$.pcb.rotateObject(string name, number deg)
+
+Rotates an object (could be either a part, drill hole or annotation).
+name  .. object name
+deg .. rotation in degrees, clockwise
+
+$.pcb.ruler()
+
+Returns whether or not the ruler is visible
+
+$.pcb.ruler(boolean enable)
+
+Shows or hides the ruler
+
+$.pcb.save(boolean asNew)
+
+Saves the board.
+asNew .. save it as a new board, rather than as a revision of the already existing board
+
+$.pcb.selectPart(string part)
+
+Selects the current part.
+part .. name of the part (see $.pcb.library)
+
+$.pcb.selectPattern(number brd)
+
+Selects the current pattern (i.e. another board).
+brd .. board id
+
+$.pcb.testParts()
+
+Shows a form for uploading a drawing. Will be removed.
+
+$.pcb.text(mixed parent, string string)
+
+Creates a text annotation.
+parent .. either an object name or an {x: .., y: ..} object
+Returns the text object's name.
+
+$.pcb.tool()
+
+Returns the current tool.
+
+$.pcb.tool(string t)
+
+Sets the current tool.
+t .. either "draw", "drill", "erase", "part", "pattern", "text"
+
+$.pcb.via(string drill)
+
+Returns whether a drill is marked as having a via.
+drill .. drill object name
+
+$.pcb.via(string drill, boolean isVia)
+
+Sets whether or not a drill is marked as having a via.
+drill .. drill object name
+
+$.pcb.zoom()
+
+Returns the current zoom factor.
+
+$.pcb.zoom(number fac)
+
+Sets the current zoom factor.

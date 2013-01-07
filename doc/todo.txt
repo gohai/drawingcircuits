@@ -1,9 +1,39 @@
 -- 0.1
-Recompile fab_modules
-Set window title in .load()
+Bug: resize
+Bug: Jumper drawing
+Bug: Part drills vs outline zoomed?
+Look through all TODOs in source tree
+
+-- 0.2
+Re-implement selection (Ctrl+A, Ctrl+D, Tab, Shift & click)
+Implement highlight
+Milling: safety, multiple steps for drills and substrate, figure out toolchange command and concatenate .rml files, encode tool parameters in filenames and in a .txt file, make drill order apparent through filenames, multiple passes
+Implements parts UI: Add drawing > name, file, [upload]; Add variant > name, parent, pins (with title, mark, description), title, description, longDescription, datasheet, datasheetPage, [commit]; Add comment > part, comment, [commit]; Add supplier > part, supplier, partNumber, url, [commit]; provide feedback whether contribution it is visible or not
+Rework colors
+Implement annotations toggle (also show pin names)
+Implement users (localStorage, .input-block-level, .btn, salt the hash)
+Implement metadata: title, description, bom, isPattern
+Implement gallery (filter for patterns, rating & use count)
+Implement schematics library
+Re-implement recording of traces (using Web Sockets)
+Set window title in .load
+Switch URLs to "//.." (also in Hotglue)
+Add project description to page ("?" in top right corner)
 
 -- later
+Trace outline with paper.js (var svgNode = paper.project.exportSvg(); var svg = new XMLSerializer().serializeToString(svgNode); see also: http://potrace.sourceforge.net/)
+Support Pads
+Implement Don Mode (background images, music, random schematics and parts to use)
 Tablet compatibility
-checkMillability (drill hole diameter including parts, too narrow traces)
+Mailing list, including new submissions waiting to be moderated
+checkMillability (traces being too narrow, drill hole diameters - including parts)
+GND & VCC annotations
+Segmentation & show connections
+Smooth drawing using paper.js
+Try bmp2cnc (0.22)
+Export: Per-device quirks, PDF for etching, PDF for stencil, PDF for solder mask, PDF with build instructions
+Make the canvas size static, introduce own viewport
+Try ctx.imageSmoothingEnabled
 Try a steady redraw
+Try 1 bit per pixel
 Make it possible to flip layers when applying a pattern

@@ -1,5 +1,14 @@
 <?php
 
+/*
+ *	db.inc.php
+ *	MySQL Database abstraction
+ *
+ *	Copyright Gottfried Haider 2013.
+ *	This source code is licensed under the GNU General Public License.
+ *	See the file COPYING for more details.
+ */
+
 // Default database configuration
 // see db_default_context
 //@define('DB_HOST', 'localhost');

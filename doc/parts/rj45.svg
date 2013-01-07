@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 15.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="43.14px" height="58.92px" viewBox="0 0 43.14 58.92" enable-background="new 0 0 43.14 58.92" xml:space="preserve">
+<g id="drills">
+	<circle id="pin7" fill="none" stroke="#000000" stroke-width="0.001" stroke-miterlimit="10" cx="12.6" cy="48.54" r="1.417"/>
+	<circle id="pin5" fill="none" stroke="#000000" stroke-width="0.001" stroke-miterlimit="10" cx="19.8" cy="48.54" r="1.417"/>
+	<circle id="pin3" fill="none" stroke="#000000" stroke-width="0.001" stroke-miterlimit="10" cx="27" cy="48.54" r="1.417"/>
+	<circle id="pin1" fill="none" stroke="#000000" stroke-width="0.001" stroke-miterlimit="10" cx="34.17" cy="48.54" r="1.417"/>
+	<circle id="pin8" fill="none" stroke="#000000" stroke-width="0.001" stroke-miterlimit="10" cx="9" cy="55.74" r="1.417"/>
+	<circle id="pin6" fill="none" stroke="#000000" stroke-width="0.001" stroke-miterlimit="10" cx="16.2" cy="55.74" r="1.417"/>
+	<circle id="pin4" fill="none" stroke="#000000" stroke-width="0.001" stroke-miterlimit="10" cx="23.4" cy="55.74" r="1.417"/>
+	<circle id="pin2" fill="none" stroke="#000000" stroke-width="0.001" stroke-miterlimit="10" cx="30.66" cy="55.8" r="1.417"/>
+	<circle fill="none" stroke="#000000" stroke-width="0.001" stroke-miterlimit="10" cx="5.4" cy="30.6" r="4.252"/>
+	<circle fill="none" stroke="#000000" stroke-width="0.001" stroke-miterlimit="10" cx="37.788" cy="30.6" r="4.252"/>
+</g>
+<g id="outline">
+	<g>
+		<path d="M41.14,2v54.92H2V2H41.14 M43.14,0H0v58.92h43.14V0L43.14,0z"/>
+	</g>
+	<line fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" x1="0" y1="22.08" x2="43.14" y2="22.08"/>
+</g>
+</svg>

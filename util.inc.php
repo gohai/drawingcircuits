@@ -5,6 +5,7 @@
  *	Static utility functions
  *
  *	Copyright Gottfried Haider, Danja Vasiliev 2010.
+ *	Copyright Gottfried Haider 2010-2013.
  *	This source code is licensed under the GNU General Public License.
  *	See the file COPYING for more details.
  */
