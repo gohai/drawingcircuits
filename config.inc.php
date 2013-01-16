@@ -7,7 +7,7 @@ error_reporting(E_ALL);
 
 // else set defaults
 @define('BASE_URL', 'http://host/dir/');		// website base url
-@define('COMMENT_VISIBILITY_GUEST', 0);		// 1 if anonymous users' comments should be visible by default, 0 if not
+@define('COMMENT_VISIBILITY_GUEST', 0);			// 1 if anonymous users' comments should be visible by default, 0 if not
 @define('COMMENT_VISIBILITY_USER', 1);			// 1 if logged in users' comments should be visible by default, 0 if not
 @define('COMMENT_VISIBILITY_MODERATOR', 1);		// 1 if moderators' comments should be visible by default, 0 if not
 @define('GOOGLE_ANALYTICS', '');				// Google Analytics id
@@ -19,6 +19,7 @@ error_reporting(E_ALL);
 @define('SUPPLIER_VISIBILITY_GUEST', 0);		// 1 if anonymous users' suppliers should be visible by default, 0 if not
 @define('SUPPLIER_VISIBILITY_USER', 0);			// 1 if logged in users' suppliers should be visible by default, 0 if not
 @define('SUPPLIER_VISIBILITY_MODERATOR', 1);	// 1 if moderators' suppliers should be visible by default, 0 if not
+@define('TMP_PATH', '/tmp/');					// location of temporary files
 
 
 function base_url()

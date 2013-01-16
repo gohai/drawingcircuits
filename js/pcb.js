@@ -1314,7 +1314,8 @@
 		},
 		export: function(options) {
 			if (typeof options != 'object') {
-				options = {};
+				// assume that we're being passed a preset name
+				options = $.pcb.exportPreset(options);
 			}
 			// save board first
 			$.pcb.save();
@@ -1334,6 +1335,57 @@
 				});
 			};
 			setTimeout(retry, 100);
+		},
+		exportPreset: function(preset) {
+			if (preset === undefined) {
+				preset = 'modela';
+			}
+			if (preset == 'modela') {
+				return {
+					png_path: {
+						offset_diameter: 0.79375,		// for 1/32" end mill
+					},
+					path_rml: {
+						speed: 2,
+						xmin: 0,
+						ymin: 0
+					},
+					top: {
+						png_path: {
+							offset_number: -1
+						},
+						path_rml: {
+							zmin: -0.3
+						}
+					},
+					drills: {
+						png_path: {
+							offset_number: 1
+						},
+						path_rml: {
+							zmin: -2.1
+						}
+					},
+					substrate: {
+						png_path: {
+							offset_number: 1
+						},
+						path_rml: {
+							zmin: -2.1
+						}
+					},
+					bottom: {
+						png_path: {
+							offset_number: -1
+						},
+						path_rml: {
+							zmin: -0.3
+						}
+					}
+				};
+			} else {
+				return {};
+			}
 		},
 		jumper: function(from, to) {
 			var jumper = {};

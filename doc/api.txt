@@ -80,7 +80,12 @@ name .. text object name
 $.pcb.export(object options)
 
 Downloads an export version of the board.
-options .. options for the various steps (see filter* functions in ../common.inc.php, fab_modules.html)
+options .. options for the various steps (see filter* functions in ../common.inc.php, fab_modules.html) or preset name (default: modela)
+
+$.pcb.exportPreset(string preset)
+
+Returns the options associated with a preset.
+preset .. preset name (default: modela)
 
 $.pcb.jumper(mixed from, mixed to)
 

@@ -1,0 +1,32 @@
+Milling Circuit Boards
+
+This is how to mill boards on the Roland Modela MDX-40 machine, as found in UCLA's Design Media Arts fabrication workshop:
+
+The machine's coordinate system is different from the one used in the drawing tool: here the coordinate origin is in the bottom left corner (when looking at the workspace from above), with the X+ axis going to the right and Y+ axis going upwards. When boards are being exported they get rotated by 90 degrees counterclockwise, which means that the top-left corner of your drawing will be indeed placed at the origin of the machine's coordinate system (or more specific: the machine's user coordinate system). You have to keep in mind, though, that the X and Y axis are inverted, so a "portrait" style material would have to placed "landscape" - again, when looking at the machine from above.
+
+The end mills we are using have to fit the machine's 1/8" collar, meaning the end mill's shank diameter has to be 1/8" as well. I am currently using a 1/32" (0.79375 mm) carbide end mill with four flutes (McMaster-Carr: 8977A793) and a 1/64" (0.396875 mm) carbide end mill, again with four flutes (McMaster-Carr: 8887A112). The offset_diameter (png_path tool) should be set to the diameter of the end mill. The speed parameter (path_rml tool) sets the feed rate (MIT gives 4 mm/s for 1/64" end mills, but advises to reduce the speed to 2-3 mm/s for newer end mills as they tend to be more brittle).
+
+The copper clad boards I am currently using are double-sided 4x6 inch (101.6x152.4 mm) blank FR1 boards (Inventables: 24201-04). Their thickness is about 1.5 mm. FR1, FR2 and FR3 are based on cotton paper, and both easier to machine as well as less of a health issue compared to the fiberglassed-based FR4 material.
+
+The number of contours to be removed around traces is determined by the offset_number parameter (png_path tool). The program's default is 1, whereas MIT's website list 4 as a reasonable default. A value of -1 removes all copper, leaving just the traces. (For drill holes and substrate you want to use 1.)
+
+To get the recommended options for milling a board on the Roland Modela, call $.pcb.exportPreset('modela'). The returned object can be changed accordingly and passed as an argument to $.pcb.export(). See filter* functions in ../common.inc.php, fab_modules.html for more information.
+
+We feed the rml files to the machine using the "Roland VPanel for MDX-40A" application.
+
+The machine will cut the rml files starting from the origin of the user coordinate system, rather than, for example, the current coordinates the spindle might be positioned at. We therefore position the origin at the top left corner of our copper clad board. This is done by moving the spindle and selecting Set Origin Point: User Coordinate System > Set: XY Origin here > Apply.
+When milling single-sided boards the origin can really be set to any point on the copper clad board. For double-sided boards, however, the origin needs to be precisely at the corner of the board, in order to ensure proper registration.
+
+After inserting the drill bit, we need to establish the origin on the Z axis. For this we place the sensor on the center of our copper clad board, move the spindle on top of it and select Set Origin Point: User Coordinate System > Set Z Origin using sensor > Detect. With this done, and the thickness of the Z0 Sensor set to (the default) 15 mm in the applications "Setup" screen, the following zmin parameters (path_rml tool) have found to work well: -0.3 for top and bottom, -2.1 for drills and substrate.
+
+Tip: Move the spindle close to your coordinate origin before you begin the cut. Make sure not to run your end mill into the copper clad board, however.
+
+I am currently using the default RPM of 4500.
+
+Submit rml files to the machine in this order: top, drills, bottom, substrate. Flip the board across the machine's X axis before and after milling the bottom file.
+
+Drill holes and the substrate layer will probably cut a little bit into your bed/spoil board.
+
+Sometimes it is necessary to press the Quit Cutting button at the lower right of the application before you can continue working with the mill. This shouldn't affect any of the settings (origin of the user coordinate system or similar).
+
+A tool change command does not seem to be implemented in the RML format (tested with Modela Player 4 and exporting to file). Concatenating multiple RML files thus doesn't seem to make much sense.

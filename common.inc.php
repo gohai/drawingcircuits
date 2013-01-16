@@ -103,7 +103,7 @@ function filterFabmodulesColor(&$layer)
 }
 
 
-function filterFabmodulesPath(&$layer, $key, $opts = array())
+function filterFabmodulesPath(&$layer, $layerName, $opts = array())
 {
 	// TODO: check against source
 	$default_args = array(
@@ -128,8 +128,8 @@ function filterFabmodulesPath(&$layer, $key, $opts = array())
 			}
 		}
 	}
-	if (@is_array($opts[$key]['png_path'])) {
-		foreach ($opts[$key]['png_path'] as $key=>$val) {
+	if (@is_array($opts[$layerName]['png_path'])) {
+		foreach ($opts[$layerName]['png_path'] as $key=>$val) {
 			if (isset($args[$key])) {
 				$args[$key] = $val;
 			}
@@ -143,19 +143,24 @@ function filterFabmodulesPath(&$layer, $key, $opts = array())
 				$argKey = array_pop(array_slice(array_keys($default_args), $j, 1));
 				$s .= ' '.$args[$argKey];
 			}
+			break;
 		}
 	}
-	@exec('./bin/png_path /tmp/'.$layer['fn'].' /tmp/'.basename($layer['fn'], '.png').'.path'.$s);
+	// DEBUG
+	$f = fopen(TMP_PATH.$opts['prefix'].'debug.txt', 'a');
+	fwrite($f, 'png_path @ '.$layerName.': '.print_r($s, true)."\r\n");
+	fclose($f);
+	@exec('./bin/png_path '.TMP_PATH.$layer['fn'].' '.TMP_PATH.basename($layer['fn'], '.png').'.path'.$s);
 }
 
 
 function filterFabmodulesPng(&$layer)
 {
-	@exec('./bin/path_png /tmp/'.basename($layer['fn'], '.png').'.path /tmp/'.basename($layer['fn'], '.png').'-toolpath.png');
+	@exec('./bin/path_png '.TMP_PATH.basename($layer['fn'], '.png').'.path '.TMP_PATH.basename($layer['fn'], '.png').'-toolpath.png');
 }
 
 
-function filterFabmodulesRml(&$layer, $key, $opts = array())
+function filterFabmodulesRml(&$layer, $layerName, $opts = array())
 {
 	// TODO: check against source
 	$default_args = array(
@@ -174,8 +179,8 @@ function filterFabmodulesRml(&$layer, $key, $opts = array())
 			}
 		}
 	}
-	if (@is_array($opts[$key]['path_rml'])) {
-		foreach ($opts[$key]['path_rml'] as $key=>$val) {
+	if (@is_array($opts[$layerName]['path_rml'])) {
+		foreach ($opts[$layerName]['path_rml'] as $key=>$val) {
 			if (isset($args[$key])) {
 				$args[$key] = $val;
 			}
@@ -190,14 +195,19 @@ function filterFabmodulesRml(&$layer, $key, $opts = array())
 				$s .= ' '.$args[$argKey];
 			}
 		}
+		break;
 	}
-	@exec('./bin/path_rml /tmp/'.basename($layer['fn'], '.png').'.path /tmp/'.basename($layer['fn'], '.png').'.rml'.$s);
+	// DEBUG
+	$f = fopen(TMP_PATH.$opts['prefix'].'debug.txt', 'a');
+	fwrite($f, 'path_rml @ '.$layerName.': '.print_r($s, true)."\r\n");
+	fclose($f);
+	@exec('./bin/path_rml '.TMP_PATH.basename($layer['fn'], '.png').'.path '.TMP_PATH.basename($layer['fn'], '.png').'.rml'.$s);
 }
 
 
 function filterFixDpi(&$layer)
 {
-	@exec('./bin/png_size /tmp/'.$layer['fn'].' '.($layer['width']/(300.0/25.4)).' '.($layer['height']/(300.0/25.4)));
+	@exec('./bin/png_size '.TMP_PATH..$layer['fn'].' '.($layer['width']/(300.0/25.4)).' '.($layer['height']/(300.0/25.4)));
 }
 
 
@@ -226,9 +236,26 @@ function filterRotate(&$layer, $rot)
 }
 
 
+function filterSubstrateMask(&$layer, $board, $opts)
+{
+	$w = @imagesx($layer['png']);
+	$h = @imagesy($layer['png']);
+	$black = @imagecolorallocate($layer['png'], 0, 0, 0);
+	$mask = $board['layers']['substrate']['png'];
+	for ($x = 0; $x < $w; $x++) {
+		for ($y = 0; $y < $h; $y++) {
+			$color = @imagecolorat($mask, $x, $y);
+			if ($color == (127 << 24)) {
+				@imagesetpixel($layer['png'], $x, $y, $black);
+			}
+		}
+	}
+}
+
+
 function filterToFile(&$layer, $fn)
 {
-	if (@imagepng($layer['png'], '/tmp/'.$fn)) {
+	if (@imagepng($layer['png'], TMP_PATH.$fn)) {
 		$layer['fn'] = $fn;
 	} else {
 		$layer['fn'] = NULL;

@@ -1,3 +1,0 @@
-Milling Circuit Boards
-
-Submit rml files to the machine in this order: top, drills, bottom, substrate. Flip the board horizontally before and after milling the bottom file.

@@ -229,15 +229,26 @@ if (empty($_REQUEST['method'])) {
 
 	$prefix = 'board'.$board['board'].'rev'.$board['rev'].'-'.date('YmdHis').'-';
 	$opts = arg_optional($_REQUEST['opts'], 'array', array());
+	$opts['prefix'] = $prefix;
 	@umask(0111);
+	// DEBUG
+	$f = fopen(TMP_PATH.$prefix.'debug.txt', 'a');
+	fwrite($f, 'Request: '.print_r($_REQUEST, true)."\r\n");
+	fclose($f);
 	filterDrillLayer($board);
 	foreach (array_keys($board['layers']) as $key) {
 		if ($key == 'top' || $key == 'bottom') {
 			filterDrillIsolation($board['layers'][$key], $board, $opts);
+			// TODO: only for offset_number -1
+			filterSubstrateMask($board['layers'][$key], $board, $opts);
+			// TODO: filterSafetyMask($board['layers'][$key], $opts);
 		}
 		if ($key == 'bottom') {
 			filterFlipX($board['layers'][$key]);
 		}
+	}
+	// Modela-specific
+	foreach (array_keys($board['layers']) as $key) {
 		filterRotate($board['layers'][$key], -90.0);
 		filterFabmodulesColor($board['layers'][$key]);
 		filterToFile($board['layers'][$key], $prefix.$key.'.png');
@@ -249,9 +260,9 @@ if (empty($_REQUEST['method'])) {
 
 	// compress
 	$zip = new ZipArchive();
-	$zipFn = '/tmp/'.$prefix.'modela40a.zip';
+	$zipFn = TMP_PATH.$prefix.'modela40a.zip';
 	$zip->open($zipFn, ZIPARCHIVE::CREATE);
-	$dir = scandir('/tmp');
+	$dir = scandir(TMP_PATH);
 	foreach ($dir as $f) {
 		if (substr($f, 0, strlen($prefix)) != $prefix) {
 			continue;
@@ -259,7 +270,7 @@ if (empty($_REQUEST['method'])) {
 		if (substr($f, -5) == '.path') {
 			continue;
 		}
-		$zip->addFile('/tmp/'.$f, $f);
+		$zip->addFile(TMP_PATH.$f, $f);
 	}
 	$zip->close();
 
@@ -269,7 +280,7 @@ if (empty($_REQUEST['method'])) {
 	@readfile($zipFn);
 
 	// cleanup
-	foreach (glob('/tmp/'.$prefix.'*') as $f) {
+	foreach (glob(TMP_PATH.$prefix.'*') as $f) {
 		@unlink($f);
 	}
 	die();
