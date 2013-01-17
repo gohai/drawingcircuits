@@ -238,6 +238,7 @@ if (empty($_REQUEST['method'])) {
 	filterDrillLayer($board);
 	foreach (array_keys($board['layers']) as $key) {
 		if ($key == 'top' || $key == 'bottom') {
+			// TODO: not for offset_number -1
 			filterDrillIsolation($board['layers'][$key], $board, $opts);
 			// TODO: only for offset_number -1
 			filterSubstrateMask($board['layers'][$key], $board, $opts);
@@ -297,7 +298,7 @@ if (empty($_REQUEST['method'])) {
 		$ret[$part['part']] = $part;
 		unset($ret[$part['part']]['part']);
 	}
-	return json_response($ret);
+	json_response($ret);
 } elseif ($_REQUEST['method'] == 'load') {
 	$board = arg_required($_REQUEST['board'], 'integer');
 

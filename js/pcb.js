@@ -1346,7 +1346,6 @@
 						offset_diameter: 0.79375,		// for 1/32" end mill
 					},
 					path_rml: {
-						speed: 2,
 						xmin: 0,
 						ymin: 0
 					},
@@ -1355,7 +1354,8 @@
 							offset_number: -1
 						},
 						path_rml: {
-							zmin: -0.3
+							speed: 4,
+							zmin: -0.4
 						}
 					},
 					drills: {
@@ -1363,7 +1363,8 @@
 							offset_number: 1
 						},
 						path_rml: {
-							zmin: -2.1
+							speed: 2,
+							zmin: -2.2
 						}
 					},
 					substrate: {
@@ -1371,7 +1372,8 @@
 							offset_number: 1
 						},
 						path_rml: {
-							zmin: -2.1
+							speed: 2,
+							zmin: -2.2
 						}
 					},
 					bottom: {
@@ -1379,7 +1381,8 @@
 							offset_number: -1
 						},
 						path_rml: {
-							zmin: -0.3
+							speed: 4,
+							zmin: -0.4
 						}
 					}
 				};

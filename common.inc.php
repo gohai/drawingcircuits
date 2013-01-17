@@ -194,8 +194,8 @@ function filterFabmodulesRml(&$layer, $layerName, $opts = array())
 				$argKey = array_pop(array_slice(array_keys($default_args), $j, 1));
 				$s .= ' '.$args[$argKey];
 			}
+			break;
 		}
-		break;
 	}
 	// DEBUG
 	$f = fopen(TMP_PATH.$opts['prefix'].'debug.txt', 'a');
@@ -207,7 +207,7 @@ function filterFabmodulesRml(&$layer, $layerName, $opts = array())
 
 function filterFixDpi(&$layer)
 {
-	@exec('./bin/png_size '.TMP_PATH..$layer['fn'].' '.($layer['width']/(300.0/25.4)).' '.($layer['height']/(300.0/25.4)));
+	@exec('./bin/png_size '.TMP_PATH.$layer['fn'].' '.($layer['width']/(300.0/25.4)).' '.($layer['height']/(300.0/25.4)));
 }
 
 
