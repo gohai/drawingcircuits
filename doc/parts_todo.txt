@@ -1,4 +1,3 @@
-Arduino shield
 Audio jack
 Capacitor
 Diode (1N4001)

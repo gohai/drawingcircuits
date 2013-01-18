@@ -150,13 +150,13 @@ function filterFabmodulesPath(&$layer, $layerName, $opts = array())
 	$f = fopen(TMP_PATH.$opts['prefix'].'debug.txt', 'a');
 	fwrite($f, 'png_path @ '.$layerName.': '.print_r($s, true)."\r\n");
 	fclose($f);
-	@exec('./bin/png_path '.TMP_PATH.$layer['fn'].' '.TMP_PATH.basename($layer['fn'], '.png').'.path'.$s);
+	@exec('./bin/png_path '.TMP_PATH.$layer['fn'].' '.TMP_PATH.basename($layer['fn'], '.png').'.path'.$s.toolTimeout());
 }
 
 
 function filterFabmodulesPng(&$layer)
 {
-	@exec('./bin/path_png '.TMP_PATH.basename($layer['fn'], '.png').'.path '.TMP_PATH.basename($layer['fn'], '.png').'-toolpath.png');
+	@exec('./bin/path_png '.TMP_PATH.basename($layer['fn'], '.png').'.path '.TMP_PATH.basename($layer['fn'], '.png').'-toolpath.png'.toolTimeout());
 }
 
 
@@ -201,13 +201,13 @@ function filterFabmodulesRml(&$layer, $layerName, $opts = array())
 	$f = fopen(TMP_PATH.$opts['prefix'].'debug.txt', 'a');
 	fwrite($f, 'path_rml @ '.$layerName.': '.print_r($s, true)."\r\n");
 	fclose($f);
-	@exec('./bin/path_rml '.TMP_PATH.basename($layer['fn'], '.png').'.path '.TMP_PATH.basename($layer['fn'], '.png').'.rml'.$s);
+	@exec('./bin/path_rml '.TMP_PATH.basename($layer['fn'], '.png').'.path '.TMP_PATH.basename($layer['fn'], '.png').'.rml'.$s.toolTimeout());
 }
 
 
 function filterFixDpi(&$layer)
 {
-	@exec('./bin/png_size '.TMP_PATH.$layer['fn'].' '.($layer['width']/(300.0/25.4)).' '.($layer['height']/(300.0/25.4)));
+	@exec('./bin/png_size '.TMP_PATH.$layer['fn'].' '.($layer['width']/(300.0/25.4)).' '.($layer['height']/(300.0/25.4)).toolTimeout());
 }
 
 
@@ -461,4 +461,10 @@ function setupPart($part, $options = array())
 function svgToMm($s) {
 	// this assumes 72 DPI
 	return @floatval($s)/72.0*25.4;
+}
+
+
+function toolTimeout()
+{
+	return ' && (sleep '.TOOL_TIMEOUT.'; kill -TERM $!; sleep 1; kill -9 $!)';
 }

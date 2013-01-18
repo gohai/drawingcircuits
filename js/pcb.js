@@ -1351,11 +1351,12 @@
 					},
 					top: {
 						png_path: {
-							offset_number: -1
+							offset_number: -1,
+							offset_overlap: 0.8
 						},
 						path_rml: {
 							speed: 4,
-							zmin: -0.4
+							zmin: -0.45
 						}
 					},
 					drills: {
@@ -1364,7 +1365,7 @@
 						},
 						path_rml: {
 							speed: 2,
-							zmin: -2.2
+							zmin: -2.3
 						}
 					},
 					substrate: {
@@ -1373,16 +1374,16 @@
 						},
 						path_rml: {
 							speed: 2,
-							zmin: -2.2
+							zmin: -2.3
 						}
 					},
 					bottom: {
 						png_path: {
-							offset_number: -1
+							offset_number: 4
 						},
 						path_rml: {
 							speed: 4,
-							zmin: -0.4
+							zmin: -0.45
 						}
 					}
 				};

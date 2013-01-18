@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 15.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="194.28px" height="151.08px" viewBox="0 0 194.28 151.08" enable-background="new 0 0 194.28 151.08" xml:space="preserve">
+<g id="drills">
+	<circle id="reset" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="93.54" cy="143.879" r="1.417"/>
+	
+		<circle id="_x33_v3" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="100.74" cy="143.879" r="1.417"/>
+	
+		<circle id="_x35_v" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="107.94" cy="143.879" r="1.417"/>
+	
+		<circle id="gnd_x5F_bottom_x5F_left" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="115.14" cy="143.879" r="1.417"/>
+	
+		<circle id="gnd_x5F_bottom_x5F_right" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="122.34" cy="143.879" r="1.417"/>
+	<circle id="vin" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="129.54" cy="143.879" r="1.417"/>
+	
+		<circle id="analog0" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="143.73" cy="143.879" r="1.417"/>
+	
+		<circle id="analog1" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="151.14" cy="143.879" r="1.417"/>
+	
+		<circle id="analog2" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="158.31" cy="143.879" r="1.417"/>
+	
+		<circle id="analog3" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="165.54" cy="143.879" r="1.417"/>
+	
+		<circle id="analog4" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="172.62" cy="143.879" r="1.417"/>
+	
+		<circle id="analog5" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="179.88" cy="143.879" r="1.417"/>
+	<circle id="aref" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="67.62" cy="7.198" r="1.417"/>
+	
+		<circle id="gnd_x5F_top" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="74.82" cy="7.198" r="1.417"/>
+	
+		<circle id="digital13" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="82.02" cy="7.198" r="1.417"/>
+	
+		<circle id="digital12" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="89.22" cy="7.198" r="1.417"/>
+	
+		<circle id="digital11" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="96.42" cy="7.198" r="1.417"/>
+	
+		<circle id="digital10" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="103.62" cy="7.2" r="1.417"/>
+	
+		<circle id="digital9" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="110.82" cy="7.198" r="1.417"/>
+	
+		<circle id="digital8" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="118.02" cy="7.198" r="1.417"/>
+	
+		<circle id="digital7" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="129.42" cy="7.198" r="1.417"/>
+	
+		<circle id="digital6" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="136.68" cy="7.198" r="1.417"/>
+	<circle id="digital5" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="143.73" cy="7.2" r="1.417"/>
+	
+		<circle id="digital4" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="151.14" cy="7.198" r="1.417"/>
+	
+		<circle id="digital3" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="158.31" cy="7.198" r="1.417"/>
+	<circle id="digital2" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="165.54" cy="7.2" r="1.417"/>
+	<circle id="digital1" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="172.68" cy="7.2" r="1.417"/>
+	<circle id="digital0" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="179.88" cy="7.2" r="1.417"/>
+</g>
+<g id="outline">
+	<g>
+		<path d="M181.932,2l3.148,3.148V36.66v0.829l0.586,0.585l6.614,6.615v91.163l-6.614,6.613l-0.586,0.586v0.828v5.201H2V2H181.932
+			 M182.76,0H0v151.08h187.08v-7.201l7.2-7.199V43.86l-7.2-7.2V4.32L182.76,0L182.76,0z"/>
+	</g>
+</g>
+</svg>

@@ -17,7 +17,7 @@ We feed the rml files to the machine using the "Roland VPanel for MDX-40A" appli
 The machine will cut the rml files starting from the origin of the user coordinate system, rather than, for example, the current coordinates the spindle might be positioned at. We therefore position the origin at the top left corner of our copper clad board. This is done by moving the spindle and selecting Set Origin Point: User Coordinate System > Set: XY Origin here > Apply.
 When milling single-sided boards the origin can really be set to any point on the copper clad board. For double-sided boards, however, the origin needs to be precisely at the corner of the board, in order to ensure proper registration.
 
-After inserting the drill bit, we need to establish the origin on the Z axis. For this we place the sensor on the center of our copper clad board, move the spindle on top of it and select Set Origin Point: User Coordinate System > Set Z Origin using sensor > Detect. With this done, and the thickness of the Z0 Sensor set to (the default) 15 mm in the applications "Setup" screen, the following zmin parameters (path_rml tool) have found to work well: -0.4 for top and bottom, -2.2 for drills and substrate.
+After inserting the drill bit, we need to establish the origin on the Z axis. For this we place the sensor on the center of our copper clad board, move the spindle on top of it and select Set Origin Point: User Coordinate System > Set Z Origin using sensor > Detect. With this done, and the thickness of the Z0 Sensor set to (the default) 15 mm in the applications "Setup" screen, the following zmin parameters (path_rml tool) have found to work well: -0.45 for top and bottom, -2.3 for drills and substrate.
 
 Tip: Move the spindle close to your coordinate origin before you begin the cut. Make sure not to run your end mill into the copper clad board, however.
 
@@ -25,7 +25,9 @@ Milling boards is traditionally done with high RPMs ("the faster the better"). I
 
 Submit rml files to the machine in this order: top, drills, bottom, substrate. Flip the board across the machine's X axis before and after milling the bottom file.
 
-Drill holes and the substrate layer will probably cut a little bit into your bed/spoil board.
+Drill holes and the substrate layer will probably cut a little bit into your bed/spoil boar.
+
+If the milling leaves "ridges" along the tool paths you might need to tweak the offset_overlap parameter (png_path tool). This is very much dependent on the type of end mill you're using. See testpattern.sh for testing settings in a systematic way.
 
 Sometimes it is necessary to press the Quit Cutting button at the lower right of the application before you can continue working with the mill. This shouldn't affect any of the settings (origin of the user coordinate system or similar).
 
