@@ -238,10 +238,22 @@ if (empty($_REQUEST['method'])) {
 	filterDrillLayer($board);
 	foreach (array_keys($board['layers']) as $key) {
 		if ($key == 'top' || $key == 'bottom') {
-			// TODO: not for offset_number -1
-			filterDrillIsolation($board['layers'][$key], $board, $opts);
-			// TODO: only for offset_number -1
-			filterSubstrateMask($board['layers'][$key], $board, $opts);
+			// get offset_number parameter
+			$offset_number = 1;
+			if (@is_array($opts['png_path']) && isset($opts['png_path']['offset_number'])) {
+				$offset_number = $opts['png_path']['offset_number'];
+			}
+			if (@is_array($opts[$key]) && @is_array($opts[$key]['png_path']) && isset($opts[$key]['png_path']['offset_number'])) {
+				$offset_number = $opts[$key]['png_path']['offset_number'];
+			}
+			if ($offset_number != -1) {
+				// not necessary if we're clearing the entire board
+				filterDrillIsolation($board['layers'][$key], $board, $opts);
+			}
+			if ($offset_number == -1) {
+				// don't clear parts of the board outside of the substrate area
+				filterSubstrateMask($board['layers'][$key], $board, $opts);
+			}
 			// TODO: filterSafetyMask($board['layers'][$key], $opts);
 		}
 		if ($key == 'bottom') {

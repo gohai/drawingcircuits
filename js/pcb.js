@@ -1352,11 +1352,11 @@
 					top: {
 						png_path: {
 							offset_number: -1,
-							offset_overlap: 0.8
+							offset_overlap: 0.5
 						},
 						path_rml: {
 							speed: 4,
-							zmin: -0.45
+							zmin: -0.20
 						}
 					},
 					drills: {
@@ -1365,7 +1365,7 @@
 						},
 						path_rml: {
 							speed: 2,
-							zmin: -2.3
+							zmin: -2.0
 						}
 					},
 					substrate: {
@@ -1374,7 +1374,7 @@
 						},
 						path_rml: {
 							speed: 2,
-							zmin: -2.3
+							zmin: -2.0
 						}
 					},
 					bottom: {
@@ -1383,7 +1383,7 @@
 						},
 						path_rml: {
 							speed: 4,
-							zmin: -0.45
+							zmin: -0.20
 						}
 					}
 				};
@@ -1836,17 +1836,17 @@
 			// TODO: remove
 			var elem = $('<input type="file">');
 			$(elem).on('change', function(e) {
-				$.pcb.addDrawing('dip28', this.files[0], function(data) {
+				$.pcb.addDrawing('arduinoshield', this.files[0], function(data) {
 					console.log('added drawing');
 					console.log(data);
-					$.pcb.addPart('dip28', 'DIP28', null, { description: 'Generic DIP 28 IC' }, function(data) {
-						console.log('added dip28');
+					$.pcb.addPart('arduinoshield', 'Arduino Shield', null, { description: 'Generic Arduino Shield' }, function(data) {
+						console.log('added part');
 						console.log(data);
 					});
-					$.pcb.addPart('atmega168-dip28', 'Atmega 168 (DIP28)', 'dip28', { description: 'Microcontroller', drills: { 'pin1': { description: 'PC6' } } }, function(data) {
-						console.log('added atmega168-dip28');
-						console.log(data);
-					});
+					//$.pcb.addPart('atmega168-dip28', 'Atmega 168 (DIP28)', 'dip28', { description: 'Microcontroller', drills: { 'pin1': { description: 'PC6' } } }, function(data) {
+					//	console.log('added atmega168-dip28');
+					//	console.log(data);
+					//});
 					//$.pcb.addPartComment('atmega168-dip28', 'Nice chip', function(data) {
 					//	console.log('added comment');
 					//	console.log(data);

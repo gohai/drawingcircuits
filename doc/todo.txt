@@ -1,19 +1,13 @@
 -- 0.1
-xmin, ymin necessary?
-look at tool output (duration?)
-test dual-sided
-test all arguments (multiple steps for drills and substrate?)
-prepare arguments in the backend
-implement safety
-make drill order apparent through filenames
-encode tool parameters in filenames
-s/-debug.txt/-info.txt
-
+Bug: board 16
 Implement object rotation for patterns
 Bug: Pattern rotation on bottom layer
 Bug: resize
 Bug: Jumper drawing
 Bug: Part drills vs outline zoomed?
+Make drill order apparent through filenames
+Encode tool parameters in filenames
+s/-debug.txt/-info.txt
 Look through all TODOs in source tree
 
 -- 0.2
@@ -37,8 +31,12 @@ Add project description to page ("?" in top right corner)
 -- later
 Trace outline with paper.js (var svgNode = paper.project.exportSvg(); var svg = new XMLSerializer().serializeToString(svgNode); see also: http://potrace.sourceforge.net/)
 Implement Don Mode (background images, music, random schematics and parts to use)
+Milling: multiple passes for drills and substrate
+Milling: explore explore error, xz, yz, xy parameters in png_path
 Milling: multiple passes with different end mills
-Milling: ensure a clean edge (bit is rotating clockwise, should move against the clean edge)
+Milling: ensure a clean edge (see direction parameter in path_rml)
+Milling: option to cut a rectangle around board
+Milling: approximate runtime
 Support Pads
 Tablet compatibility
 Mailing list, including new submissions waiting to be moderated

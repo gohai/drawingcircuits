@@ -1,3 +1,5 @@
 Using a Vinyl Cutter to fabricate Circuit Boards
 
-This is how to cut boards on the Roland GX-24 CAMM-1 machine, as found in UCLA's Design Media Arts fabrication workshop:
+This is how to cut boards on the Roland CAMM-1 Servo GX-24 machine, as found in UCLA's Design Media Arts fabrication workshop:
+
+The machine's loadable material with is given as 50 - 700 mm, while the maximum cutting area is 584 mm.
