@@ -468,7 +468,7 @@
 						layersToLoad--;
 						if (layersToLoad == 0 && typeof success == 'function') {
 								// merge board with default
-								data = $.extend(true, defaultBoard, data);
+								data = $.extend(true, {}, defaultBoard, data);
 								removePartsDrills(data.drills);
 								success(data);
 						}
@@ -478,7 +478,7 @@
 			// fallback if we don't have any layers at all
 			if (layersToLoad == 0 && typeof success == 'function') {
 					// merge board with default
-					data = $.extend(true, defaultBoard, data);
+					data = $.extend(true, {}, defaultBoard, data);
 					removePartsDrills(data.drills);
 					success(data);
 			}
@@ -608,8 +608,8 @@
 		// clear flag (see requestRedraw())
 		view.redrawPending = false;
 		// setup canvas
-		$('#pcb-canvas').prop('width', mmToPx(board.height, true));
-		$('#pcb-canvas').prop('height', mmToPx(board.width, true));
+		$('#pcb-canvas').prop('width', mmToPx(board.width, true));
+		$('#pcb-canvas').prop('height', mmToPx(board.height, true));
 		var cvs = $('#pcb-canvas').get(0);
 
 		// render board
@@ -1036,14 +1036,14 @@
 			requestRedraw();
 			return false;
 		});
-		// TODO: this is not quite working right
+		// TODO: this certainly needs more testing and love
 		$('html').on('touchstart', '#pcb-canvas', function(e) {
 			for (var t in e.originalEvent.targetTouches) {
 				var touch = e.originalEvent.targetTouches[t];
 				if (typeof touch != 'object' || typeof touch.pageX != 'number') {
 					continue;
 				}
-				$.pcb.point(pxToMm(touch.pageX), pxToMm(touch.pageY));
+				$.pcb.point(pxToMm(touch.pageX, true), pxToMm(touch.pageY, true));
 			}
 			return false;
 		});
@@ -1053,18 +1053,17 @@
 				if (typeof touch != 'object' || typeof touch.pageX != 'number') {
 					continue;
 				}
-				$.pcb.point(pxToMm(touch.pageX), pxToMm(touch.pageY));
+				$.pcb.point(pxToMm(touch.pageX, true), pxToMm(touch.pageY, true));
 			}
 			return false;
 		});
 		$('html').on('touchstop', '#pcb-canvas', function(e) {
-			var canvasOffset = $(this).offset();
 			for (var t in e.originalEvent.targetTouches) {
 				var touch = e.originalEvent.targetTouches[t];
 				if (typeof touch != 'object' || typeof touch.pageX != 'number') {
 					continue;
 				}
-				$.pcb.point(pxToMm(touch.pageX), pxToMm(touch.pageY));
+				$.pcb.point(pxToMm(touch.pageX, true), pxToMm(touch.pageY, true));
 			}
 			return false;
 		});

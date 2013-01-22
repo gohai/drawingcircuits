@@ -232,8 +232,8 @@ if (empty($_REQUEST['method'])) {
 	$opts['prefix'] = $prefix;
 	@umask(0111);
 	// DEBUG
-	$f = fopen(TMP_PATH.$prefix.'debug.txt', 'a');
-	fwrite($f, 'Request: '.print_r($_REQUEST, true)."\r\n");
+	$f = fopen(TMP_PATH.$prefix.'info.txt', 'a');
+	fwrite($f, 'Request: '.var_dump_inl($_REQUEST)."\r\n\r\n");
 	fclose($f);
 	filterDrillLayer($board);
 	foreach (array_keys($board['layers']) as $key) {
