@@ -18,7 +18,7 @@
 		author: null,
 		board: null,
 		drills: {},
-		height: 100,
+		height: 152.4,
 		jumpers: {},
 		layers: {
 			'bottom': null,
@@ -30,7 +30,7 @@
 		parts: {},
 		rev: null,
 		texts: {},
-		width: 100
+		width: 101.6
 	};
 	var board = {};
 
@@ -106,6 +106,21 @@
 			a.push(l);
 		}
 		return a;
+	};
+	var canvasIsEmpty = function(cvs, bgARGB) {
+		if (bgARGB === undefined) {
+			bgARGB = 0;
+		}
+		var ctx = cvs.getContext('2d');
+		var data = ctx.getImageData(0, 0, cvs.width, cvs.height);
+		for (var i=0; i < cvs.width*cvs.height*4; i+=4) {
+			// ARGB
+			var col = (data.data[i+3]<<24)|(data.data[i]<<16)|(data.data[i+1]<<8)|data.data[i+2];
+			if (col != bgARGB) {
+				return false;
+			}
+		}
+		return true;
 	};
 	var createCanvas = function(width, height) {
 		var cvs = $('<canvas></canvas>');
@@ -414,6 +429,14 @@
 			}
 		}
 		return '';
+	};
+	var getWacomPlugin = function() {
+		var plugin = document.getElementById('pcb-wacom-plugin');
+		if (typeof plugin != 'object' || typeof plugin.version != 'string') {
+			return null;
+		} else {
+			return plugin;
+		}
 	};
 	var imgToCanvas = function(src, callback) {
 		var img = new Image();
@@ -966,6 +989,14 @@
 				e.offsetY = e.pageY-o.top;
 			}
 			var p = screenPxToCanvas(e.offsetX, e.offsetY);
+			var wacom = getWacomPlugin();
+			if (wacom !== null) {
+				if (view.tool == 'draw' && wacom.penAPI.pointerType == 3) {
+					$.pcb.tool('erase');
+				} else if (view.tool == 'erase' && wacom.penAPI.pointerType == 1) {
+					$.pcb.tool('draw');
+				}
+			}
 			if (view.tool == 'draw' || view.tool == 'drill' || view.tool == 'erase') {
 				$.pcb.point(pxToMm(p.x, true), pxToMm(p.y, true));
 				view.toolData.usingTool = true;
@@ -1091,7 +1122,7 @@
 
 		// create main canvas
 		var cvs = $('<canvas id="pcb-canvas"></canvas>');
-		$('body').append(cvs);
+		$('body').prepend(cvs);
 		// normalize {request,cancel}AnimationFrame across browsers
 		var requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.msRequestAnimationFrame;
 		window.requestAnimationFrame = requestAnimationFrame;
@@ -1679,7 +1710,7 @@
 			for (var l in board.layers) {
 				var cvs = createCanvas(width, height);
 				// substrate is filled by default
-				if (l == 'substrate') {
+				if (l == 'substrate' && canvasIsEmpty(board.layers[l], 255<<24)) {
 					fillCanvas(cvs, '#000');
 				}
 				var ctx = cvs.getContext('2d');

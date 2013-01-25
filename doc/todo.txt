@@ -1,5 +1,4 @@
 -- 0.1
-Still to slow
 Implement object rotation for patterns
 Bug: Pattern rotation on bottom layer
 Bug: Jumper drawing
