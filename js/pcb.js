@@ -1386,7 +1386,7 @@
 						},
 						path_rml: {
 							speed: 4,
-							zmin: -0.20
+							zmin: -0.2
 						}
 					},
 					drills: {
@@ -1409,11 +1409,11 @@
 					},
 					bottom: {
 						png_path: {
-							offset_number: 4
+							offset_number: -1
 						},
 						path_rml: {
 							speed: 4,
-							zmin: -0.20
+							zmin: -0.2
 						}
 					}
 				};
