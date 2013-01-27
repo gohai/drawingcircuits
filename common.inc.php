@@ -368,7 +368,7 @@ function parseSvg(&$xmlString, &$ret)
 				$j = 0;
 				while (true) {
 					$name = 'drill'.$j;
-					if (!isset($ret[$name])) {
+					if (!isset($ret['drills'][$name])) {
 						break;
 					} else {
 						$j++;

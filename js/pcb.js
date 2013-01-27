@@ -753,14 +753,6 @@
 		}
 		ctx.restore();
 
-		// drill holes
-		for (var d in brd.drills) {
-			drawDrill(ctx, brd.drills[d], opt);
-		}
-		for (var p in brd.parts) {
-			drawPartDrills(ctx, brd.parts[p], opt);
-		}
-
 		// parts on the active layer
 		for (var p in brd.parts) {
 			var part = brd.parts[p];
@@ -769,6 +761,14 @@
 			} else {
 				drawPartOutline(ctx, part, opt);
 			}
+		}
+
+		// drill holes
+		for (var d in brd.drills) {
+			drawDrill(ctx, brd.drills[d], opt);
+		}
+		for (var p in brd.parts) {
+			drawPartDrills(ctx, brd.parts[p], opt);
 		}
 
 		// text
@@ -1039,6 +1039,14 @@
 				e.offsetY = e.pageY-o.top;
 			}
 			var p = screenPxToCanvas(e.offsetX, e.offsetY);
+			var wacom = getWacomPlugin();
+			if (wacom !== null) {
+				if (view.tool == 'draw' && wacom.penAPI.pointerType == 3) {
+					$.pcb.tool('erase');
+				} else if (view.tool == 'erase' && wacom.penAPI.pointerType == 1) {
+					$.pcb.tool('draw');
+				}
+			}
 			if (view.tool == 'draw' || view.tool == 'erase') {
 				if (view.toolData.usingTool === true) {
 					$.pcb.line(pxToMm(view.lastMouseX, true), pxToMm(view.lastMouseY, true), pxToMm(p.x, true), pxToMm(p.y, true));
