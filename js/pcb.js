@@ -307,6 +307,7 @@
 		var ret = {};
 		for (var d in part.drills) {
 			var drill = part.drills[d];
+			// TODO: use rotatePoint()
 			var c = Math.cos(-obj.rot*Math.PI/180);
 			var s = Math.sin(-obj.rot*Math.PI/180);
 			// coordinate origin is the top-left corner of the _top_ layer
@@ -544,24 +545,30 @@
 				// TODO: consolidate with .moveObject
 				var obj = src[scope][o];
 				if (scope == 'drills') {
-					obj.x += offsetX;
-					obj.y += offsetY;
+					var p = rotatePoint(obj.x, obj.y, srcRot, src.width/2, src.height/2);
+					obj.x = offsetX+p.x;
+					obj.y = offsetY+p.y;
 				} else if (scope == 'jumpers') {
 					if (typeof obj.from == 'object') {
-						obj.from.x += offsetX;
-						obj.from.y += offsetY;
+						var p = rotatePoint(obj.from.x, obj.from.y, srcRot, src.width/2, src.height/2);
+						obj.from.x = offsetX+p.x;
+						obj.from.y = offsetY+p.y;
 					}
 					if (typeof obj.to == 'object') {
-						obj.to.x += offsetX;
-						obj.to.y += offsetY;
+						var p = rotatePoint(obj.to.x, obj.to.y, srcRot, src.width/2, src.height/2);
+						obj.to.x = offsetX+p.x;
+						obj.to.y = offsetY+p.y;
 					}
 				} else if (scope == 'parts') {
-					obj.x += offsetX;
-					obj.y += offsetY;
+					var p = rotatePoint(obj.x, obj.y, srcRot, src.width/2, src.height/2);
+					obj.x = offsetX+p.x;
+					obj.y = offsetY+p.y;
+					obj.rot = normalizeAngle(obj.rot+srcRot);
 				} else if (scope == 'texts') {
 					if (typeof obj.parent == 'object') {
-						obj.parent.x += offsetX;
-						obj.parent.y += offsetY;
+						var p = rotatePoint(obj.parent.x, obj.parent.y, srcRot, src.width/2, src.height/2);
+						obj.parent.x = offsetX+p.x;
+						obj.parent.y = offsetY+p.y;
 					}
 				}
 				// rename objects
@@ -890,6 +897,23 @@
 		}
 
 		return view.layers[prefix+l];
+	};
+	var rotatePoint = function(pointX, pointY, deg, pivotX, pivotY) {
+		if (deg == 0) {
+			return {x: pointX, y: pointY};
+		} else {
+			var rad = deg * Math.PI / 180.0;
+			if (pivotX === undefined) {
+				pivotX = 0;
+			}
+			if (pivotY === undefined) {
+				pivotY = 0;
+			}
+			return {
+				x: Math.cos(rad)*(pointX-pivotX)-Math.sin(rad)*(pointY-pivotY)+pivotX,
+				y: Math.sin(rad)*(pointX-pivotX)+Math.cos(rad)*(pointY-pivotY)+pivotY
+			};
+		}
 	};
 	var screenPxToCanvas = function(x, y) {
 		if (view.layer == 'bottom') {

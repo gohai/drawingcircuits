@@ -1,5 +1,4 @@
 -- 0.1
-Implement object rotation for patterns
 Bug: Pattern rotation on bottom layer
 Bug: Jumper drawing
 Bug: Part drills vs outline zoomed?
