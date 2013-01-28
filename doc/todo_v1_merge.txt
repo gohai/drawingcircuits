@@ -327,42 +327,6 @@ html {
 			}
 			$.pcb.tool($(this).prop('id').substr(p+1));
 		});
-		$('#tool-draw').on('click', function(e) {
-			if (e.shiftKey || e.altKey) {
-				var s = prompt('Set diameter (mm)', $.pcb.diameter());
-				if (s === null) {
-					return;
-				}
-				$.pcb.diameter(parseFloat(s));
-			}
-			if (e.altKey) {
-				promptManualCoords();
-			}
-		});
-		$('#tool-erase').on('click', function(e) {
-			if (e.shiftKey || e.altKey) {
-				var s = prompt('Set diameter (mm)', $.pcb.diameter());
-				if (s === null) {
-					return;
-				}
-				$.pcb.diameter(parseFloat(s));	
-			}
-			if (e.altKey) {
-				promptManualCoords();
-			}
-		});
-		$('#tool-drill').on('click', function(e) {
-			if (e.shiftKey || e.altKey) {
-				var s = prompt('Set diameter (mm)', $.pcb.diameter());
-				if (s === null) {
-					return;
-				}
-				$.pcb.diameter(parseFloat(s));	
-			}
-			if (e.altKey) {
-				promptManualCoords();
-			}
-		});
 		$('#menu-del').on('click', function(e) {
 			$.pcb.remove();
 		});
@@ -419,20 +383,3 @@ html {
 				$.pcb.clear();
 			}
 		});
-
-
-var promptManualCoords = function() {
-		s = prompt('Set x coordinate (mm)', options.lastManualX);
-		if (s === null) {
-			return;
-		}
-		var x = parseFloat(s);
-		s = prompt('Set y coordinate (mm)', options.lastManualY);
-		if (s === null) {
-			return;
-		}
-		var y = parseFloat(s);
-		$.pcb.point(x, y);
-		lastManualX = x;
-		lastManualY = y;
-	}

@@ -1323,7 +1323,7 @@
 					return view[diameterKey];
 				}
 			} else {
-				if (mm <= 0) {
+				if (typeof mm != 'number' || mm <= 0) {
 					return false;
 				} else {
 					view[diameterKey] = mm;
@@ -1873,15 +1873,19 @@
 			$('html').trigger('pcb-saving');
 		},
 		selectPart: function(part) {
-			var l = $.pcb.library();
-			if (l === false) {
-				console.warn('Library not yet available');
-				return false;
-			} else if (l[part] === undefined) {
-				return false;
-			} else if (part !== view.part) {
-				view.part = part;
-				requestRedraw();
+			if (part === undefined) {
+				return view.part;
+			} else {
+				var l = $.pcb.library();
+				if (l === false) {
+					console.warn('Library not yet available');
+					return false;
+				} else if (l[part] === undefined) {
+					return false;
+				} else if (part !== view.part) {
+					view.part = part;
+					requestRedraw();
+				}
 			}
 		},
 		selectPattern: function(brd) {

@@ -192,6 +192,10 @@ $.pcb.save(boolean asNew)
 Saves the board.
 asNew .. save it as a new board, rather than as a revision of the already existing board
 
+$.pcb.selectPart()
+
+Returns the currently selected part.
+
 $.pcb.selectPart(string part)
 
 Selects the current part.
