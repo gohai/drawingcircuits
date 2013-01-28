@@ -1,7 +1,7 @@
 // pcb.js
 // Copyright Gottfried Haider 2013.
 // This source code is licensed under the GNU General Public License. See the file COPYING for more details.
- 
+
 (function($, window, document, undefined) {
 	var options = {
 		auth: {
@@ -168,7 +168,7 @@
 	var drawJumper = function(ctx, coords, opt) {
 		ctx.save();
 		ctx.lineCap = 'round';
-		ctx.lineWidth = mmToPx(1, opt.zoom);
+		ctx.lineWidth = mmToPx(0.75, opt.zoom);
 		ctx.strokeStyle = '#ff0';
 		ctx.beginPath()
 		ctx.moveTo(mmToPx(coords.from.x, opt.zoom), mmToPx(coords.from.y, opt.zoom));
@@ -205,7 +205,11 @@
 			if (view.toolData.rot === undefined) {
 				view.toolData.rot = 0;
 			}
-			ctx.rotate(view.toolData.rot*Math.PI/180);
+			if (view.layer == 'bottom') {
+				ctx.rotate(-view.toolData.rot*Math.PI/180);
+			} else {
+				ctx.rotate(view.toolData.rot*Math.PI/180);
+			}
 			// TODO (later): cache board
 			ctx.drawImage(cvs, -cvs.width/2, -cvs.height/2);
 		} else if (view.tool == 'text') {
@@ -307,7 +311,7 @@
 		var ret = {};
 		for (var d in part.drills) {
 			var drill = part.drills[d];
-			// TODO: use rotatePoint()
+			// TODO (later): use rotatePoint()
 			var c = Math.cos(-obj.rot*Math.PI/180);
 			var s = Math.sin(-obj.rot*Math.PI/180);
 			// coordinate origin is the top-left corner of the _top_ layer
@@ -404,7 +408,8 @@
 		} else {
 			var obj = findObject(jumper.from, brd);
 			ret.from = { x: obj.obj.x, y: obj.obj.y };
-			ret.layers.push('both');
+			ret.layers.push('top');
+			ret.layers.push('bottom');
 		}
 		if (typeof jumper.to == 'object') {
 			ret.to = { x: jumper.to.x, y: jumper.to.y, layer: jumper.to.layer };
@@ -412,7 +417,8 @@
 		} else {
 			var obj = findObject(jumper.to, brd);
 			ret.to = { x: obj.obj.x, y: obj.obj.y };
-			ret.layers.push('both');
+			ret.layers.push('top');
+			ret.layers.push('bottom');
 		}
 		ret.layers = arrayUnique(ret.layers);
 		return ret;
@@ -520,8 +526,8 @@
 			ctx.rotate(srcRot*Math.PI/180);
 			// mask everything except the source
 			ctx.beginPath();
-			// TODO: this leaves a mark on Safari & Firefox
-			ctx.rect(-src.layers[l].width/2, -src.layers[l].height/2, src.layers[l].width, src.layers[l].height);
+			// the offset prevents a tiny border around the pattern
+			ctx.rect(Math.ceil(-src.layers[l].width/2), Math.ceil(-src.layers[l].height/2), src.layers[l].width-1, src.layers[l].height-1);
 			ctx.closePath();
 			ctx.clip();
 			// copy image
@@ -542,7 +548,7 @@
 			for (var o in objs) {
 				var o = objs[o];
 				// move object
-				// TODO: consolidate with .moveObject
+				// TODO (later): consolidate with .moveObject
 				var obj = src[scope][o];
 				if (scope == 'drills') {
 					var p = rotatePoint(obj.x, obj.y, srcRot, src.width/2, src.height/2);
@@ -656,7 +662,6 @@
 			drawMouseCursor(ctx, view.lastMouseX, view.lastMouseY);
 		}
 		// ruler
-		// TODO: rework (position fixed)
 		if (view.ruler == true) {
 			ctx.save();
 			ctx.strokeStyle = '#000';
@@ -670,7 +675,6 @@
 				} else {
 					ctx.lineTo(Math.round(x)+0.5, 5);
 				}
-				// TODO: text
 				cnt++;
 				ctx.stroke();
 			}
@@ -699,7 +703,7 @@
 		if (obj === false) {
 			return false;
 		} else {
-			// TODO: event
+			// TODO (later): event
 			delete brd[obj.type][name];
 		}
 		// find and delete objects that had a reference
@@ -729,7 +733,7 @@
 		for (var j in brd.jumpers) {
 			var jumper = brd.jumpers[j];
 			var coords = getJumperCoords(jumper, brd);
-			if (1 < coords.layers.length || (coords.layers.length == 1 && coords.layers[0] != opt.layer)) {
+			if ($.inArray(opt.layer, coords.layers) == -1) {
 				drawJumper(ctx, coords, opt);
 			}
 		}
@@ -740,7 +744,7 @@
 			if (part.layer == opt.layer) {
 				continue;
 			} else {
-				// TODO: change color
+				// TODO (later): change color
 				drawPartOutline(ctx, part, opt);
 			}
 		}
@@ -779,11 +783,6 @@
 		}
 
 		// text
-		// TODO: handle zoom
-		// TODO: reintroduce crosshair?
-		// TODO: more intelligent alignment (e.g. when close to the right border)
-		// TODO: multiline support
-		// TODO: top to bottom support?
 		for (var t in brd.texts) {
 			var text = brd.texts[t];
 			if (typeof text.parent == 'object') {
@@ -807,7 +806,7 @@
 					} else {
 						var x = (coords.from.x+coords.to.x)/2;
 						var y = (coords.from.y+coords.to.y)/2;
-						// TODO: maybe rotate and offset
+						// TODO (later): maybe rotate and offset
 					}
 				} else if (parent.type == 'parts') {
 					if (opt.layer != parent.obj.layer) {
@@ -824,7 +823,7 @@
 		for (var j in brd.jumpers) {
 			var jumper = brd.jumpers[j];
 			var coords = getJumperCoords(jumper, brd);
-			if (coords.layers.length == 1 && coords.layers[0] == opt.layer) {
+			if ($.inArray(opt.layer, coords.layers) != -1) {
 				drawJumper(ctx, coords, opt);
 			}
 		}
@@ -837,7 +836,7 @@
 			view.parts[part] = false;
 			var img = new Image();
 			img.onload = function() {
-				// TODO: evaluate performance later (we could convert it to a canvas element here as well)
+				// TODO (later): evaluate performance later (we could convert it to a canvas element here as well)
 				view.parts[part] = img;
 			}
 			// encodeURIComponent() fixes Mozilla (would error out on #)
@@ -1099,7 +1098,7 @@
 			requestRedraw();
 			return false;
 		});
-		// TODO: this certainly needs more testing and love
+		// TODO (later): this certainly needs more testing and love
 		$('html').on('touchstart', '#pcb-canvas', function(e) {
 			for (var t in e.originalEvent.targetTouches) {
 				var touch = e.originalEvent.targetTouches[t];
@@ -1163,7 +1162,7 @@
 
 		$.pcb.clear();
 		$.pcb.library();
-		// TODO: remove
+		// TODO (later): remove once the UI is in place
 		$.pcb.selectPattern(1);
 	});
 
@@ -1329,7 +1328,7 @@
 				} else {
 					view[diameterKey] = mm;
 					requestRedraw();
-					// TODO: event
+					// TODO (later): event
 					return true;
 				}
 			}
@@ -1404,6 +1403,7 @@
 			}
 			if (preset == 'modela') {
 				return {
+					safety: 5,
 					png_path: {
 						offset_diameter: 0.79375,		// for 1/32" end mill
 					},
@@ -1513,7 +1513,7 @@
 				} else {
 					view.layer = l;
 					invalidateView(false);
-					// TODO: event
+					// TODO (later): event
 					return true;
 				}
 			}
@@ -1529,7 +1529,7 @@
 				}, function(data) {
 					if (data !== null) {
 						options.library = data;
-						// TODO: remove
+						// TODO (later): remove once the UI is in place
 						$.pcb.selectPart('atmega168-dip28');
 					} else {
 						options.library = null;
@@ -1543,11 +1543,10 @@
 		line: function(x1, y1, x2, y2) {
 			var len = Math.sqrt(Math.pow(x2-x1, 2)+Math.pow(y2-y1, 2));
 			var step = pxToMm(1);
-			// TODO: evaluate performance later
+			// TODO (later): evaluate performance later
 			for (var i=0; i <= len; i += step) {
 				$.pcb.point(x1+((x2-x1)/len)*i, y1+((y2-y1)/len)*i);
 			}
-			// TODO: add raw pixel access
 		},
 		load: function(brd, rev) {
 			if (typeof brd != 'number') {
@@ -1599,7 +1598,7 @@
 			}
 			if (ret) {
 				requestRedraw();
-				// TODO: event
+				// TODO (later): event
 			}
 			return ret;
 		},
@@ -1895,7 +1894,7 @@
 			});
 		},
 		testParts: function() {
-			// TODO: remove
+			// TODO (later): remove once the UI is in place
 			var elem = $('<input type="file">');
 			$(elem).on('change', function(e) {
 				$.pcb.addDrawing('arduinoshield', this.files[0], function(data) {

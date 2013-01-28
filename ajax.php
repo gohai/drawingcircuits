@@ -68,7 +68,7 @@ if (empty($_REQUEST['method'])) {
 		}
 
 		// check if we have the permission to modify the part
-		// TODO: check for (administrative) role as well
+		// TODO (later): check for (administrative) role as well
 		if ($part['author'] !== NULL && $part['author'] != $_REQUEST['auth']['uid']) {
 			json_response(array('error'=>'Insufficient privileges to modify part '.$part['part']));
 		}
@@ -94,7 +94,7 @@ if (empty($_REQUEST['method'])) {
 			json_response(array('error'=>databaseError()));
 		} else {
 			json_response(setupPart($part, array('visibility'=>true)));
-			// TODO: email notification if not visible
+			// TODO (later): email notification if not visible
 		}
 	} else {
 		// create a new part
@@ -131,7 +131,7 @@ if (empty($_REQUEST['method'])) {
 			json_response(array('error'=>databaseError()));
 		} else {
 			json_response(setupPart($part, array('visibility'=>true)));
-			// TODO: email notification if not visible
+			// TODO (later): email notification if not visible
 		}
 	}
 } elseif ($_REQUEST['method'] == 'addPartComment') {
@@ -165,7 +165,7 @@ if (empty($_REQUEST['method'])) {
 	} else {
 		$comment['id'] = $q;
 		json_response(array_key_whitelist($comment, array('id', 'part', 'comment', 'visible')));
-		// TODO: email notification if not visible
+		// TODO (later): email notification if not visible
 	}
 } elseif ($_REQUEST['method'] == 'addPartSupplier') {
 	checkAuth();
@@ -199,7 +199,7 @@ if (empty($_REQUEST['method'])) {
 		json_response(array('error'=>databaseError()));
 	} else {
 		json_response(array_key_whitelist($supplier, array('part', 'supplier', 'partNumber', 'url', 'visible')));
-		// TODO: email notification if not visible
+		// TODO (later): email notification if not visible
 	}
 } elseif ($_REQUEST['method'] == 'export') {
 	$board = arg_required($_REQUEST['board'], 'integer');
@@ -254,11 +254,14 @@ if (empty($_REQUEST['method'])) {
 				// don't clear parts of the board outside of the substrate area
 				filterSubstrateMask($board['layers'][$key], $board, $opts);
 			}
-			// TODO: filterSafetyMask($board['layers'][$key], $opts);
 		}
 		if ($key == 'bottom') {
 			filterFlipX($board['layers'][$key]);
 		}
+	}
+	// apply the safely mask at last so that it doesn't affect the substrate mask
+	foreach (array_keys($board['layers']) as $key) {
+		filterSafetyMask($board['layers'][$key], $opts);
 	}
 	// Modela-specific
 	foreach (array_keys($board['layers']) as $key) {
@@ -351,7 +354,7 @@ if (empty($_REQUEST['method'])) {
 			http_error(400, true);
 			die();
 		} elseif ($q[0]['owner'] !== NULL && $q[0]['owner'] !== $auth['uid']) {
-			// TODO: we might check for administrative role here as well
+			// TODO (later): check for (administrative) role as well
 			$board['board'] = NULL;
 		}
 	}
@@ -384,7 +387,7 @@ if (empty($_REQUEST['method'])) {
 	foreach ($board['layers'] as $key=>$val) {
 		if (!@is_string($val['png']) || substr($val['png'], 0, 22) != 'data:image/png;base64,') {
 			// unsupported Data-URL
-			// TODO: allow for blank layers being set to NULL later
+			// TODO (later): allow for blank layers being set to NULL
 			continue;
 		}
 		$val['png'] = @base64_decode(substr($val['png'], 22));

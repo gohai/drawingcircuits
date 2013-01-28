@@ -1,14 +1,10 @@
--- 0.1
-Bug: Pattern rotation on bottom layer
-Bug: Jumper drawing
-Bug: Part drills vs outline zoomed?
-Look through all TODOs in source tree
-
 -- 0.2
 Re-implement selection (Ctrl+A, Ctrl+D, Tab, Shift & click)
 Implement highlight
 Implements parts UI: Add drawing > name, file, [upload]; Add variant > name, parent, pins (with title, mark, description), title, description, longDescription, datasheet, datasheetPage, [commit]; Add comment > part, comment, [commit]; Add supplier > part, supplier, partNumber, url, [commit]; provide feedback whether contribution it is visible or not
 Fix drawing behind the UI
+Rework ruler (position: fixed, text)
+Rework text (handle tool, reintroduce crosshair, more intelligent alignment - e.g. when close to the right border, multiline support, top to bottom support?)
 Implement 404
 Rework colors
 Fix SVG rendering on Firefox
@@ -35,6 +31,8 @@ Milling: approximate runtime
 Support Pads
 Tablet compatibility
 Mailing list, including new submissions waiting to be moderated
+Implement pixels(layer), updatePixels()
+Part outline vs drills at different zoom levels
 checkMillability (traces being too narrow, drill hole diameters - including parts)
 GND & VCC annotations
 Segmentation & show connections

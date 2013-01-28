@@ -24,6 +24,6 @@ error_reporting(E_ALL);
 
 function base_url()
 {
-	// TODO: auto detect
+	// TODO (later): auto detect
 	return BASE_URL;
 }

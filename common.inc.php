@@ -234,6 +234,22 @@ function filterRotate(&$layer, $rot)
 }
 
 
+function filterSafetyMask(&$layer, $opts)
+{
+	$safety = 5.0;
+	if (isset($opts['safety'])) {
+		$safety = $opts['safety'];
+	}
+	$w = @imagesx($layer['png']);
+	$h = @imagesy($layer['png']);
+	$black = @imagecolorallocate($layer['png'], 0, 0, 0);
+	@imagefilledrectangle($layer['png'], 0, 0, mmToPx($safety), $h, $black);
+	@imagefilledrectangle($layer['png'], $w-mmToPx($safety), 0, $w, $h, $black);
+	@imagefilledrectangle($layer['png'], 0, 0, $w, mmToPx($safety), $black);
+	@imagefilledrectangle($layer['png'], 0, $h-mmToPx($safety), $w, $h, $black);
+}
+
+
 function filterSubstrateMask(&$layer, $board, $opts)
 {
 	$w = @imagesx($layer['png']);
