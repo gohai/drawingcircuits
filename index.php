@@ -19,8 +19,12 @@
 	try { $.pcb.baseUrl('<?php echo base_url(); ?>'); } catch (e) {}
 <?php
 
+	$board = DEFAULT_BOARD;
 	if (!empty($_REQUEST['board'])) {
-		echo tab().'$(document).ready(function(e) { $.pcb.load('.$_REQUEST['board'];
+		$board = $_REQUEST['board'];
+	}
+	if (!empty($board)) {
+		echo tab().'$(document).ready(function(e) { $.pcb.load('.$board;
 		if (!empty($_REQUEST['rev'])) {
 			echo ', '.$_REQUEST['rev'];
 		}
@@ -35,7 +39,26 @@
 <div id="pcb-tool-erase" class="pcb-tool pcb-ui" title="Erase (shift to set diameter, alt for manual coordinates)"></div>
 <div id="pcb-tool-drill" class="pcb-tool pcb-ui" title="Place a drill hole (shift to set diameter, alt for manual coordinates)"></div>
 <div id="pcb-tool-part" class="pcb-tool pcb-ui" title="Place a part (alt for manual coordinates)"></div>
-<object id="pcb-wacom-plugin" type="application/x-wacomtabletplugin" style="height: 0px; width: 0px;"></object>
+<!-- <object id="pcb-wacom-plugin" type="application/x-wacomtabletplugin" style="height: 0px; width: 0px;"></object> -->
+<?php
+
+	$s = TWITTER;
+	if (!empty($s)) {
+
+?>
+<div id="pcb-twitter">
+	<a href="https://twitter.com/<?php echo TWITTER; ?>" class="twitter-follow-button" data-show-count="false" data-size="large" data-show-screen-name="false">Follow @<?php echo TWITTER; ?></a>
+	<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+</div>
+<?php
+
+	}
+
+?>
+<div id="pcb-doc">
+	<a href="http://drawingcircuits.org/doc/keyboard_shortcuts.txt">Keyboard shortcuts</a><br>
+	<a href="http://drawingcircuits.org/doc/api.txt">JS API</a>
+</div>
 <?php
 
 	$s = GOOGLE_ANALYTICS;

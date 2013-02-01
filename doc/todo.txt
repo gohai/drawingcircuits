@@ -32,6 +32,7 @@ Support Pads
 Tablet compatibility
 Mailing list, including new submissions waiting to be moderated
 Implement pixels(layer), updatePixels()
+Show electrical symbols
 Part outline vs drills at different zoom levels
 checkMillability (traces being too narrow, drill hole diameters - including parts)
 GND & VCC annotations

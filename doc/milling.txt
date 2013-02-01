@@ -8,6 +8,8 @@ The end mills we are using have to fit the machine's 1/8" collar, meaning the en
 
 The copper clad boards I am currently using are double-sided 4x6 inch (101.6x152.4 mm) blank FR1 boards (Inventables: 24201-04). Their thickness is about 1.5 mm. FR1, FR2 and FR3 are based on cotton paper, and both easier to machine as well as less of a health issue compared to the fiberglassed-based FR4 material.
 
+Create a template out of wood to hold your copper clad boards: Cut a piece of MDF and firmly attach it to your bed/spoil board (currently using 1" #4 wood screws for this). Use ClickMill to mill a pocket with the following dimensions: 152.8 mm x 102.0 mm x 3 mm. (Next time: try 101.9 mm, 2 mm) Activate the checkbox for corner enlargement. Make sure the end mill diameter is set correctly in the program. Also make sure to write down the Machine Coordinates of the pocket's origin as we can use them later to set the User Coordinate system accordingly. The copper clad boards should rest in the template without a lot of play, you also shouldn't be able to flex them when you press down.
+
 The number of contours to be removed around traces is determined by the offset_number parameter (png_path tool). The program's default is 1, whereas MIT's website list 4 as a reasonable default. A value of -1 removes all copper, leaving just the traces. (For drill holes and substrate you want to use 1.)
 
 To get the recommended options for milling a board on the Roland Modela, call $.pcb.exportPreset('modela'). The returned object can be changed accordingly and passed as an argument to $.pcb.export(). See filter* functions in ../common.inc.php, fab_modules.html for more information.
@@ -23,7 +25,7 @@ Tip: Move the spindle close to your coordinate origin before you begin the cut a
 
 Milling boards is traditionally done with high RPMs ("the faster the better"). I am currently using 10.000 RPM.
 
-Submit rml files to the machine in this order: top, drills, bottom, substrate. Flip the board across the machine's X axis before and after milling the bottom file.
+Submit rml files to the machine in this order: (bottom,) top, drills, substrate. Flip the board across the machine's X axis after milling the bottom file.
 
 Drill holes and the substrate layer will probably cut a little bit into your bed/spoil board.
 
@@ -31,4 +33,4 @@ Sometimes it is necessary to press the Quit Cutting button at the lower right of
 
 A tool change command does not seem to be implemented in the RML format (tested with Modela Player 4 and exporting to file). Concatenating multiple RML files thus doesn't seem to make much sense.
 
-Some RML commands: PA (plot absolute), VS & VZ (speed), PZ (set z down), MC1 (turn motor on), PU (move to point), PD or Z (move down), MC0 (turn motor off), H (move to home)
+Some RML commands: PA (plot absolute), VS (speed while up), VZ (speed while down), PZ (set z down), MC1 (turn motor on), PU (move to point), PD or Z (move down), MC0 (turn motor off), H (move to home)

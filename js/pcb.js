@@ -50,7 +50,7 @@
 		ruler: false,
 		tool: 'draw',
 		toolData: {},
-		zoom: 1
+		zoom: 2
 	};
 	var view = {};
 
@@ -121,6 +121,15 @@
 			}
 		}
 		return true;
+	};
+	var centerCanvas = function() {
+		var canvasWidth = $('#pcb-canvas').width();
+		var windowWidth = $(window).width();
+		if (canvasWidth < windowWidth) {
+			$('#pcb-canvas').css('left', (windowWidth-canvasWidth)/2+'px');
+		} else {
+			$('#pcb-canvas').css('left', '0px');
+		}
 	};
 	var createCanvas = function(width, height) {
 		var cvs = $('<canvas></canvas>');
@@ -439,7 +448,7 @@
 	};
 	var getWacomPlugin = function() {
 		var plugin = document.getElementById('pcb-wacom-plugin');
-		if (typeof plugin != 'object' || typeof plugin.version != 'string') {
+		if (plugin === null || typeof plugin.version != 'string') {
 			return null;
 		} else {
 			return plugin;
@@ -1148,6 +1157,8 @@
 		$(window).on('resize', function(e) {
 			if (isTouchDevice()) {
 				fitZoomToViewport();
+			} else {
+				centerCanvas();
 			}
 		});
 
@@ -1309,10 +1320,12 @@
 				board.layers[l] = cvs;
 			}
 			view = $.extend(true, {}, defaultView);
+			invalidateView();
 			if (isTouchDevice()) {
 				fitZoomToViewport();
+			} else {
+				centerCanvas();
 			}
-			invalidateView();
 		},
 		diameter: function(mm) {
 			var diameterKey = 'diameter'+view.tool.charAt(0).toUpperCase()+view.tool.slice(1);
@@ -1418,7 +1431,7 @@
 						},
 						path_rml: {
 							speed: 4,
-							zmin: -0.2
+							zmin: -0.25
 						}
 					},
 					drills: {
@@ -1426,7 +1439,7 @@
 							offset_number: 1
 						},
 						path_rml: {
-							speed: 2,
+							speed: 0.5,
 							zmin: -2.0
 						}
 					},
@@ -1435,7 +1448,7 @@
 							offset_number: 1
 						},
 						path_rml: {
-							speed: 2,
+							speed: 0.5,
 							zmin: -2.0
 						}
 					},
@@ -1445,7 +1458,7 @@
 						},
 						path_rml: {
 							speed: 4,
-							zmin: -0.2
+							zmin: -0.25
 						}
 					}
 				};

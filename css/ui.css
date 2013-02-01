@@ -1,3 +1,10 @@
+#pcb-doc {
+	position: fixed;
+	right: 12px;
+	text-align: right;
+	top: 40px;
+}
+
 .pcb-tool {
 	border-radius: 2px;
 	border-style: solid;
@@ -27,6 +34,12 @@
 #pcb-tool-part {
 	background-image: url("../img/icon-part-bg.png");
 	top: 110px;
+}
+
+#pcb-twitter {
+	position: fixed;
+	right: 12px;
+	top: 5px;
 }
 
 .pcb-ui {
