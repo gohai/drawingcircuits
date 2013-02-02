@@ -1422,7 +1422,8 @@
 					},
 					path_rml: {
 						xmin: 0,
-						ymin: 0
+						ymin: 0,
+						z_up: 8
 					},
 					top: {
 						png_path: {
