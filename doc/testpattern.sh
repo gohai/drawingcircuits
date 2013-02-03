@@ -27,7 +27,7 @@ rm testpattern-*.rml 2>/dev/null
 ../bin/png_path testpattern.png testpattern-c2.path 1.1 0.79375 -1 0.6
 ../bin/path_rml testpattern-c2.path testpattern-c2.rml 4 15 30 -0.25
 ../bin/png_path testpattern.png testpattern-c3.path 1.1 0.79375 -1 0.7
-../bin/path_rml testpattern-c3.path testpattern-c3.rml 4 30 30 -0.257
+../bin/path_rml testpattern-c3.path testpattern-c3.rml 4 30 30 -0.25
 # we could concatenate here and filter all the MC0 and H commands
 ../bin/png_path testpattern.png testpattern-c4.path 1.1 0.79375 -1 0.8
 ../bin/path_rml testpattern-c4.path testpattern-c4.rml 4 45 30 -0.25
