@@ -272,6 +272,7 @@
 			drawDrillGfx(ctx, drill.diameter, opt);
 			if (opt.zoom <= options.zoomCutoffPins && d.substr(0, 5) != 'drill') {
 				ctx.rotate(-rot*Math.PI/180);
+				// TODO: bug
 				if (opt.layer == 'bottom') {
 					ctx.scale(-1, 1);
 				}
