@@ -1608,8 +1608,6 @@
 				}, function(data) {
 					if (data !== null) {
 						options.library = data;
-						// TODO (later): remove once the UI is in place
-						$.pcb.selectPart('atmega168-dip28');
 					} else {
 						options.library = null;
 					}

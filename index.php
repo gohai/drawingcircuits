@@ -36,10 +36,11 @@
 </script>
 </head>
 <body>
-<div id="pcb-tool-draw" class="pcb-tool pcb-ui" title="Draw (shift to set diameter, alt for manual coordinates)"></div>
-<div id="pcb-tool-erase" class="pcb-tool pcb-ui" title="Erase (shift to set diameter, alt for manual coordinates)"></div>
-<div id="pcb-tool-drill" class="pcb-tool pcb-ui" title="Place a drill hole (shift to set diameter, alt for manual coordinates)"></div>
-<div id="pcb-tool-part" class="pcb-tool pcb-ui" title="Place a part (alt for manual coordinates)"></div>
+<div id="pcb-tool-draw" class="pcb-tool pcb-icon pcb-ui" title="Draw (shift to set diameter, alt for manual coordinates)"></div>
+<div id="pcb-tool-erase" class="pcb-tool pcb-icon pcb-ui" title="Erase (shift to set diameter, alt for manual coordinates)"></div>
+<div id="pcb-tool-drill" class="pcb-tool pcb-icon pcb-ui" title="Place a drill hole (shift to set diameter, alt for manual coordinates)"></div>
+<div id="pcb-tool-part" class="pcb-tool pcb-icon pcb-ui" title="Place a part (alt for manual coordinates)"></div>
+<div id="pcb-icon-import" class="pcb-icon pcb-ui" title="Import assets"></div>
 <!-- <object id="pcb-wacom-plugin" type="application/x-wacomtabletplugin" style="height: 0px; width: 0px;"></object> -->
 <?php
 
