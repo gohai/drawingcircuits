@@ -10,8 +10,12 @@
 			user: null
 		},
 		baseUrl: null,
+		donMode: false,
 		highDpi: 300,
-		library: null
+		library: null,
+		zoomCutoffPins: 1,
+		zoomCutoffSiblingText: 2,
+		zoomCutoffText: 3
 	};
 
 	var defaultBoard = {
@@ -39,7 +43,6 @@
 		diameterDraw: 2,
 		diameterDrill: 1,
 		diameterErase: 2,
-		donMode: false,
 		lastMouseX: null,
 		lastMouseY: null,
 		layer: 'top',
@@ -267,6 +270,21 @@
 			var y = mmToPx(drill.y, opt.zoom);
 			ctx.translate(x, y);
 			drawDrillGfx(ctx, drill.diameter, opt);
+			if (opt.zoom <= options.zoomCutoffPins && d.substr(0, 5) != 'drill') {
+				ctx.rotate(-rot*Math.PI/180);
+				if (opt.layer == 'bottom') {
+					ctx.scale(-1, 1);
+				}
+				if (drill.description !== undefined) {
+					drawTextGfx(ctx, drill.description);
+				} else {
+					drawTextGfx(ctx, d);
+				}
+				if (opt.layer == 'bottom') {
+					ctx.scale(-1, 1);
+				}
+				ctx.rotate(rot*Math.PI/180);
+			}
 			ctx.translate(-x, -y);
 		}
 		ctx.restore();
@@ -304,8 +322,8 @@
 	};
 	var drawTextGfx = function(ctx, text) {
 		ctx.save();
-		ctx.fillStyle = '#ff0';
-		ctx.font = 'caption';
+		ctx.fillStyle = '#000';
+		ctx.font = '11px '+$('body').css('font-family');
 		ctx.textBaseline = 'middle';
 		ctx.fillText(text, -ctx.measureText(text).width/2, 0);
 		ctx.restore();
@@ -805,10 +823,15 @@
 			if (typeof text.parent == 'object') {
 				if (text.parent.layer != opt.layer) {
 					continue;
+				} else if (options.zoomCutoffText < opt.zoom) {
+					continue;
 				}
 				var x = text.parent.x;
 				var y = text.parent.y;
 			} else {
+				if (options.zoomCutoffSiblingText < opt.zoom) {
+					continue;
+				}
 				var parent = findObject(text.parent, brd);
 				if (parent.type == 'drills') {
 					if (opt.layer == 'substrate') {
@@ -1359,13 +1382,13 @@
 		},
 		donMode: function(enable) {
 			if (enable === undefined) {
-				return view.donMode;
+				return options.donMode;
 			} else {
 				if (enable) {
-					if (view.donMode) {
+					if (options.donMode) {
 						return;
 					} else {
-						view.donMode = true;
+						options.donMode = true;
 					}
 					var elem = $('<audio id="pcb-don-music" loop><source src="media/don.ogg" type="audio/ogg"><source src="media/don.mp3" type="audio/mpeg"></audio>');
 					$(elem).on('durationchange', function(e) {
@@ -1380,7 +1403,7 @@
 					});
 					$('body').append(elem);
 				} else {
-					view.donMode = false;
+					options.donMode = false;
 					$('#pcb-don-music').each(function() {
 						// fade out
 						$(this).animate({volume: 0}, 4000, 'swing', function() {

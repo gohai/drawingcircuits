@@ -6,13 +6,13 @@
 <g id="drills">
 	<circle id="reset" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="93.54" cy="143.879" r="1.417"/>
 	
-		<circle id="_x33_v3" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="100.74" cy="143.879" r="1.417"/>
+		<circle id="3v3" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="100.74" cy="143.879" r="1.417"/>
 	
-		<circle id="_x35_v" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="107.94" cy="143.879" r="1.417"/>
+		<circle id="5v" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="107.94" cy="143.879" r="1.417"/>
 	
-		<circle id="gnd_x5F_bottom_x5F_left" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="115.14" cy="143.879" r="1.417"/>
+		<circle id="gnd_bottom_left" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="115.14" cy="143.879" r="1.417"/>
 	
-		<circle id="gnd_x5F_bottom_x5F_right" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="122.34" cy="143.879" r="1.417"/>
+		<circle id="gnd_bottom_right" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="122.34" cy="143.879" r="1.417"/>
 	<circle id="vin" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="129.54" cy="143.879" r="1.417"/>
 	
 		<circle id="analog0" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="143.73" cy="143.879" r="1.417"/>
@@ -28,7 +28,7 @@
 		<circle id="analog5" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="179.88" cy="143.879" r="1.417"/>
 	<circle id="aref" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="67.62" cy="7.198" r="1.417"/>
 	
-		<circle id="gnd_x5F_top" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="74.82" cy="7.198" r="1.417"/>
+		<circle id="gnd_top" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="74.82" cy="7.198" r="1.417"/>
 	
 		<circle id="digital13" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="82.02" cy="7.198" r="1.417"/>
 	
