@@ -230,7 +230,7 @@ var showPartDialog = function() {
 		$(this).addClass('pcb-dlg-part-list-selected');
 	});
 	// handle hover
-	$('#pcb-dlg-part-list > li').on('hover.pcb-dlg', function(e) {
+	$('#pcb-dlg-part-list > li').on('mouseenter.pcb-dlg', function(e) {
 		var p = $(this).data('part');
 		var part = library[p];
 		var html = '';
@@ -383,9 +383,10 @@ $(document).ready(function() {
 			}
 			$.pcb.part($.pcb.selectPart(), c.x, c.y, rot);
 			ui.lastManualRot = rot;
+		} else {
+			showPartDialog();
+			return false;
 		}
-		showPartDialog();
-		return false;
 	});
 	$('#pcb-icon-import').on('click', function(e) {
 		showImportDialog();
