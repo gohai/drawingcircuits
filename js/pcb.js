@@ -131,6 +131,13 @@
 		} else {
 			$('#pcb-canvas').css('left', '0px');
 		}
+		var canvasHeight = $('#pcb-canvas').height();
+		var windowHeight = $(window).height();
+		if (canvasHeight < windowHeight) {
+			$('#pcb-canvas').css('top', (windowHeight-canvasHeight)/2+'px');
+		} else {
+			$('#pcb-canvas').css('top', '0px');
+		}
 	};
 	var createCanvas = function(width, height) {
 		var cvs = $('<canvas></canvas>');
@@ -2049,6 +2056,9 @@
 				} else {
 					view.zoom = fac;
 					invalidateView();
+					if (!isTouchDevice()) {
+						centerCanvas();
+					}
 					return true;
 				}
 			}

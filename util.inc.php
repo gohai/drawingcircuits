@@ -575,6 +575,8 @@ function json_request()
 function json_response($data)
 {
 	header('Content-type: application/json');
+	// we convert everything into objects since we can't differentiate between empty
+	// numeric and associative arrays in PHP
 	echo @json_encode($data, JSON_FORCE_OBJECT);
 	die();
 }
