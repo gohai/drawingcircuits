@@ -1015,7 +1015,7 @@
 			}
 		});
 		$('html').on('mousedown', '#pcb-canvas', function(e) {
-			if ($.browser.mozilla) {
+			if (typeof e.offsetX != 'number') {
 				var o = $(this).offset();
 				e.offsetX = e.pageX-o.left;
 				e.offsetY = e.pageY-o.top;
@@ -1065,7 +1065,7 @@
 			return false;
 		});
 		$('html').on('mousemove', '#pcb-canvas', function(e) {
-			if ($.browser.mozilla) {
+			if (typeof e.offsetX != 'number') {
 				var o = $(this).offset();
 				e.offsetX = e.pageX-o.left;
 				e.offsetY = e.pageY-o.top;
@@ -1138,7 +1138,7 @@
 			}
 			return false;
 		});
-		$('html').ajaxError(function(e, jqxhr, settings, exception) {
+		$(document).ajaxError(function(e, jqxhr, settings, exception) {
 			// DEBUG
 			console.warn('ajaxError: '+exception);
 			// reference counting (also see ajaxRequest())
