@@ -39,6 +39,7 @@
 		diameterDraw: 2,
 		diameterDrill: 1,
 		diameterErase: 2,
+		donMode: false,
 		lastMouseX: null,
 		lastMouseY: null,
 		layer: 'top',
@@ -1348,6 +1349,40 @@
 		},
 		dimensions: function() {
 			return { width: board.width, height: board.height };
+		},
+		donMode: function(enable) {
+			if (enable === undefined) {
+				return view.donMode;
+			} else {
+				if (enable) {
+					if (view.donMode) {
+						return;
+					} else {
+						view.donMode = true;
+					}
+					var elem = $('<audio id="pcb-don-music" loop><source src="media/don.ogg" type="audio/ogg"><source src="media/don.mp3" type="audio/mpeg"></audio>');
+					$(elem).on('durationchange', function(e) {
+						// seek to a random position
+						this.currentTime = this.duration*Math.random();
+						this.volume = 0;
+						this.play();
+					});
+					$(elem).on('play', function(e) {
+						// fade in
+						$(this).animate({volume: 1}, 4000);
+					});
+					$('body').append(elem);
+				} else {
+					view.donMode = false;
+					$('#pcb-don-music').each(function() {
+						// fade out
+						$(this).animate({volume: 0}, 4000, 'swing', function() {
+							$(this).get(0).pause();
+							$(this).remove();
+						});
+					});
+				}
+			}
 		},
 		drill: function(x, y, diameter) {
 			if (typeof x != 'number' || typeof y != 'number') {
