@@ -58,8 +58,8 @@
 
 ?>
 <div id="pcb-doc">
-	<a href="http://drawingcircuits.org/doc/keyboard_shortcuts.txt">Keyboard shortcuts</a><br>
-	<a href="http://drawingcircuits.org/doc/api.txt">JS API</a>
+	<a href="http://drawingcircuits.org/doc/keyboard_shortcuts.txt" target="_blank">Keyboard shortcuts</a><br>
+	<a href="http://drawingcircuits.org/doc/api.txt" target="_blank">JS API</a>
 </div>
 <?php
 

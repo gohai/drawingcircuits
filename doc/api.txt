@@ -65,6 +65,14 @@ $.pcb.dimensions()
 
 Returns an object with the board's dimensions in mm.
 
+$.pcb.donMode()
+
+Return whether or not Don (Suggs) mode is active.
+
+$.pcb.donMode(boolean enable)
+
+Enable or disable Don (Suggs) mode.
+
 $.pcb.drill(number x, number y, number diameter)
 
 Creates a drill hole.

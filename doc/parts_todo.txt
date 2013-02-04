@@ -1,4 +1,3 @@
-Audio jack
 Capacitor
 Diode (1N4001)
 Fuse holder (5x20)
