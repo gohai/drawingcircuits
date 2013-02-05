@@ -53,6 +53,7 @@
 		pattern: null,
 		redrawPending: false,
 		ruler: false,
+		sel: [],
 		tool: 'draw',
 		toolData: {},
 		zoom: 2
@@ -1387,6 +1388,19 @@
 				centerCanvas();
 			}
 		},
+		deselect: function(name) {
+			if (name === undefined) {
+				view.sel = [];
+			} else {
+				for (i=0; i < view.sel.length; i++) {
+					if (view.sel[i] === name) {
+						view.sel.splice(i, 1);
+						break;
+					}
+				}
+			}
+			requestRedraw();
+		},
 		diameter: function(mm) {
 			var diameterKey = 'diameter'+view.tool.charAt(0).toUpperCase()+view.tool.slice(1);
 			if (mm === undefined) {
@@ -1868,6 +1882,7 @@
 			}
 		},
 		removeObject: function(name) {
+			$.pcb.deselect(name);
 			var ret = removeObject(name);
 			if (ret) {
 				requestRedraw();
@@ -2035,6 +2050,28 @@
 			});
 			// EVENT
 			$('html').trigger('pcb-saving');
+		},
+		select: function(name) {
+			if (name === undefined) {
+				return $.extend(true, [], view.sel);
+			} else {
+				var obj = findObject(name, board);
+				if (obj === false) {
+					return false;
+				} else if (obj.type == 'texts' && typeof obj.obj.parent != 'object') {
+					// select the parent instead
+					name = obj.obj.parent;
+				}
+				// check if already selected
+				if ($.inArray(name, view.sel) != -1) {
+					return true;
+				} else {
+					view.sel.push(name);
+					requestRedraw();
+					return true;
+				}
+			}
+			// TODO: selectAll(layer)
 		},
 		selectPart: function(part) {
 			if (part === undefined) {
