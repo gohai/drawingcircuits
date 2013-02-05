@@ -49,7 +49,7 @@ body {
 	background: #fff;
 	left: 165px;
 	max-height: 240px;
-	overflow-y: scroll;
+	overflow-y: auto;
 	padding-left: 4px;
 	padding-right: 4px;
 	position: absolute;
@@ -92,7 +92,7 @@ body {
 
 #pcb-dlg-part-list {
 	max-height: 240px;
-	overflow-y: scroll;
+	overflow-y: auto;
 	position: absolute;
 	width: 160px;
 }

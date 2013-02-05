@@ -29,7 +29,7 @@ Milling: ensure a clean edge (see direction parameter in path_rml)
 Milling: option to cut a rectangle around board
 Milling: approximate runtime
 Support Pads
-Tablet compatibility
+Tablet compatibility (prevent the warning on Firefox for Wacom)
 Mailing list, including new submissions waiting to be moderated
 Implement pixels(layer), updatePixels()
 Show electrical symbols

@@ -11,6 +11,7 @@
 		},
 		baseUrl: null,
 		donMode: false,
+		fontSize: 11,
 		highDpi: 300,
 		library: null,
 		zoomCutoffPins: 1,
@@ -147,6 +148,33 @@
 		$(cvs).prop('width', mmToPx(width));
 		$(cvs).prop('height', mmToPx(height));
 		return $(cvs).get(0);
+	};
+	var distToSegment = function(p, v, w) {
+		// taken from http://stackoverflow.com/questions/849211/shortest-distance-between-a-point-and-a-line-segment
+		var sqr = function (x) {
+			return x * x;
+		};
+		var dist2 = function(v, w) {
+			return sqr(v.x - w.x) + sqr(v.y - w.y)
+		};
+		var distToSegmentSquared = function(p, v, w) {
+			var l2 = dist2(v, w);
+			if (l2 == 0) {
+				return dist2(p, v);
+			}
+			var t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+			if (t < 0) {
+				return dist2(p, v);
+			}
+			if (t > 1) {
+				return dist2(p, w);
+			}
+			return dist2(p, {
+				x: v.x + t * (w.x - v.x),
+				y: v.y + t * (w.y - v.y)
+			});
+		};
+		return Math.sqrt(distToSegmentSquared(p, v, w));
 	};
 	var downloadRequest = function(data) {
 		var arg = '';
@@ -324,7 +352,7 @@
 	var drawTextGfx = function(ctx, text) {
 		ctx.save();
 		ctx.fillStyle = '#000';
-		ctx.font = '11px '+$('body').css('font-family');
+		ctx.font = options.fontSize+'px '+$('body').css('font-family');
 		ctx.textBaseline = 'middle';
 		ctx.fillText(text, -ctx.measureText(text).width/2, 0);
 		ctx.restore();
@@ -1683,11 +1711,69 @@
 		objects: function(withPartDrills) {
 			var ret = {};
 			ret.drills = $.extend(true, {}, board.drills);
-			ret.texts = $.extend(true, {}, board.texts);
-			ret.parts = $.extend(true, {}, board.parts);
 			ret.jumpers = $.extend(true, {}, board.jumpers);
+			ret.parts = $.extend(true, {}, board.parts);
+			ret.texts = $.extend(true, {}, board.texts);
 			if (withPartDrills === true) {
 				addPartsDrills(ret.parts, ret.drills);
+			}
+			return ret;
+		},
+		objectsAt: function(x, y, layer) {
+			if (typeof x != 'number' && typeof y != 'number') {
+				return false;
+			}
+			if (typeof layer != 'string') {
+				layer = view.layer;
+			}
+			var ret = [];
+			for (var d in board.drills) {
+				var drill = board.drills[d];
+				if (Math.sqrt(Math.pow(drill.x-x, 2)+Math.pow(drill.y-y, 2)) < drill.diameter/2) {
+					ret.push(d);
+				}
+			}
+			for (var j in board.jumpers) {
+				var jumper = board.jumpers[j];
+				var coords = getJumperCoords(jumper, board);
+				if ($.inArray(layer, coords.layers) == -1) {
+					continue;
+				}
+				var dist = distToSegment({x: x, y: y}, coords.from, coords.to);
+				if (dist < 0.5) {
+					ret.push(j);
+				}
+			}
+			for (var p in board.parts) {
+				var part = board.parts[p];
+				if (part.layer != layer) {
+					continue;
+				}
+				// TODO: handle rotation
+				if (part.x-part.width/2 < x && x < part.x+part.width/2 && part.y-part.height/2 < y && y < part.y+part.height/2) {
+					ret.push(p);
+				}
+			}
+			for (var t in board.texts) {
+				var text = board.texts[t];
+				// only look at autonomous texts
+				if (typeof text.parent != 'object') {
+					continue;
+				}
+				if (text.parent.layer != layer) {
+					continue;
+				}
+				// test y first because it's cheaper
+				if (text.parent.y-options.fontSize/2 < y && y < text.parent.y+options.fontSize/2) {
+					var cvs = $('#pcb-canvas').get(0);
+					var ctx = cvs.getContext('2d');
+					ctx.save();
+					ctx.font = options.fontSize+'px '+$('body').css('font-family');
+					var width = ctx.measureText(text.text).width;
+					if (text.parent.x-width/2 < x && x < text.parent.x+width/2) {
+						ret.push(t);
+					}
+				}
 			}
 			return ret;
 		},
