@@ -132,7 +132,7 @@ body {
 
 #pcb-icon-import {
 	background-image: url("../img/icon-import-bg.png");
-	top: 145px;
+	top: 190px;
 }
 
 .pcb-tool {
@@ -156,6 +156,11 @@ body {
 #pcb-tool-part {
 	background-image: url("../img/icon-part-bg.png");
 	top: 110px;
+}
+
+#pcb-tool-sel {
+	background-image: url("../img/icon-select-bg.png");
+	top: 145px;
 }
 
 #pcb-twitter {

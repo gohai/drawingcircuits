@@ -53,7 +53,7 @@
 		pattern: null,
 		redrawPending: false,
 		ruler: false,
-		sel: [],
+		sel: null,
 		tool: 'draw',
 		toolData: {},
 		zoom: 2
@@ -1090,7 +1090,7 @@
 					$.pcb.tool('draw');
 				}
 			}
-			if (view.tool == 'draw' || view.tool == 'drill' || view.tool == 'erase') {
+			if (view.tool == 'draw' || view.tool == 'drill' || view.tool == 'erase' || view.tool == 'sel') {
 				$.pcb.point(pxToMm(p.x, true), pxToMm(p.y, true));
 				view.toolData.usingTool = true;
 			} else if (view.tool == 'part' || view.tool == 'pattern') {
@@ -1388,18 +1388,14 @@
 				centerCanvas();
 			}
 		},
-		deselect: function(name) {
-			if (name === undefined) {
-				view.sel = [];
-			} else {
-				for (i=0; i < view.sel.length; i++) {
-					if (view.sel[i] === name) {
-						view.sel.splice(i, 1);
-						break;
-					}
-				}
+		deselect: function() {
+			if (view.sel !== null) {
+				// TODO: event
+				// DEBUG
+				console.log('deselecting, was '+view.sel);
+				view.sel = null;
+				requestRedraw();
 			}
-			requestRedraw();
 		},
 		diameter: function(mm) {
 			var diameterKey = 'diameter'+view.tool.charAt(0).toUpperCase()+view.tool.slice(1);
@@ -1879,6 +1875,31 @@
 				requestRedraw();
 			} else if (view.tool == 'drill') {
 				$.pcb.drill(x, y, $.pcb.diameter());
+			} else if (view.tool == 'sel') {
+				var objs = $.pcb.objectsAt(x, y);
+				// check if currently selected object is in stack of objects
+				var found = false;
+				for (var i=0; i < objs.length; i++) {
+					var name = objs[i];
+					if (name === view.sel) {
+						if (objs.length == 1) {
+							$.pcb.deselect();
+						} else if (i+1 < objs.length) {
+							// select the next one in the stack
+							$.pcb.select(objs[i+1]);
+						} else {
+							// roll over
+							$.pcb.select(objs[0]);
+						}
+						found = true;
+						break;
+					}
+				}
+				if (!found && objs.length) {
+					$.pcb.select(objs[0]);
+				} else if (!found) {
+					$.pcb.deselect();
+				}
 			}
 		},
 		removeObject: function(name) {
@@ -2053,7 +2074,7 @@
 		},
 		select: function(name) {
 			if (name === undefined) {
-				return $.extend(true, [], view.sel);
+				return view.sel;
 			} else {
 				var obj = findObject(name, board);
 				if (obj === false) {
@@ -2063,15 +2084,17 @@
 					name = obj.obj.parent;
 				}
 				// check if already selected
-				if ($.inArray(name, view.sel) != -1) {
+				if (name == view.sel) {
 					return true;
 				} else {
-					view.sel.push(name);
+					$.pcb.deselect(view.sel);
+					view.sel = name;
+					// TODO
+					console.log('selected '+name);
 					requestRedraw();
 					return true;
 				}
 			}
-			// TODO: selectAll(layer)
 		},
 		selectPart: function(part) {
 			if (part === undefined) {
@@ -2166,6 +2189,12 @@
 				} else {
 					view.tool = t;
 					view.toolData = {};
+					// show mouse cursor for select tool
+					if (view.tool == 'sel') {
+						$('#pcb-canvas').css('cursor', 'default');
+					} else {
+						$('#pcb-canvas').css('cursor', '');
+					}
 					requestRedraw();
 				}
 			}
