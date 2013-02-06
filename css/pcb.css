@@ -2,3 +2,11 @@
 	cursor: none;
 	position: absolute;
 }
+
+#pcb-don-studio {
+	background-image: url("../media/studio.jpg");
+	background-size: cover;
+	height: 100%;
+	position: fixed;
+	width: 100%;
+}

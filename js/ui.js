@@ -180,6 +180,7 @@ var showImportDialog = function() {
 	html += '<div><h1>Add part</h1><div class="pcb-dlg-import-collapsible" style="display: none;">TODO</div></div>';
 	html += '<div><h1>Add supplier</h1><div class="pcb-dlg-import-collapsible" style="display: none;">TODO</div></div>';
 	html += '<div><h1>Add comment</h1><div class="pcb-dlg-import-collapsible" style="display: none;">TODO</div></div>';
+	html += '<div><h1>Add schematic</h1><div class="pcb-dlg-import-collapsible" style="display: none;">TODO</div></div>';
 	html += '</div>';
 	var dialogElem = $(html);
 	$('body').append(dialogElem);
@@ -386,6 +387,13 @@ $(document).ready(function() {
 		} else {
 			showPartDialog();
 			return false;
+		}
+	});
+	$('#pcb-icon-remove').on('click', function(e) {
+		// TODO: grey out
+		var sel = $.pcb.select();
+		if (sel !== null) {
+			$.pcb.removeObject(sel);
 		}
 	});
 	$('#pcb-icon-import').on('click', function(e) {

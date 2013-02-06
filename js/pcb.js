@@ -14,6 +14,8 @@
 		fontSize: 11,
 		highDpi: 300,
 		library: null,
+		nudge: 0.1,
+		nudgeShift: 10,
 		zoomCutoffPins: 1,
 		zoomCutoffSiblingText: 2,
 		zoomCutoffText: 3
@@ -394,6 +396,16 @@
 			};
 		}
 		return ret;
+	};
+	var exceedsBoard = function(x, y, brd) {
+		if (brd === undefined) {
+			brd = board;
+		}
+		if (x < 0 || board.width < x || y < 0 || board.height < y) {
+			return true;
+		} else {
+			return false;
+		}
 	};
 	var fillCanvas = function(cvs, color) {
 		var ctx = cvs.getContext('2d');
@@ -1004,11 +1016,78 @@
 			// prevent context menu from showing up
 			return false;
 		});
+		$('html').on('keydown', function(e) {
+			if (!$(e.target).is('body')) {
+				return;
+			}
+			// we use this for arrow keys only (they don't show up in keypress)
+			if (37 <= e.keyCode && e.keyCode <= 40) {
+				if (view.sel) {
+					if (e.keyCode == 37 && e.shiftKey) {
+						if (view.layer == 'bottom') {
+							$.pcb.moveObject(view.sel, options.nudgeShift, 0, true);
+						} else {
+							$.pcb.moveObject(view.sel, -options.nudgeShift, 0, true);
+						}
+					} else if (e.keyCode == 37) {
+						if (view.layer == 'bottom') {
+							$.pcb.moveObject(view.sel, options.nudge, 0, true);
+						} else {
+							$.pcb.moveObject(view.sel, -options.nudge, 0, true);
+						}
+					} else if (e.keyCode == 38 && e.shiftKey) {
+						$.pcb.moveObject(view.sel, 0, -options.nudgeShift, true);
+					} else if (e.keyCode == 38) {
+						$.pcb.moveObject(view.sel, 0, -options.nudge, true);
+					} else if (e.keyCode == 39 && e.shiftKey) {
+						if (view.layer == 'bottom') {
+							$.pcb.moveObject(view.sel, -options.nudgeShift, 0, true);
+						} else {
+							$.pcb.moveObject(view.sel, options.nudgeShift, 0, true);
+						}
+					} else if (e.keyCode == 39) {
+						if (view.layer == 'bottom') {
+							$.pcb.moveObject(view.sel, -options.nudge, 0, true);
+						} else {
+							$.pcb.moveObject(view.sel, options.nudge, 0, true);
+						}
+					} else if (e.keyCode == 40 && e.shiftKey) {
+						$.pcb.moveObject(view.sel, 0, options.nudgeShift, true);
+					} else if (e.keyCode == 40) {
+						$.pcb.moveObject(view.sel, 0, options.nudge, true);
+					}
+				}
+				return false;
+			}
+		});
 		$('html').on('keypress', function(e) {
 			if (!$(e.target).is('body')) {
 				return;
 			}
-			if (e.charCode == 43 || e.charCode == 61) {
+			// TODO: move all to keydown?
+			if (e.charCode == 1 && e.ctrlKey) {
+				// Ctrl-d
+				$.pcb.deselect();
+			} else if (e.charCode == 19) {
+				// Ctrl-s
+				if (!$.pcb.requestPending()) {
+					var origBoard = $.pcb.board();
+					$.pcb.save();
+					// wait for request to finish
+					var retry = function() {
+						if (!$.pcb.requestPending()) {
+							if (origBoard !== $.pcb.board()) {
+								// redirect
+								view.allowNavigation = true;
+								window.location = $.pcb.baseUrl()+$.pcb.board();
+							}
+						} else {
+							setTimeout(retry, 100);
+						}
+					};
+					setTimeout(retry, 100);
+				}
+			} else if (e.charCode == 43 || e.charCode == 61) {
 				// + or =
 				$.pcb.zoom($.pcb.zoom()*0.8);
 			} else if (e.charCode == 45) {
@@ -1050,23 +1129,7 @@
 				$.pcb.ruler(!$.pcb.ruler());
 			} else if (e.charCode == 115) {
 				// s
-				if (!$.pcb.requestPending()) {
-					var origBoard = $.pcb.board();
-					$.pcb.save();
-					// wait for request to finish
-					var retry = function() {
-						if (!$.pcb.requestPending()) {
-							if (origBoard !== $.pcb.board()) {
-								// redirect
-								view.allowNavigation = true;
-								window.location = $.pcb.baseUrl()+$.pcb.board();
-							}
-						} else {
-							setTimeout(retry, 100);
-						}
-					};
-					setTimeout(retry, 100);
-				}
+				$.pcb.tool('sel');
 			} else if (e.charCode == 116) {
 				// t
 				$.pcb.tool('text');
@@ -1429,6 +1492,10 @@
 					} else {
 						options.donMode = true;
 					}
+					// studio
+					var elem = $('<div id="pcb-don-studio"></div>');
+					$('body').prepend(elem);
+					// music
 					var elem = $('<audio id="pcb-don-music" loop><source src="media/don.ogg" type="audio/ogg"><source src="media/don.mp3" type="audio/mpeg"></audio>');
 					$(elem).on('durationchange', function(e) {
 						// seek to a random position
@@ -1448,6 +1515,7 @@
 						$(this).animate({volume: 0}, 4000, 'swing', function() {
 							$(this).get(0).pause();
 							$(this).remove();
+							$('#pcb-don-studio').remove();
 						});
 					});
 				}
@@ -1684,39 +1752,94 @@
 			// EVENT
 			$('html').trigger('pcb-loading');
 		},
-		moveObject: function(name, x, y) {
+		moveObject: function(name, x, y, relative) {
+			var obj = findObject(name);
+			if (obj === false) {
+				return false;
+			}
 			if (typeof x != 'number' || typeof y != 'number') {
 				return false;
 			}
-			if (x < 0 || board.width < x || y < 0 || board.height < y) {
-				console.warn('Coordinates exceed board dimensions');
-				return false;
+			if (typeof relative != 'boolean') {
+				relative = false;
 			}
-
-			var ret = false;
-			if (board.drills[name] !== undefined) {
-				// move drills
-				board.drills[name].x = x;
-				board.drills[name].y = y;
-				ret = true;
-			} else if (board.parts[name] !== undefined) {
-				// move parts
-				board.parts[name].x = x;
-				board.parts[name].y = y;
-				ret = true;
-			} else if (board.texts[name] !== undefined) {
-				// move texts
-				if (typeof board.texts[name].parent == 'object') {
-					board.texts[name].parent.x = x;
-					board.texts[name].parent.y = y;
-					ret = true;
+			if (!relative) {
+				// check coordinates
+				if (exceedsBoard(x, y)) {
+					console.warn('Coordinates exceed board dimensions');
+					return false;
 				}
 			}
-			if (ret) {
-				requestRedraw();
-				// TODO (later): event
+
+			var redraw = false;
+			if (obj.type == 'drills') {
+				if (relative) {
+					if (exceedsBoard(obj.obj.x+x, obj.obj.y+y)) {
+						console.warn('Coordinates exceed board dimensions');
+						return false;
+					} else {
+						obj.obj.x += x;
+						obj.obj.y += y;
+					}
+				} else {
+					obj.obj.x = x;
+					obj.obj.y = y;
+				}
+				redraw = true;
+			} else if (obj.type == 'jumpers') {
+				if (relative) {
+					if (typeof obj.obj.from == 'object' && obj.obj.to == 'object') {
+						if (exceedsBoard(obj.obj.from.x+x, obj.obj.from.y+y) ||
+							exceedsBoard(obj.obj.to.x+x, obj.obj.to.y+y)) {
+							console.warn('Coordinates exceed board dimensions');
+							return false;
+						} else {
+							obj.obj.from.x += x;
+							obj.obj.from.y += y;
+							obj.obj.to.x += x;
+							obj.obj.to.y += y;
+							redraw = true;
+						}
+					}
+				}
+			} else if (obj.type == 'parts') {
+				if (relative) {
+					if (exceedsBoard(obj.obj.x+x, obj.obj.y+y)) {
+						console.warn('Coordinates exceed board dimensions');
+						return false;
+					} else {
+						obj.obj.x += x;
+						obj.obj.y += y;
+					}
+				} else {
+					obj.x = x;
+					obj.y = y;
+				}
+				redraw = true;
+			} else if (obj.type == 'texts') {
+				if (typeof obj.obj.parent == 'object') {
+					if (relative) {
+						if (exceedsBoard(obj.obj.parent.x+x, obj.obj.parent.y+y)) {
+							console.warn('Coordinates exceed board dimensions');
+							return false;
+						} else {
+							obj.obj.parent.x += x;
+							obj.obj.parent.y += y;
+						}
+					} else {
+						obj.obj.parent.x = x;
+						obj.obj.parent.y = y;
+					}
+					redraw = true;
+				}
 			}
-			return ret;
+
+			if (redraw) {
+				requestRedraw();
+				return true;
+			} else {
+				return false;
+			}
 		},
 		objects: function(withPartDrills) {
 			var ret = {};
@@ -1903,7 +2026,9 @@
 			}
 		},
 		removeObject: function(name) {
-			$.pcb.deselect(name);
+			if (view.sel === name) {
+				$.pcb.deselect();
+			}
 			var ret = removeObject(name);
 			if (ret) {
 				requestRedraw();

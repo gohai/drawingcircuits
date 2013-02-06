@@ -8,11 +8,14 @@
 ]	Increase tool diameter
 b	Switch to draw ("brush") tool
 d	Switch to drill tool
+Ctrl-d	Deselect any selected object
 e	Switch to erase tool
 p	Place a part
 P	Place a pattern
 r	Toggle ruler
-s	Save board
+s	Select an object
+Ctrl-s	Save board
 t	Add a text annotation
+Arrow	Nudge selected object (Shift for bigger steps)
 
 RMB	Rotate part or pattern

@@ -130,9 +130,14 @@ body {
 	width: 30px;
 }
 
+#pcb-icon-remove {
+	background-image: url("../img/icon-remove-bg.png");
+	top: 190px;
+}
+
 #pcb-icon-import {
 	background-image: url("../img/icon-import-bg.png");
-	top: 190px;
+	top: 235px;
 }
 
 .pcb-tool {
@@ -159,7 +164,7 @@ body {
 }
 
 #pcb-tool-sel {
-	background-image: url("../img/icon-select-bg.png");
+	background-image: url("../img/icon-sel-bg.png");
 	top: 145px;
 }
 
