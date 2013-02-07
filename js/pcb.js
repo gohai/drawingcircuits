@@ -16,6 +16,7 @@
 		library: null,
 		nudge: 0.1,
 		nudgeShift: 10,
+		thumbSize: 300,
 		zoomCutoffPins: 1,
 		zoomCutoffSiblingText: 2,
 		zoomCutoffText: 3
@@ -151,6 +152,17 @@
 		$(cvs).prop('width', mmToPx(width));
 		$(cvs).prop('height', mmToPx(height));
 		return $(cvs).get(0);
+	};
+	var createThumbnail = function(brd) {
+		var cvs = $('<canvas></canvas>');
+		// TODO: fit board into thumbSize
+		$(cvs).prop('width', options.thumbSize);
+		$(cvs).prop('height', options.thumbSize);
+		cvs = cvs.get(0);
+		var opt = $.extend(true, {}, defaultView);
+		opt.noSvg = true;
+		renderBoard(cvs, brd, opt);
+		return cvs;
 	};
 	var distToSegment = function(p, v, w) {
 		// taken from http://stackoverflow.com/questions/849211/shortest-distance-between-a-point-and-a-line-segment
@@ -822,7 +834,11 @@
 				continue;
 			} else {
 				// TODO (later): change color
-				drawPartOutline(ctx, part, opt);
+				// drawing an SVG taints the canvas, at least on Chrome, so that no 
+				// toDataURL calls will be possible afterwards
+				if (!opt.noSvg) {
+					drawPartOutline(ctx, part, opt);
+				}
 			}
 		}
 
@@ -847,7 +863,9 @@
 			if (part.layer != opt.layer) {
 				continue;
 			} else {
-				drawPartOutline(ctx, part, opt);
+				if (!opt.noSvg) {
+					drawPartOutline(ctx, part, opt);
+				}
 			}
 		}
 
@@ -2171,6 +2189,10 @@
 			if (asNew) {
 				board.board = null;
 			}
+			try {
+				var thumb = createThumbnail(board).toDataURL('image/png');
+			} catch (e) {
+			}
 			// make a copy of board in order to base64-encode the contained layers
 			var boardCopy = $.extend(true, {}, board);
 			for (var l in boardCopy.layers) {
@@ -2185,6 +2207,7 @@
 			ajaxRequest({
 				method: 'save',
 				board: boardCopy,
+				thumb: thumb,
 				auth: options.auth
 			}, function(data) {
 				if (data !== null) {

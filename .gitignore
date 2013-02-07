@@ -1,3 +1,4 @@
 .DS_Store
 *.swp
+img/thumb-*
 user-config.inc.php

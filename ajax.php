@@ -398,6 +398,16 @@ if (empty($_REQUEST['method'])) {
 	$json = array_key_blacklist($board, array('author', 'board', 'layers', 'parentBoard', 'parentRev', 'rev'));
 	$json = json_encode($json, JSON_FORCE_OBJECT);
 	db_insert('revisions', array('board'=>$board['board'], 'rev'=>$board['rev'], 'created'=>'NOW()', 'author'=>$auth['uid'], 'host'=>gethostbyaddr($_SERVER['REMOTE_ADDR']), 'parentBoard'=>$board['parentBoard'], 'parentRev'=>$board['parentRev'], 'json'=>$json));
+
+	// save thumbnail
+	if (!empty($_REQUEST['thumb'])) {
+		$png = @base64_decode(substr($_REQUEST['thumb'], 22));
+		$mask = umask(0);
+		umask(0111);
+		@file_put_contents('img/thumb-'.$board['board'].'.png', $png);
+		umask($mask);
+	}
+
 	// return ids
 	json_response(array('board'=>$board['board'], 'rev'=>$board['rev']));
 } else {
