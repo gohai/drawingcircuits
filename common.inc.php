@@ -234,7 +234,7 @@ function filterRotate(&$layer, $rot)
 }
 
 
-function filterSafetyMask(&$layer, $opts)
+function filterSafetyMask(&$layer, $layerName, $opts)
 {
 	$safety = 5.0;
 	if (isset($opts['safety'])) {
@@ -242,11 +242,16 @@ function filterSafetyMask(&$layer, $opts)
 	}
 	$w = @imagesx($layer['png']);
 	$h = @imagesy($layer['png']);
-	$black = @imagecolorallocate($layer['png'], 0, 0, 0);
-	@imagefilledrectangle($layer['png'], 0, 0, mmToPx($safety), $h, $black);
-	@imagefilledrectangle($layer['png'], $w-mmToPx($safety), 0, $w, $h, $black);
-	@imagefilledrectangle($layer['png'], 0, 0, $w, mmToPx($safety), $black);
-	@imagefilledrectangle($layer['png'], 0, $h-mmToPx($safety), $w, $h, $black);
+	if ($layerName == 'substrate') {
+		@imagealphablending($layer['png'], false);
+		$color = @imagecolorallocatealpha($layer['png'], 0, 0, 0, 127);
+	} else {
+		$color = @imagecolorallocate($layer['png'], 0, 0, 0);
+	}
+	@imagefilledrectangle($layer['png'], 0, 0, mmToPx($safety), $h, $color);
+	@imagefilledrectangle($layer['png'], $w-mmToPx($safety), 0, $w, $h, $color);
+	@imagefilledrectangle($layer['png'], 0, 0, $w, mmToPx($safety), $color);
+	@imagefilledrectangle($layer['png'], 0, $h-mmToPx($safety), $w, $h, $color);
 }
 
 

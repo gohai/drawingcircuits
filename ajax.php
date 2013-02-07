@@ -261,7 +261,7 @@ if (empty($_REQUEST['method'])) {
 	}
 	// apply the safely mask at last so that it doesn't affect the substrate mask
 	foreach (array_keys($board['layers']) as $key) {
-		filterSafetyMask($board['layers'][$key], $opts);
+		filterSafetyMask($board['layers'][$key], $key, $opts);
 	}
 	// Modela-specific
 	foreach (array_keys($board['layers']) as $key) {
