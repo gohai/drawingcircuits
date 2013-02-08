@@ -1083,11 +1083,30 @@
 				return;
 			}
 			// TODO: move all to keydown?
-			if (e.charCode == 1 && e.ctrlKey) {
-				// Ctrl-d
+			if (e.charCode == 43 || e.charCode == 61) {
+				// + or =
+				$.pcb.zoom($.pcb.zoom()*0.8);
+			} else if (e.charCode == 45) {
+				// -
+				$.pcb.zoom($.pcb.zoom()*1.2);
+			} else if (e.charCode == 48) {
+				// 0
+				$.pcb.zoom(defaultView.zoom);
+			} else if (e.charCode == 49) {
+				// 1
+				$.pcb.layer('top');
+			} else if (e.charCode == 50) {
+				$.pcb.layer('substrate');
+			} else if (e.charCode == 51) {
+				$.pcb.layer('bottom');
+			} else if (e.charCode == 68) {
+				// D
 				$.pcb.deselect();
-			} else if (e.charCode == 19) {
-				// Ctrl-s
+			} else if (e.charCode == 80) {
+				// P
+				$.pcb.tool('pattern');
+			} else if (e.charCode == 83) {
+				// S
 				if (!$.pcb.requestPending()) {
 					var origBoard = $.pcb.board();
 					$.pcb.save();
@@ -1105,25 +1124,6 @@
 					};
 					setTimeout(retry, 100);
 				}
-			} else if (e.charCode == 43 || e.charCode == 61) {
-				// + or =
-				$.pcb.zoom($.pcb.zoom()*0.8);
-			} else if (e.charCode == 45) {
-				// -
-				$.pcb.zoom($.pcb.zoom()*1.2);
-			} else if (e.charCode == 48) {
-				// 0
-				$.pcb.zoom(defaultView.zoom);
-			} else if (e.charCode == 49) {
-				// 1
-				$.pcb.layer('top');
-			} else if (e.charCode == 50) {
-				$.pcb.layer('substrate');
-			} else if (e.charCode == 51) {
-				$.pcb.layer('bottom');
-			} else if (e.charCode == 80) {
-				// P
-				$.pcb.tool('pattern');
 			} else if (e.charCode == 91) {
 				// [
 				$.pcb.diameter($.pcb.diameter()-1);
@@ -1622,7 +1622,7 @@
 						},
 						path_rml: {
 							speed: 4,
-							zmin: -0.25
+							zmin: -0.325
 						}
 					},
 					drills: {
@@ -1630,8 +1630,8 @@
 							offset_number: 1
 						},
 						path_rml: {
-							speed: 0.5,
-							zmin: -2.0
+							speed: 1,
+							zmin: -1.9
 						}
 					},
 					substrate: {
@@ -1640,7 +1640,7 @@
 						},
 						path_rml: {
 							speed: 0.5,
-							zmin: -2.0
+							zmin: -1.9
 						}
 					},
 					bottom: {
@@ -1649,7 +1649,7 @@
 						},
 						path_rml: {
 							speed: 4,
-							zmin: -0.25
+							zmin: -0.325
 						}
 					}
 				};
