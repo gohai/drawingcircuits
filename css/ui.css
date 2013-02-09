@@ -112,13 +112,6 @@ body {
 	font-weight: bold;
 }
 
-#pcb-doc {
-	position: fixed;
-	right: 12px;
-	text-align: right;
-	top: 40px;
-}
-
 .pcb-icon {
 	border-radius: 2px;
 	border-style: solid;
@@ -138,6 +131,26 @@ body {
 #pcb-icon-import {
 	background-image: url("../img/icon-import-bg.png");
 	top: 235px;
+}
+
+#pcb-login {
+	position: absolute;
+	right: 12px;
+	top: 5px;
+}
+
+#pcb-login-btn {
+}
+
+#pcb-login-error {
+}
+
+#pcb-login-password {
+	width: 50px;
+}
+
+#pcb-login-user {
+	width: 50px;
 }
 
 .pcb-tool {
@@ -171,7 +184,7 @@ body {
 #pcb-twitter {
 	position: fixed;
 	right: 12px;
-	top: 5px;
+	bottom: 5px;
 }
 
 .pcb-ui {

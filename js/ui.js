@@ -204,6 +204,34 @@ var showImportDialog = function() {
 	});
 	return true;
 };
+var showLoginBar = function() {
+	if ($('#pcb-login').length) {
+		$('#pcb-login').remove();
+	}
+	var auth = $.pcb.auth();
+	if (auth.uid) {
+		var elem = $('<div id="pcb-login">Hello '+auth.user+' (<a href="#" id="pcb-login-logout">Logout</a>)</div>');
+	} else {
+		var elem = $('<div id="pcb-login"><a href="#" id="pcb-login-login">Login</a> or <a href="'+$.pcb.baseUrl()+'signup" target="_blank">Signup</a></div>');
+	}
+	$('body').prepend(elem);
+	$('#pcb-login-login').on('click', function(e) {
+		$('#pcb-login').html('<form><input id="pcb-login-user" type="text" placeholder="User" autofocus> <input id="pcb-login-password" type="password" placeholder="Pass"> <input id="pcb-login-btn" type="submit" value="Login"></form>');
+		$('#pcb-login-btn').on('click', function(e) {
+			$.pcb.auth($('#pcb-login-user').val(), $('#pcb-login-password').val(), function() {
+				showLoginBar();
+			}, function() {
+				$('#pcb-login').html('<span id="pcb-login-error">Wrong username or password</span>');
+				setTimeout(showLoginBar, 2000);
+			});
+			return false;
+		});
+	});
+	$('#pcb-login-logout').on('click', function(e) {
+		$.pcb.deauth();
+		showLoginBar();
+	});
+};
 var showPartDialog = function() {
 	// destroy if already shown
 	hideDialog();
@@ -400,6 +428,7 @@ $(document).ready(function() {
 		showImportDialog();
 		return false;
 	});
+	showLoginBar();
 });
 
 })();

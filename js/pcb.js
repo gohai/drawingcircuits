@@ -1431,7 +1431,7 @@
 				}
 			});
 		},
-		auth: function(user, password) {
+		auth: function(user, password, success, fail) {
 			if (user === undefined) {
 				if (localStorage['pcbSecret'] !== undefined) {
 					options.auth.secret = localStorage['pcbSecret'];
@@ -1457,7 +1457,13 @@
 						localStorage['pcbUid'] = data.uid;
 						localStorage['pcbUser'] = data.user;
 						$.pcb.auth();
-						// TODO (later): event
+						if (typeof success == 'function') {
+							success();
+						}
+					} else {
+						if (typeof fail == 'function') {
+							fail();
+						}
 					}
 				});
 			} else {
