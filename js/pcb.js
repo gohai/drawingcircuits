@@ -1313,6 +1313,7 @@
 		var cancelAnimationFrame = window.cancelAnimationFrame || window.webkitCancelAnimationFrame || window.mozCancelAnimationFrame || window.msCancelAnimationFrame;
 		window.cancelAnimationFrame = cancelAnimationFrame;
 
+		$.pcb.auth();
 		$.pcb.clear();
 		$.pcb.library();
 		// TODO (later): remove once the UI is in place
@@ -1421,7 +1422,7 @@
 				url: url,
 				auth: options.auth
 			}, function(data) {
-				if (data != null) {
+				if (data !== null) {
 					if (typeof data.error == 'string') {
 						console.warn(data.error);
 					} else if (typeof success == 'function') {
@@ -1429,6 +1430,39 @@
 					}
 				}
 			});
+		},
+		auth: function(user, password) {
+			if (user === undefined) {
+				if (localStorage['pcbSecret'] !== undefined) {
+					options.auth.secret = localStorage['pcbSecret'];
+					options.auth.uid = localStorage['pcbUid'];
+					options.auth.user = localStorage['pcbUser'];
+				} else {
+					options.auth.secret = null;
+					options.auth.uid = null;
+					options.auth.user = null;
+				}
+				return {
+					uid: options.auth.uid,
+					user: options.auth.user
+				}
+			} else if (typeof user == 'string' && typeof password == 'string') {
+				ajaxRequest({
+					method: 'auth',
+					user: user,
+					password: password
+				}, function(data) {
+					if (data !== null && data.uid !== undefined) {
+						localStorage['pcbSecret'] = data.secret;
+						localStorage['pcbUid'] = data.uid;
+						localStorage['pcbUser'] = data.user;
+						$.pcb.auth();
+						// TODO (later): event
+					}
+				});
+			} else {
+				return false;
+			}
 		},
 		author: function() {
 			return board.author;
@@ -1468,6 +1502,12 @@
 			} else {
 				centerCanvas();
 			}
+		},
+		deauth: function() {
+			localStorage.removeItem('pcbSecret');
+			localStorage.removeItem('pcbUid');
+			localStorage.removeItem('pcbUser');
+			$.pcb.auth();
 		},
 		deselect: function() {
 			if (view.sel !== null) {

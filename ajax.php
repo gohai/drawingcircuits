@@ -201,6 +201,41 @@ if (empty($_REQUEST['method'])) {
 		json_response(array_key_whitelist($supplier, array('part', 'supplier', 'partNumber', 'url', 'visible')));
 		// TODO (later): email notification if not visible
 	}
+} elseif ($_REQUEST['method'] == 'addUser') {
+	$user = array();
+	$user['user'] = arg_required($_REQUEST['user'], 'string');
+	$user['email'] = arg_required($_REQUEST['email'], 'string');
+	// calculate secret
+	$password = arg_required($_REQUEST['password'], 'string');
+	$user['salt'] = uniqid(mt_rand(0, 999999999), true);
+	$user['secret'] = md5($user['salt'].$password);
+	$user['firstLogin'] = 'NOW()';
+	$user['firstHost'] = gethostbyaddr($_SERVER['REMOTE_ADDR']);
+	$user['lastLogin'] = $user['firstLogin'];
+	$user['lastHost'] = $user['firstHost'];
+	// insert into database
+	$q = db_insert('users', $user);
+	if ($q === false) {
+		json_response(array());
+	} else {
+		json_response(array('secret' => $user['secret'], 'uid' => $q, 'user' => $user['user']));
+	}
+} elseif ($_REQUEST['method'] == 'auth') {
+	$user = arg_required($_REQUEST['user'], 'string');
+	$password = arg_required($_REQUEST['password'], 'string');
+	$q = db_fetch('users', 'user="'.db_esc($user).'"');
+	if ($q === false) {
+		http_error(500, true);
+		die();
+	} else if (empty($q)) {
+		json_response(array());
+	}
+	// check secret
+	if (md5($q[0]['salt'].$password) == $q[0]['secret']) {
+		json_response(array('secret' => $q[0]['secret'], 'uid' => $q[0]['uid'], 'user' => $user));
+	} else {
+		json_response(array());
+	}
 } elseif ($_REQUEST['method'] == 'export') {
 	$board = arg_required($_REQUEST['board'], 'integer');
 
