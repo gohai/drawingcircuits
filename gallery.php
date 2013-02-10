@@ -9,10 +9,13 @@
 <meta name="viewport" content="width=device-width">
 <link rel="stylesheet" href="<?php echo base_url(); ?>css/reset.min.css" type="text/css">
 <link rel="stylesheet" href="<?php echo base_url(); ?>css/ui.css" type="text/css">
-<link rel="stylesheet" href="<?php echo base_url(); ?>css/gallery.css" type="text/css">
+<style type="text/css">
+</style>
 <script type="text/javascript" src="<?php echo base_url(); ?>js/<?php echo JQUERY; ?>"></script>
-<script type="text/javascript" src="<?php echo base_url(); ?>js/ui.js"></script>
-<script type="text/javascript" src="<?php echo base_url(); ?>js/gallery.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+});
+</script>
 </head>
 <body>
 <div id="pcb-gallery-nav">

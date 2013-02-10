@@ -226,6 +226,7 @@ var showLoginBar = function() {
 			});
 			return false;
 		});
+		// TODO: hide when clicking outside
 	});
 	$('#pcb-login-logout').on('click', function(e) {
 		$.pcb.deauth();
@@ -235,8 +236,7 @@ var showLoginBar = function() {
 var showMetadataDialog = function() {
 	// destroy if already shown
 	hideDialog();
-	var dialogElem = $('<div id="pcb-dlg-metadata" class="pcb-dlg pcb-ui"><h2>Title</h2><p><input type="text" id="pcb-dlg-metadata-title" autofocus></p><h2>Description</h2><p><textarea id="pcb-dlg-metadata-description"></textarea></p><p><input type="checkbox" id="pcb-dlg-metadata-ispattern"> Is a pattern</p><h2>Bill of materials</h2><p><textarea id="pcb-dlg-metadata-bom"></textarea></p><p id="pcb-dlg-metadata-parts"><p><input type="button" id="pcb-dlg-metadata-btn" value="Apply"></p></div>');
-	// TODO: add author
+	var dialogElem = $('<div id="pcb-dlg-metadata" class="pcb-dlg pcb-ui"><h2>Title</h2><p><input type="text" id="pcb-dlg-metadata-title" autofocus></p><p id="pcb-dlg-metadata-author"></p><h2>Description</h2><p><textarea id="pcb-dlg-metadata-description"></textarea></p><p><input type="checkbox" id="pcb-dlg-metadata-ispattern"> Is a pattern</p><h2>Bill of materials</h2><p><textarea id="pcb-dlg-metadata-bom"></textarea></p><p id="pcb-dlg-metadata-parts"><p><input type="button" id="pcb-dlg-metadata-btn" value="Apply"></p></div>');
 	// TODO: explain pattern
 	$('body').append(dialogElem);
 	centerElem(dialogElem);
@@ -244,6 +244,20 @@ var showMetadataDialog = function() {
 	if (metadata.title) {
 		$('#pcb-dlg-metadata-title').val(metadata.title);
 	}
+
+	// author
+	var authorString = 'by ';
+	if (metadata.author) {
+		// TODO: resolve
+		authorString += 'UID '+metadata.author;
+	} else {
+		authorString += 'Anonymous practitioner';
+	}
+	if (metadata.parentBoard) {
+		authorString += ', based on <a href="'+$.pcb.baseUrl()+metadata.parentBoard+'/'+metadata.parentRev+'" target="_blank">Board '+metadata.parentBoard+' Revision '+metadata.parentRev+'</a>';
+	}
+	$('#pcb-dlg-metadata-author').html(authorString);
+
 	if (metadata.description) {
 		$('#pcb-dlg-metadata-description').val(metadata.description);
 	}
@@ -288,6 +302,10 @@ var showMetadataDialog = function() {
 		$.pcb.metadata('isPattern', $('#pcb-dlg-metadata-ispattern').prop('checked'));
 		$.pcb.metadata('bom', $('#pcb-dlg-metadata-bom').val());
 		hideDialog();
+	});
+	// handle resize
+	$(window).on('resize.pcb-dlg', function(e) {
+		centerElem(dialogElem);
 	});
 	// handle close
 	// TODO: unify
@@ -398,7 +416,7 @@ var showPartDialog = function() {
 				var comment = comments[i];
 				html += '<li>';
 				if (comment.author === null) {
-					html += 'Anonymous wrote: ';
+					html += 'Anonymous practitioner wrote: ';
 				} else {
 					// TODO: resolve
 					html += 'UID '+comment.author+' wrote: ';

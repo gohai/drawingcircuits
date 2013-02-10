@@ -1540,9 +1540,6 @@
 				}
 			}
 		},
-		dimensions: function() {
-			return { width: board.width, height: board.height };
-		},
 		donMode: function(enable) {
 			if (enable === undefined) {
 				return options.donMode;
@@ -1818,8 +1815,12 @@
 				author: 'number',
 				bom: 'string',
 				description: 'string',
+				height: 'number',
 				isPattern: 'boolean',
-				title: 'string'
+				parentBoard: 'number',
+				parentRev: 'number',
+				title: 'string',
+				width: 'number'
 			};
 			if (key === undefined) {
 				var ret = {};
@@ -1849,7 +1850,7 @@
 					return false;
 				}
 				// filter properties that are read-only
-				if (key == 'author') {
+				if (key == 'author' || key == 'height' || key == 'parentBoard' || key == 'parentRev' || key == 'width') {
 					return false;
 				}
 				board[key] = value;
@@ -2015,9 +2016,6 @@
 				}
 			}
 			return ret;
-		},
-		parentBoard: function() {
-			return { board: board.parentBoard, rev: board.parentRev };
 		},
 		part: function(part, x, y, rot, layer) {
 			var l = $.pcb.library();
@@ -2271,6 +2269,7 @@
 			}
 		},
 		save: function(asNew) {
+			// TODO: warn if not logged in, call auth()?
 			board.parentBoard = board.board;
 			board.parentRev = board.rev;
 			board.rev = null;
