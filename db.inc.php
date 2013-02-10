@@ -245,6 +245,7 @@ function db_type_dec($q, $r)
 			$i++;
 			continue;
 		}
+		// TODO: issue with boolean variables in MySQL being returned as int
 		switch (@mysql_field_type($q, $i)) {
 			case 'bool':
 				if ($val == '1') {

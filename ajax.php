@@ -429,10 +429,18 @@ if (empty($_REQUEST['method'])) {
 		db_insert('layers', array('board'=>$board['board'], 'rev'=>$board['rev'], 'layer'=>$key, 'width'=>$val['width'], 'height'=>$val['height'], 'png'=>$val['png']));
 	}
 
+	// save isPattern separately
+	if (isset($board['isPattern'])) {
+		$isPattern = $board['isPattern'];
+	} else {
+		$isPattern = false;
+	}
+
 	// save the rest
-	$json = array_key_blacklist($board, array('author', 'board', 'layers', 'parentBoard', 'parentRev', 'rev'));
+	$json = array_key_blacklist($board, array('author', 'board', 'isPattern', 'layers', 'parentBoard', 'parentRev', 'rev'));
 	$json = json_encode($json, JSON_FORCE_OBJECT);
-	db_insert('revisions', array('board'=>$board['board'], 'rev'=>$board['rev'], 'created'=>'NOW()', 'author'=>$auth['uid'], 'host'=>gethostbyaddr($_SERVER['REMOTE_ADDR']), 'parentBoard'=>$board['parentBoard'], 'parentRev'=>$board['parentRev'], 'json'=>$json));
+	// TODO (later): use a variable instead
+	db_insert('revisions', array('board'=>$board['board'], 'rev'=>$board['rev'], 'created'=>'NOW()', 'author'=>$auth['uid'], 'host'=>gethostbyaddr($_SERVER['REMOTE_ADDR']), 'parentBoard'=>$board['parentBoard'], 'parentRev'=>$board['parentRev'], 'isPattern' => $isPattern, 'json'=>$json));
 
 	// save thumbnail
 	if (!empty($_REQUEST['thumb'])) {

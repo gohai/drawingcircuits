@@ -323,6 +323,12 @@ function loadBoard($board, $rev)
 		$ret['author'] = $q[0]['author'];
 		$ret['parentBoard'] = $q[0]['parentBoard'];
 		$ret['parentRev'] = $q[0]['parentRev'];
+		// this works around an issue with boolean variables in MySQL being returned as int
+		if ($q[0]['isPattern']) {
+			$ret['isPattern'] = true;
+		} else {
+			$ret['isPattern'] = false;
+		}
 		// load layers
 		$ret['layers'] = array();
 		$q = db_fetch('layers', 'board='.$board.' AND rev='.$rev);

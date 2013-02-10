@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS `boards` (
   `board` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `owner` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`board`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `comments` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS `comments` (
   PRIMARY KEY (`id`),
   KEY `part` (`part`),
   KEY `visible` (`visible`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `layers` (
   `board` int(10) unsigned NOT NULL,
@@ -63,10 +63,12 @@ CREATE TABLE IF NOT EXISTS `revisions` (
   `host` varchar(255) NOT NULL,
   `parentBoard` int(10) unsigned DEFAULT NULL,
   `parentRev` int(10) unsigned DEFAULT NULL,
+  `isPattern` tinyint(1) NOT NULL,
   `json` text NOT NULL,
   PRIMARY KEY (`board`,`rev`),
   KEY `created` (`created`,`author`),
-  KEY `uid` (`author`)
+  KEY `uid` (`author`),
+  KEY `isPattern` (`isPattern`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `suppliers` (
@@ -87,6 +89,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `uid` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `user` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
+  `salt` varchar(32) NOT NULL,
   `secret` varchar(32) NOT NULL,
   `role` tinyint(3) unsigned NOT NULL DEFAULT '1',
   `firstLogin` datetime NOT NULL,
@@ -94,7 +97,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `lastLogin` datetime NOT NULL,
   `lastHost` varchar(255) NOT NULL,
   PRIMARY KEY (`uid`),
-  KEY `user` (`user`)
+  UNIQUE KEY `user` (`user`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
