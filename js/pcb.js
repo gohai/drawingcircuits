@@ -1470,9 +1470,6 @@
 				return false;
 			}
 		},
-		author: function() {
-			return board.author;
-		},
 		baseUrl: function(url) {
 			if (url === undefined) {
 				return options.baseUrl;
@@ -1815,6 +1812,51 @@
 			});
 			// EVENT
 			$('html').trigger('pcb-loading');
+		},
+		metadata: function(key, value) {
+			var keys = {
+				author: 'number',
+				bom: 'string',
+				description: 'string',
+				isPattern: 'boolean',
+				title: 'string'
+			};
+			if (key === undefined) {
+				var ret = {};
+				for (var k in keys) {
+					if (board[k] !== undefined) {
+						ret[k] = board[k];
+					} else {
+						ret[k] = null;
+					}
+				}
+				return ret;
+			} else if (typeof key == 'string' && value === undefined) {
+				if (keys[key] !== undefined) {
+					if (board[key] !== undefined) {
+						return board[key];
+					} else {
+						return null;
+					}
+				} else {
+					return false;
+				}
+			} else if (typeof key == 'string') {
+				if (keys[key] === undefined) {
+					return false;
+				}
+				if (typeof value != keys[key]) {
+					return false;
+				}
+				// filter properties that are read-only
+				if (key == 'author') {
+					return false;
+				}
+				board[key] = value;
+				return true;
+			} else {
+				return false;
+			}
 		},
 		moveObject: function(name, x, y, relative) {
 			var obj = findObject(name);

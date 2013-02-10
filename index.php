@@ -43,6 +43,7 @@
 <div id="pcb-tool-sel" class="pcb-tool pcb-icon pcb-ui" title="Select objects"></div>
 <div id="pcb-icon-remove" class="pcb-icon pcb-ui" title="Remove selected object"></div>
 <div id="pcb-icon-import" class="pcb-icon pcb-ui" title="Import assets"></div>
+<div id="pcb-icon-metadata" class="pcb-icon pcb-ui" title="Metadata"></div>
 <!-- <object id="pcb-wacom-plugin" type="application/x-wacomtabletplugin" style="height: 0px; width: 0px;"></object> -->
 <?php
 

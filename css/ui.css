@@ -10,6 +10,10 @@ body {
 	line-height: 18px;
 }
 
+textarea {
+	resize: none;
+}
+
 .pcb-dlg {
 	background-color: #fff;
 	overflow: hidden;
@@ -36,6 +40,39 @@ body {
 	padding-bottom: 9px;
 	padding-left: 6px;
 	padding-top: 9px;
+}
+
+#pcb-dlg-metadata {
+	height: 362px;
+	padding: 20px;
+	width: 400px;
+}
+
+#pcb-dlg-metadata-bom {
+	height: 75px;
+	max-height: 75px;
+	width: 394px;
+}
+
+#pcb-dlg-metadata-btn {
+	margin-left: 350px;
+	width: 50px;
+}
+
+#pcb-dlg-metadata-description {
+	height: 75px;
+	max-height: 75px;
+	width: 394px;
+}
+
+#pcb-dlg-metadata-parts {
+	height: 75px;
+	max-height: 75px;
+	overflow-y: scroll;
+}
+
+#pcb-dlg-metadata-title {
+	width: 394px;
 }
 
 #pcb-dlg-part {
@@ -131,6 +168,10 @@ body {
 #pcb-icon-import {
 	background-image: url("../img/icon-import-bg.png");
 	top: 235px;
+}
+
+#pcb-icon-metadata {
+	top: 270px;
 }
 
 #pcb-login {

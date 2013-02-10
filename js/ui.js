@@ -210,9 +210,9 @@ var showLoginBar = function() {
 	}
 	var auth = $.pcb.auth();
 	if (auth.uid) {
-		var elem = $('<div id="pcb-login">Hello '+auth.user+' (<a href="#" id="pcb-login-logout">Logout</a>)</div>');
+		var elem = $('<div id="pcb-login" class="pcb-ui">Hello '+auth.user+' (<a href="#" id="pcb-login-logout">Logout</a>)</div>');
 	} else {
-		var elem = $('<div id="pcb-login"><a href="#" id="pcb-login-login">Login</a> or <a href="'+$.pcb.baseUrl()+'signup" target="_blank">Signup</a></div>');
+		var elem = $('<div id="pcb-login" class="pcb-ui"><a href="#" id="pcb-login-login">Login</a> or <a href="'+$.pcb.baseUrl()+'signup" target="_blank">Signup</a></div>');
 	}
 	$('body').prepend(elem);
 	$('#pcb-login-login').on('click', function(e) {
@@ -230,6 +230,73 @@ var showLoginBar = function() {
 	$('#pcb-login-logout').on('click', function(e) {
 		$.pcb.deauth();
 		showLoginBar();
+	});
+};
+var showMetadataDialog = function() {
+	// destroy if already shown
+	hideDialog();
+	var dialogElem = $('<div id="pcb-dlg-metadata" class="pcb-dlg pcb-ui"><h2>Title</h2><p><input type="text" id="pcb-dlg-metadata-title" autofocus></p><h2>Description</h2><p><textarea id="pcb-dlg-metadata-description"></textarea></p><p><input type="checkbox" id="pcb-dlg-metadata-ispattern"> Is a pattern</p><h2>Bill of materials</h2><p><textarea id="pcb-dlg-metadata-bom"></textarea></p><p id="pcb-dlg-metadata-parts"><p><input type="button" id="pcb-dlg-metadata-btn" value="Apply"></p></div>');
+	// TODO: add author
+	// TODO: explain pattern
+	$('body').append(dialogElem);
+	centerElem(dialogElem);
+	var metadata = $.pcb.metadata();
+	if (metadata.title) {
+		$('#pcb-dlg-metadata-title').val(metadata.title);
+	}
+	if (metadata.description) {
+		$('#pcb-dlg-metadata-description').val(metadata.description);
+	}
+	if (metadata.isPattern) {
+		$('#pcb-dlg-metadata-ispattern').prop('checked', true);
+	}
+	if (metadata.bom) {
+		$('#pcb-dlg-metadata-bom').val(metadata.bom);
+	}
+
+	// list parts on board
+	var partsString = '';
+	var library = $.pcb.library();
+	if (library) {
+		var parts = {};
+		var objects = $.pcb.objects();
+		for (var p in objects.parts) {
+			var part = objects.parts[p].part;
+			if (parts[part] !== undefined) {
+				parts[part] += 1;
+			} else {
+				parts[part] = 1;
+			}
+		}
+		for (var p in parts) {
+			if (partsString.length) {
+				partsString += ', ';
+			}
+			partsString += parts[p]+'x '+library[p].title;
+			// TODO: list suppliers
+		}
+	}
+	if (!partsString.length) {
+		partsString = 'None';
+	}
+	$('#pcb-dlg-metadata-parts').html('Parts currently on the board: '+partsString);
+
+	// handle button
+	$('#pcb-dlg-metadata-btn').on('click', function(e) {
+		$.pcb.metadata('title', $('#pcb-dlg-metadata-title').val());
+		$.pcb.metadata('description', $('#pcb-dlg-metadata-description').val());
+		$.pcb.metadata('isPattern', $('#pcb-dlg-metadata-ispattern').prop('checked'));
+		$.pcb.metadata('bom', $('#pcb-dlg-metadata-bom').val());
+		hideDialog();
+	});
+	// handle close
+	// TODO: unify
+	$('html').on('click.pcb-dlg', function(e) {
+		if ($(e.target).is('#pcb-dlg-metadata') || $(e.target).parents('#pcb-dlg-metadata').length) {
+			return;
+		} else {
+			hideDialog();
+		}
 	});
 };
 var showPartDialog = function() {
@@ -426,6 +493,10 @@ $(document).ready(function() {
 	});
 	$('#pcb-icon-import').on('click', function(e) {
 		showImportDialog();
+		return false;
+	});
+	$('#pcb-icon-metadata').on('click', function(e) {
+		showMetadataDialog();
 		return false;
 	});
 	showLoginBar();
