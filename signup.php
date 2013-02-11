@@ -16,8 +16,7 @@
 	}
 	input {
 		height: 16px;
-		margin-bottom: 2px;
-		margin-top: 2px;
+		margin: 2px 0px;
 		width: 194px;
 	}
 	#pcb-signup {

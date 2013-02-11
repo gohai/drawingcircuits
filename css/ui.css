@@ -178,6 +178,8 @@ textarea {
 }
 
 #pcb-login {
+	background-color: #fff;
+	padding: 0px 2px;
 	position: absolute;
 	right: 12px;
 	top: 5px;

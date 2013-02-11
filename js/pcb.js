@@ -142,7 +142,7 @@
 		var canvasHeight = $('#pcb-canvas').height();
 		var windowHeight = $(window).height();
 		if (canvasHeight < windowHeight) {
-			$('#pcb-canvas').css('top', (windowHeight-canvasHeight)/2+'px');
+			$('#pcb-canvas').css('top', (windowHeight-canvasHeight)*0.85+'px');
 		} else {
 			$('#pcb-canvas').css('top', '0px');
 		}

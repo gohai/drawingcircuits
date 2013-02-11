@@ -1,4 +1,6 @@
 #pcb-canvas {
+	background-color: lightblue;
+	box-shadow: 3px 3px;
 	cursor: none;
 	position: absolute;
 }
