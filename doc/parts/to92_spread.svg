@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 15.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="17.236px" height="10.219px" viewBox="0 0 17.236 10.219" enable-background="new 0 0 17.236 10.219" xml:space="preserve">
+<g id="drills">
+	<circle id="pin3" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="15.817" cy="5.331" r="1.417"/>
+	<circle id="pin2" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="8.618" cy="5.331" r="1.417"/>
+	<circle id="pin1" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="1.417" cy="5.331" r="1.417"/>
+</g>
+<g id="outline">
+	<g>
+		<path d="M3.871,8.219V6.746C3.871,4.13,6,2,8.618,2c2.617,0,4.746,2.13,4.746,4.746v1.473H3.871 M1.871,10.219h13.493V6.746
+			C15.364,3.02,12.344,0,8.618,0C4.891,0,1.871,3.02,1.871,6.746V10.219L1.871,10.219z"/>
+	</g>
+</g>
+</svg>

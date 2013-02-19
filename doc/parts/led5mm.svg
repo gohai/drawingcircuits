@@ -4,8 +4,8 @@
 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 	 width="15.307px" height="16.441px" viewBox="0 0 15.307 16.441" enable-background="new 0 0 15.307 16.441" xml:space="preserve">
 <g id="drills">
-	<circle fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="4.054" cy="8.221" r="1.417"/>
-	<circle fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="11.254" cy="8.221" r="1.417"/>
+	<circle id="a" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="4.054" cy="8.221" r="1.417"/>
+	<circle id="c" fill="none" stroke="#231F20" stroke-width="0.001" stroke-miterlimit="10" cx="11.254" cy="8.221" r="1.417"/>
 </g>
 <g id="outline">
 	<g>
