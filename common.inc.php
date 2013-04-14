@@ -67,6 +67,30 @@ function filterDrillIsolation(&$layer, $board, $opts)
 }
 
 
+function filterDrillFile(&$board, $opts)
+{
+	$w = $board['width'];
+	$h = $board['height'];
+	// output svg
+	$s = '<?xml version="1.0" standalone="no"?>'."\n";
+	$s .= '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">'."\n";
+	$s .= '<svg width="'.$w.'mm" height="'.$h.'mm" viewBox="0 0 '.$w.' '.$h.'" xmlns="http://www.w3.org/2000/svg" version="1.1">'."\n";
+	$s .= "\t".'<g>'."\n";
+	$s .= "\t\t".'<rect x="0" y="0" width="'.$w.'" height="'.$h.'" fill="none" stroke="red" stroke-width="0.001" />'."\n";
+	foreach ($board['drills'] as $drill) {
+		// since we're not dealing with a bitmap we need to take care of drill holes that
+		// are outside the board dimensions
+		if ($drill['x'] < 0 || $w < $drill['x'] || $drill['y'] < 0 || $h < $drill['y']) {
+			continue;
+		}
+		$s .= "\t\t".'<circle cx="'.$drill['x'].'" cy="'.$drill['y'].'" r="'.($drill['diameter']/2).'" fill="none" stroke="red" stroke-width="0.001" />'."\n";
+	}
+	$s .= "\t".'</g>'."\n";
+	$s .= '</svg>'."\n";
+	@file_put_contents(TMP_PATH.$opts['prefix'].'drills.svg', $s);
+}
+
+
 function filterDrillLayer(&$board)
 {
 	$w = $board['layers']['top']['width'];
@@ -84,19 +108,24 @@ function filterDrillLayer(&$board)
 }
 
 
-function filterFabmodulesColor(&$layer)
+function filterFabmodulesColor(&$layer, $invert = true)
 {
 	$w = @imagesx($layer['png']);
 	$h = @imagesy($layer['png']);
-	$white = @imagecolorallocate($layer['png'], 255, 255, 255);
-	$black = @imagecolorallocate($layer['png'], 0, 0, 0);
+	if ($invert) {
+		$stroke = @imagecolorallocate($layer['png'], 255, 255, 255);
+		$bg = @imagecolorallocate($layer['png'], 0, 0, 0);
+	} else {
+		$stroke = @imagecolorallocate($layer['png'], 0, 0, 0);
+		$bg = @imagecolorallocate($layer['png'], 255, 255, 255);
+	}
 	for ($x = 0; $x < $w; $x++) {
 		for ($y = 0; $y < $h; $y++) {
 			$color = @imagecolorat($layer['png'], $x, $y);
 			if ($color != (127 << 24)) {
-				@imagesetpixel($layer['png'], $x, $y, $white);
+				@imagesetpixel($layer['png'], $x, $y, $stroke);
 			} else {
-				@imagesetpixel($layer['png'], $x, $y, $black);
+				@imagesetpixel($layer['png'], $x, $y, $bg);
 			}
 		}
 	}
@@ -222,6 +251,13 @@ function filterFlipX(&$layer)
 			@imagesetpixel($layer['png'], $w-1-$x, $y, $left);
 		}
 	}
+}
+
+
+function filterPotrace(&$layer, $layerName, $opts)
+{
+	@exec('convert '.TMP_PATH.$layer['fn'].' '.TMP_PATH.basename($layer['fn'], '.png').'.pbm');
+	@exec('potrace '.TMP_PATH.basename($layer['fn'], '.png').'.pbm -o '.TMP_PATH.basename($layer['fn'], '.png').'.eps -r 300');
 }
 
 

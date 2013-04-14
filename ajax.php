@@ -264,61 +264,83 @@ if (empty($_REQUEST['method'])) {
 
 	$prefix = 'board'.$board['board'].'rev'.$board['rev'].'-'.date('YmdHis').'-';
 	$opts = arg_optional($_REQUEST['opts'], 'array', array());
+	$opts['preset'] = arg_optional($opts['preset'], 'string', 'camm');
 	$opts['prefix'] = $prefix;
 	@umask(0111);
 	// DEBUG
 	$f = fopen(TMP_PATH.$prefix.'info.txt', 'a');
 	fwrite($f, 'Request: '.var_dump_inl($_REQUEST)."\r\n\r\n");
 	fclose($f);
-	filterDrillLayer($board);
-	foreach (array_keys($board['layers']) as $key) {
-		if ($key == 'top' || $key == 'bottom') {
-			// get offset_number parameter
-			$offset_number = 1;
-			if (@is_array($opts['png_path']) && isset($opts['png_path']['offset_number'])) {
-				$offset_number = $opts['png_path']['offset_number'];
+
+	if ($opts['preset'] == 'modela') {
+		filterDrillLayer($board);
+		foreach (array_keys($board['layers']) as $key) {
+			if ($key == 'top' || $key == 'bottom') {
+				// get offset_number parameter
+				$offset_number = 1;
+				if (@is_array($opts['png_path']) && isset($opts['png_path']['offset_number'])) {
+					$offset_number = $opts['png_path']['offset_number'];
+				}
+				if (@is_array($opts[$key]) && @is_array($opts[$key]['png_path']) && isset($opts[$key]['png_path']['offset_number'])) {
+					$offset_number = $opts[$key]['png_path']['offset_number'];
+				}
+				if ($offset_number != -1) {
+					// not necessary if we're clearing the entire board
+					filterDrillIsolation($board['layers'][$key], $board, $opts);
+				}
+				if ($offset_number == -1) {
+					// don't clear parts of the board outside of the substrate area
+					filterSubstrateMask($board['layers'][$key], $board, $opts);
+				}
 			}
-			if (@is_array($opts[$key]) && @is_array($opts[$key]['png_path']) && isset($opts[$key]['png_path']['offset_number'])) {
-				$offset_number = $opts[$key]['png_path']['offset_number'];
-			}
-			if ($offset_number != -1) {
-				// not necessary if we're clearing the entire board
-				filterDrillIsolation($board['layers'][$key], $board, $opts);
-			}
-			if ($offset_number == -1) {
-				// don't clear parts of the board outside of the substrate area
-				filterSubstrateMask($board['layers'][$key], $board, $opts);
+			if ($key == 'bottom') {
+				filterFlipX($board['layers'][$key]);
 			}
 		}
-		if ($key == 'bottom') {
-			filterFlipX($board['layers'][$key]);
+		// apply the safely mask at last so that it doesn't affect the substrate mask
+		foreach (array_keys($board['layers']) as $key) {
+			filterSafetyMask($board['layers'][$key], $key, $opts);
 		}
-	}
-	// apply the safely mask at last so that it doesn't affect the substrate mask
-	foreach (array_keys($board['layers']) as $key) {
-		filterSafetyMask($board['layers'][$key], $key, $opts);
-	}
-	// Modela-specific
-	foreach (array_keys($board['layers']) as $key) {
-		filterRotate($board['layers'][$key], -90.0);
-		filterFabmodulesColor($board['layers'][$key]);
-		filterToFile($board['layers'][$key], $prefix.$key.'.png');
-		filterFixDpi($board['layers'][$key]);
-		filterFabmodulesPath($board['layers'][$key], $key, $opts);
-		filterFabmodulesRml($board['layers'][$key], $key, $opts);
-		filterFabmodulesPng($board['layers'][$key]);
+		foreach (array_keys($board['layers']) as $key) {
+			filterRotate($board['layers'][$key], -90.0);
+			filterFabmodulesColor($board['layers'][$key], true);
+			filterToFile($board['layers'][$key], $prefix.$key.'.png');
+			filterFixDpi($board['layers'][$key]);
+			filterPotrace($board['layers'][$key], $key, $opts);
+			filterFabmodulesPath($board['layers'][$key], $key, $opts);
+			filterFabmodulesRml($board['layers'][$key], $key, $opts);
+			filterFabmodulesPng($board['layers'][$key]);
+		}
+	} elseif ($opts['preset'] == 'camm') {
+		filterDrillFile($board, $opts);
+		foreach (array_keys($board['layers']) as $key) {
+			filterFabmodulesColor($board['layers'][$key], false);
+			filterToFile($board['layers'][$key], $prefix.$key.'.png');
+			// unnecessary as we're not outputting pngs
+			//filterFixDpi($board['layers'][$key]);
+			filterPotrace($board['layers'][$key], $key, $opts);
+		}
 	}
 
 	// compress
 	$zip = new ZipArchive();
-	$zipFn = TMP_PATH.$prefix.'modela40a.zip';
+	if ($opts['preset'] == 'modela') {
+		$zipFn = TMP_PATH.$prefix.'modela40a.zip';
+	} elseif ($opts['preset'] == 'camm') {
+		$zipFn = TMP_PATH.$prefix.'camm1.zip';
+	} else {
+		$zipFn = TMP_PATH.$prefix.'.zip';
+	}
 	$zip->open($zipFn, ZIPARCHIVE::CREATE);
 	$dir = scandir(TMP_PATH);
 	foreach ($dir as $f) {
 		if (substr($f, 0, strlen($prefix)) != $prefix) {
 			continue;
 		}
-		if (substr($f, -5) == '.path') {
+		if (substr($f, -5) == '.path' || substr($f, -4) == '.pbm') {
+			continue;
+		}
+		if ($opts['preset'] == 'camm' && (substr($f, -4) == '.png' || substr($f, -4) == '.txt')) {
 			continue;
 		}
 		$zip->addFile(TMP_PATH.$f, $f);

@@ -1642,9 +1642,13 @@
 		},
 		exportPreset: function(preset) {
 			if (preset === undefined) {
-				preset = 'modela';
+				preset = 'camm';
 			}
-			if (preset == 'modela') {
+			if (preset == 'camm') {
+				return {
+					preset: 'camm'
+				};
+			} else if (preset == 'modela') {
 				return {
 					safety: 5,
 					png_path: {
@@ -1655,6 +1659,7 @@
 						ymin: 0,
 						z_up: 8
 					},
+					preset: 'modela',
 					top: {
 						png_path: {
 							offset_number: -1,
