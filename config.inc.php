@@ -12,7 +12,7 @@ error_reporting(E_ALL);
 @define('COMMENT_VISIBILITY_MODERATOR', 1);		// 1 if moderators' comments should be visible by default, 0 if not
 @define('DEFAULT_BOARD', '');					// default board to load
 @define('GOOGLE_ANALYTICS', '');				// Google Analytics id
-@define('JQUERY', 'jquery-1.9.0.min.js');		// jQuery file to use
+@define('JQUERY', 'jquery-1.9.1.min.js');		// jQuery file to use
 @define('PART_VISIBILITY_GUEST', 0);			// 1 if anonymous users' parts should be visible by default, 0 if not
 @define('PART_VISIBILITY_USER', 0);				// 1 if logged in users' parts should be visible by default, 0 if not
 @define('PART_VISIBILITY_MODERATOR', 1);		// 1 if moderators' parts should be visible by default, 0 if not

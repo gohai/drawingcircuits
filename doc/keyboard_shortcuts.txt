@@ -17,5 +17,6 @@ s	Select an object
 S	Save board
 t	Add a text annotation
 Arrow	Nudge selected object (Shift for bigger steps)
+;	Show a schematic (test)
 
 RMB	Rotate part or pattern

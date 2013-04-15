@@ -166,6 +166,7 @@ var hideDialog = function() {
 	$(window).off('.pcb-dlg');
 	$('.pcb-dlg').remove();
 };
+// TODO: rework
 var showImportDialog = function() {
 	// destroy if already shown
 	hideDialog();
@@ -440,15 +441,6 @@ var showPartDialog = function() {
 };
 
 $(document).ready(function() {
-	$('html').on('pcb-loading', function(e) {
-		var elem = $('<div id="pcb-ui-banner-loading" class="pcb-ui-banner pcb-ui">Loading</div>');
-		$('body').append(elem);
-		$(elem).css('left', ($(window).width()-$(elem).width())/2);
-		$(elem).css('top', ($(window).height()-$(elem).height())/2);
-	});
-	$('html').on('pcb-loaded', function(e) {
-		$('#pcb-ui-banner-loading').remove();
-	});
 	$('html').on('pcb-saving', function(e) {
 		var elem = $('<div id="pcb-ui-banner-saving" class="pcb-ui-banner pcb-ui">Saving</div>');
 		$('body').append(elem);
@@ -457,6 +449,10 @@ $(document).ready(function() {
 	});
 	$('html').on('pcb-saved', function(e) {
 		$('#pcb-ui-banner-saving').remove();
+	});
+	$('html').on('pcb-tool-changed', function(e) {
+		$('.pcb-tool-selected').removeClass('pcb-tool-selected');
+		$('#pcb-tool-'+$.pcb.tool()).addClass('pcb-tool-selected');
 	});
 
 	$('.pcb-tool').on('click', function(e) {
@@ -509,13 +505,46 @@ $(document).ready(function() {
 			$.pcb.removeObject(sel);
 		}
 	});
-	$('#pcb-icon-import').on('click', function(e) {
-		showImportDialog();
-		return false;
+	$('#pcb-icon-clear').on('click', function(e) {
+		if (confirm("Do you want to abandon your current drawing?")) {
+			$.pcb.clear();
+		}
+	});
+	$('#pcb-icon-save').on('click', function(e) {
+		if (e.shiftKey) {
+			var asNew = true;
+		} else {
+			var asNew = false;
+		}
+		if (!$.pcb.requestPending()) {
+			var origBoard = $.pcb.board();
+			$.pcb.save(asNew);
+			// wait for request to finish
+			var retry = function() {
+				if (!$.pcb.requestPending()) {
+					if (origBoard !== $.pcb.board()) {
+						// redirect
+						$.pcb.allowNavigation(true);
+						window.location = $.pcb.baseUrl()+$.pcb.board();
+					}
+				} else {
+					setTimeout(retry, 100);
+				}
+			};
+			setTimeout(retry, 100);
+		}
 	});
 	$('#pcb-icon-metadata').on('click', function(e) {
 		showMetadataDialog();
 		return false;
+	});
+	$('#pcb-icon-fabricate').on('click', function(e) {
+		if (e.shiftKey) {
+			$.pcb.export($.pcb.exportPreset('modela'));
+		} else {
+			$.pcb.export($.pcb.exportPreset('camm'));
+		}
+		// TODO (later): animation
 	});
 	showLoginBar();
 });

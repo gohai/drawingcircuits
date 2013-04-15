@@ -1,6 +1,6 @@
 #pcb-canvas {
-	background-color: lightblue;
-	box-shadow: 3px 3px;
+	background-color: rgb(245, 225, 195);
+	box-shadow: 3px 3px black;
 	cursor: none;
 	position: absolute;
 }
@@ -11,4 +11,60 @@
 	height: 100%;
 	position: fixed;
 	width: 100%;
+}
+
+.pcb-schematic {
+	background-position: 0px 0px;
+	box-shadow: 3px 3px black;
+	height: 200px;
+	overflow: hidden;
+	position: fixed;
+	right: 12px;
+	top: 50px;
+	width: 200px;
+}
+
+.pcb-schematic-close {
+	color: #08c;
+	cursor: pointer;
+	font-size: 13px;
+	font-weight: bold;
+	position: absolute;
+	right: 1px;
+	top: -6px;
+}
+
+.pcb-schematic-pan {
+	cursor: pointer;
+	height: 0px;
+	position: absolute;
+	width: 0px;
+}
+
+.pcb-schematic-pan-bottom {
+	border: 10px solid transparent;
+	border-top-color: #08c;
+	left: 90px;
+	top: 190px;
+}
+
+.pcb-schematic-pan-left {
+	border: 10px solid transparent;
+	border-right-color: #08c;
+	left: -10px;
+	top: 90px;
+}
+
+.pcb-schematic-pan-right {
+	border: 10px solid transparent;
+	border-left-color: #08c;
+	left: 190px;
+	top: 90px;
+}
+
+.pcb-schematic-pan-top {
+	border: 10px solid transparent;
+	border-bottom-color: #08c;
+	left: 90px;
+	top: -10px;
 }

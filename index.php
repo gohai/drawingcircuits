@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="<?php echo base_url(); ?>css/ui.css" type="text/css">
 <script type="text/javascript" src="<?php echo base_url(); ?>js/<?php echo JQUERY; ?>"></script>
 <script type="text/javascript" src="<?php echo base_url(); ?>js/jquery-migrate-1.1.0.js"></script>
-<script type="text/javascript" src="<?php echo base_url(); ?>js/paper.js"></script>
+<script type="text/javascript" src="<?php echo base_url(); ?>js/jquery-ui-1.10.2.custom.min.js"></script>
 <script type="text/javascript" src="<?php echo base_url(); ?>js/pcb.js"></script>
 <script type="text/javascript" src="<?php echo base_url(); ?>js/ui.js"></script>
 <script type="text/javascript">
@@ -36,14 +36,16 @@
 </script>
 </head>
 <body>
-<div id="pcb-tool-draw" class="pcb-tool pcb-icon pcb-ui" title="Draw (shift to set diameter, alt for manual coordinates)"></div>
+<div id="pcb-tool-draw" class="pcb-tool-selected pcb-tool pcb-icon pcb-ui" title="Draw (shift to set diameter, alt for manual coordinates)"></div>
 <div id="pcb-tool-erase" class="pcb-tool pcb-icon pcb-ui" title="Erase (shift to set diameter, alt for manual coordinates)"></div>
 <div id="pcb-tool-drill" class="pcb-tool pcb-icon pcb-ui" title="Place a drill hole (shift to set diameter, alt for manual coordinates)"></div>
 <div id="pcb-tool-part" class="pcb-tool pcb-icon pcb-ui" title="Place a part (alt for manual coordinates)"></div>
 <div id="pcb-tool-sel" class="pcb-tool pcb-icon pcb-ui" title="Select objects"></div>
 <div id="pcb-icon-remove" class="pcb-icon pcb-ui" title="Remove selected object"></div>
-<!-- <div id="pcb-icon-import" class="pcb-icon pcb-ui" title="Import assets"></div> -->
+<div id="pcb-icon-clear" class="pcb-icon pcb-ui" title="Clear board"></div>
+<div id="pcb-icon-save" class="pcb-icon pcb-ui" title="Save (shift to save as a new board)"></div>
 <div id="pcb-icon-metadata" class="pcb-icon pcb-ui" title="Edit metadata">meta</div>
+<div id="pcb-icon-fabricate" class="pcb-icon pcb-ui" title="Fabricate board (shift for CNC mill, otherwise: vinyl cutter)"></div>
 <!-- <object id="pcb-wacom-plugin" type="application/x-wacomtabletplugin" style="height: 0px; width: 0px;"></object> -->
 <?php
 

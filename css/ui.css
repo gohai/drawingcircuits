@@ -165,21 +165,31 @@ textarea {
 	top: 190px;
 }
 
-#pcb-icon-import {
-	background-image: url("../img/icon-import-bg.png");
+#pcb-icon-clear {
+	background-image: url("../img/icon-clear-bg.png");
 	top: 235px;
+}
+
+#pcb-icon-save {
+	background-image: url("../img/icon-save-bg.png");
+	top: 270px;
 }
 
 #pcb-icon-metadata {
 	background-color: rgba(204, 204, 204, 0.9);
 	line-height: 28px;
 	text-align: center;
-	top: 235px;
+	top: 305px;
+}
+
+#pcb-icon-fabricate {
+	background-image: url("../img/icon-fabricate-bg.png");
+	top: 340px;
 }
 
 #pcb-login {
 	background-color: #fff;
-	padding: 0px 2px;
+	padding: 0 2px;
 	position: absolute;
 	right: 12px;
 	top: 5px;
@@ -200,6 +210,10 @@ textarea {
 }
 
 .pcb-tool {
+}
+
+.pcb-tool-selected {
+	opacity: 0.6;
 }
 
 #pcb-tool-draw {
@@ -234,18 +248,14 @@ textarea {
 }
 
 .pcb-ui {
+	z-index: 1;
 }
 
 .pcb-ui-banner {
-	background-color: rgb(255, 255, 255, 0.9);
-	border-radius: 10px;
-	line-height: 200px;
+	background-color: #fff;
+	padding: 0 2px;
 	position: fixed;
 	text-align: center;
-	width: 400px;
-}
-
-#pcb-ui-banner-loading {
 }
 
 #pcb-ui-banner-saving {

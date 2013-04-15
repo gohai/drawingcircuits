@@ -59,7 +59,7 @@
 		sel: null,
 		tool: 'draw',
 		toolData: {},
-		zoom: 2
+		zoom: 3.456
 	};
 	var view = {};
 
@@ -131,7 +131,7 @@
 		}
 		return true;
 	};
-	var centerCanvas = function() {
+	var centerCanvas = function(onlyChangeLeft) {
 		var canvasWidth = $('#pcb-canvas').width();
 		var windowWidth = $(window).width();
 		if (canvasWidth < windowWidth) {
@@ -142,7 +142,11 @@
 		var canvasHeight = $('#pcb-canvas').height();
 		var windowHeight = $(window).height();
 		if (canvasHeight < windowHeight) {
-			$('#pcb-canvas').css('top', (windowHeight-canvasHeight)*0.85+'px');
+			if (onlyChangeLeft) {
+				return (windowHeight-canvasHeight)*0.85;
+			} else {
+				$('#pcb-canvas').css('top', (windowHeight-canvasHeight)*0.85+'px');
+			}
 		} else {
 			$('#pcb-canvas').css('top', '0px');
 		}
@@ -863,7 +867,6 @@
 
 		// layers
 		ctx.save();
-		ctx.globalAlpha = 0.5;
 		if (opt.layer == 'bottom') {
 			var order = ['top', 'substrate', 'bottom'];
 		} else if (opt.layer == 'substrate') {
@@ -871,8 +874,17 @@
 		} else {
 			var order = ['bottom', 'substrate', 'top'];
 		}
+		var i=0;
 		for (var l in order) {
+			if (i < 2) {
+				ctx.globalAlpha = 0.5;
+			} else if (order[l] != 'substrate') {
+				ctx.globalAlpha = 1.0;
+			} else {
+				ctx.globalAlpha = 0.5;
+			}
 			ctx.drawImage(requestViewLayer(brd, order[l], opt), 0, 0);
+			i++;
 		}
 		ctx.restore();
 
@@ -1010,12 +1022,12 @@
 			ctx.drawImage(brd.layers[l], 0, 0, brd.layers[l].width, brd.layers[l].height, 0, 0, view.layers[prefix+l].width, view.layers[prefix+l].height);
 			ctx.globalCompositeOperation = 'source-in';
 			if (l == 'top') {
-				ctx.fillStyle = '#f00';
+				ctx.fillStyle = '#900';
 			} else if (l == 'substrate') {
 				// not really necessary
 				ctx.fillStlye = '#000';
 			} else if (l == 'bottom') {
-				ctx.fillStyle = '#00f';
+				ctx.fillStyle = '#009';
 			}
 			ctx.rect(0, 0, view.layers[prefix+l].width, view.layers[prefix+l].height);
 			ctx.fill();
@@ -1126,11 +1138,15 @@
 				$.pcb.layer('substrate');
 			} else if (e.charCode == 51) {
 				$.pcb.layer('bottom');
+			} else if (e.charCode == 59) {
+				// ;
+				$.pcb.schematic();
 			} else if (e.charCode == 68) {
 				// D
 				$.pcb.deselect();
 			} else if (e.charCode == 80) {
 				// P
+				$.pcb.selectPattern(40);
 				$.pcb.tool('pattern');
 			} else if (e.charCode == 83) {
 				// S
@@ -1343,8 +1359,7 @@
 		$.pcb.auth();
 		$.pcb.clear();
 		$.pcb.library();
-		// TODO (later): remove once the UI is in place
-		$.pcb.selectPattern(1);
+		$.pcb.donMode(true);
 	});
 
 	// Interface
@@ -1458,11 +1473,21 @@
 				}
 			});
 		},
+		allowNavigation: function(allow) {
+			if (allow === undefined) {
+				return view.allowNavigation;
+			} else if (typeof allow == 'boolean') {
+				view.allowNavigation = allow;
+			} else {
+				return false;
+			}
+		},
 		auth: function(user, password, success, fail) {
 			if (user === undefined) {
 				if (localStorage['pcbSecret'] !== undefined) {
 					options.auth.secret = localStorage['pcbSecret'];
-					options.auth.uid = localStorage['pcbUid'];
+					// localStorage only stores strings
+					options.auth.uid = parseInt(localStorage['pcbUid']);
 					options.auth.user = localStorage['pcbUser'];
 				} else {
 					options.auth.secret = null;
@@ -1526,6 +1551,8 @@
 				board.layers[l] = cvs;
 			}
 			view = $.extend(true, {}, defaultView);
+			// EVENT
+			$('html').trigger('pcb-tool-changed');
 			invalidateView();
 			if (isTouchDevice()) {
 				fitZoomToViewport();
@@ -1570,6 +1597,13 @@
 		donMode: function(enable) {
 			if (enable === undefined) {
 				return options.donMode;
+			} else if (enable == 'seek') {
+				// special command
+				$('#pcb-don-music').each(function() {
+					if (this.duration) {
+						this.currentTime = this.duration*Math.random();
+					}
+				});
 			} else {
 				if (enable) {
 					if (options.donMode) {
@@ -1590,14 +1624,14 @@
 					});
 					$(elem).on('play', function(e) {
 						// fade in
-						$(this).animate({volume: 1}, 4000);
+						$(this).animate({volume: 1}, 10000);
 					});
 					$('body').append(elem);
 				} else {
 					options.donMode = false;
 					$('#pcb-don-music').each(function() {
 						// fade out
-						$(this).animate({volume: 0}, 4000, 'swing', function() {
+						$(this).animate({volume: 0}, 5000, 'swing', function() {
 							$(this).get(0).pause();
 							$(this).remove();
 							$('#pcb-don-studio').remove();
@@ -1830,14 +1864,25 @@
 				rev = null;
 			}
 			loadBoard(brd, rev, function(newBoard) {
-				board = newBoard;
-				view = $.extend(true, {}, defaultView);
-				if (isTouchDevice()) {
-					fitZoomToViewport();
-				}
-				invalidateView();
-				// EVENT
-				$('html').trigger('pcb-loaded');
+				$('#pcb-canvas').animate({
+					top: $(window).height()+'px'
+				}, 1000, 'swing', function() {
+					board = newBoard;
+					view = $.extend(true, {}, defaultView);
+					// TODO: consolidate with clear()
+					// EVENT
+					$('html').trigger('pcb-tool-changed');
+					if (isTouchDevice()) {
+						fitZoomToViewport();
+					}
+					invalidateView();
+					var top = centerCanvas(true)+'px';
+					// EVENT
+					$('html').trigger('pcb-loaded');
+					$('#pcb-canvas').animate({
+						top: top
+					}, 1000, 'swing');
+				});
 			});
 			// EVENT
 			$('html').trigger('pcb-loading');
@@ -2115,11 +2160,11 @@
 							ctx.fillStyle = '#000';
 						} else {
 							if (view.layer == 'top') {
-								ctx.fillStyle = '#f00';
+								ctx.fillStyle = '#900';
 							} else if (view.layer == 'substrate') {
 								ctx.fillStyle = '#000';
 							} else {
-								ctx.fillStyle = '#00f';
+								ctx.fillStyle = '#009';
 							}
 						}
 					} else {
@@ -2339,6 +2384,37 @@
 			// EVENT
 			$('html').trigger('pcb-saving');
 		},
+		schematic: function(name) {
+			var elem = $('<div class="pcb-schematic pcb-ui" title="Example schematic"><div class="pcb-schematic-pan-left pcb-schematic-pan pcb-ui"></div><div class="pcb-schematic-pan-right pcb-schematic-pan pcb-ui"></div><div class="pcb-schematic-pan-top pcb-schematic-pan pcb-ui"></div><div class="pcb-schematic-pan-bottom pcb-schematic-pan pcb-ui"></div><div class="pcb-schematic-close pcb-ui" title="Close">x</div></div>');
+			// TODO: replace with images from the database
+			$(elem).css('background-image', 'url("../img/schematic.gif")');
+			$('body').append(elem);
+			$(elem).draggable();
+			$(elem).find('.pcb-schematic-close').on('click', function(e) {
+				$(this).parent().remove();
+			});
+			$(elem).find('.pcb-schematic-pan').on('click', function(e) {
+				var parent = $(this).parent();
+				var a = parent.css('background-position').split(' ');
+				if (a.length != 2) {
+					var x = 0;
+					var y = 0;
+				} else {
+					var x = parseFloat(a[0]);
+					var y = parseFloat(a[1]);
+				}
+				if ($(this).hasClass('pcb-schematic-pan-left')) {
+					x += 10;
+				} else if ($(this).hasClass('pcb-schematic-pan-right')) {
+					x -= 10;
+				} else if ($(this).hasClass('pcb-schematic-pan-top')) {
+					y += 10;
+				} else if ($(this).hasClass('pcb-schematic-pan-bottom')) {
+					y -= 10;
+				}
+				parent.css('background-position', x+'px '+y+'px');
+			});
+		},
 		select: function(name) {
 			if (name === undefined) {
 				return view.sel;
@@ -2462,6 +2538,8 @@
 					} else {
 						$('#pcb-canvas').css('cursor', '');
 					}
+					// EVENT
+					$('html').trigger('pcb-tool-changed');
 					requestRedraw();
 				}
 			}
