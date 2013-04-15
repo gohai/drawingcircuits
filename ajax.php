@@ -371,6 +371,18 @@ if (empty($_REQUEST['method'])) {
 		unset($ret[$part['part']]['part']);
 	}
 	json_response($ret);
+} elseif ($_REQUEST['method'] == 'getTime') {
+	$date = getdate();
+	// apply offset
+	$date['hours'] += TIMEZONE;
+	if ($date['hours'] < 0) {
+		$date['hours'] += 24;
+	} else if (24 < $date['hours']) {
+		$date['hours'] -= 24;
+	}
+	// get floating point representation
+	$time = $date['hours']/24.0 + $date['minutes']/(24.0*60.0) + $date['seconds']/(24.0*60.0*60.0);
+	json_response(array('time' => $time));
 } elseif ($_REQUEST['method'] == 'load') {
 	$board = arg_required($_REQUEST['board'], 'integer');
 
