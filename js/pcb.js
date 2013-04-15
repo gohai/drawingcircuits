@@ -534,6 +534,25 @@
 			return plugin;
 		}
 	};
+	var handleSelection = function(ctx, name, opt, func) {
+		if (name == opt.sel) {
+			// TODO: switch all over to createElement
+			var helperCvs = document.createElement('canvas');
+			helperCvs.width = ctx.canvas.width;
+			helperCvs.height = ctx.canvas.height;
+			helperCtx = helperCvs.getContext('2d');
+			// draw onto temporary canvas
+			func(helperCtx);
+			// color it red
+			helperCtx.globalCompositeOperation = 'source-in';
+			helperCtx.fillStyle = '#f00';
+			helperCtx.fillRect(0, 0, helperCvs.width, helperCvs.height);
+			// and draw it onto the regular canvas
+			ctx.drawImage(helperCvs, 0, 0);
+		} else {
+			func(ctx);
+		}
+	};
 	var imgToCanvas = function(src, callback) {
 		var img = new Image();
 		img.onload = function() {
@@ -864,14 +883,18 @@
 				continue;
 			} else {
 				if (!opt.noSvg) {
-					drawPartOutline(ctx, part, opt);
+					handleSelection(ctx, p, opt, function(ctx) {
+						drawPartOutline(ctx, part, opt);					
+					});
 				}
 			}
 		}
 
 		// drill holes
 		for (var d in brd.drills) {
-			drawDrill(ctx, brd.drills[d], opt);
+			handleSelection(ctx, d, opt, function(ctx) {
+				drawDrill(ctx, brd.drills[d], opt);
+			});
 		}
 		for (var p in brd.parts) {
 			drawPartDrills(ctx, brd.parts[p], opt);
@@ -916,7 +939,9 @@
 					var y = parent.obj.y;
 				}
 			}
-			drawText(ctx, x, y, text.text, opt);
+			handleSelection(ctx, t, opt, function(ctx) {
+				drawText(ctx, x, y, text.text, opt);
+			});
 		}
 
 		// jumpers on the active layer
@@ -924,7 +949,9 @@
 			var jumper = brd.jumpers[j];
 			var coords = getJumperCoords(jumper, brd);
 			if ($.inArray(opt.layer, coords.layers) != -1) {
-				drawJumper(ctx, coords, opt);
+				handleSelection(ctx, j, opt, function(ctx) {
+					drawJumper(ctx, coords, opt);
+				});
 			}
 		}
 
