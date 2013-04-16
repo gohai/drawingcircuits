@@ -36,7 +36,8 @@
 </script>
 </head>
 <body>
-<div id="pcb-tool-draw" class="pcb-tool-selected pcb-tool pcb-icon pcb-ui" title="Draw (shift to set diameter, alt for manual coordinates)"></div>
+<div id="pcb-don-studio"></div>
+<div id="pcb-tool-draw" class="pcb-tool pcb-icon pcb-ui" title="Draw (shift to set diameter, alt for manual coordinates)"></div>
 <div id="pcb-tool-erase" class="pcb-tool pcb-icon pcb-ui" title="Erase (shift to set diameter, alt for manual coordinates)"></div>
 <div id="pcb-tool-drill" class="pcb-tool pcb-icon pcb-ui" title="Place a drill hole (shift to set diameter, alt for manual coordinates)"></div>
 <div id="pcb-tool-part" class="pcb-tool pcb-icon pcb-ui" title="Place a part (alt for manual coordinates)"></div>
@@ -46,7 +47,6 @@
 <div id="pcb-icon-save" class="pcb-icon pcb-ui" title="Save (shift to save as a new board)"></div>
 <div id="pcb-icon-metadata" class="pcb-icon pcb-ui" title="Edit metadata">meta</div>
 <div id="pcb-icon-fabricate" class="pcb-icon pcb-ui" title="Fabricate board (shift for CNC mill, otherwise: vinyl cutter)"></div>
-<!-- <object id="pcb-wacom-plugin" type="application/x-wacomtabletplugin" style="height: 0px; width: 0px;"></object> -->
 <?php
 
 	$s = TWITTER;

@@ -151,6 +151,14 @@
 			$('#pcb-canvas').css('top', '0px');
 		}
 	};
+	var checkWacomPlugin = function() {
+		for (var i=0; i < window.navigator.plugins.length; i++) {
+			var plugin = window.navigator.plugins[i];
+			if (plugin.name == 'WacomTabletPlugin') {
+				$('body').append('<object id="pcb-wacom-plugin" type="application/x-wacomtabletplugin" style="height: 0px; width: 0px;"></object>');
+			}
+		}
+	};
 	var createCanvas = function(width, height) {
 		var cvs = $('<canvas></canvas>');
 		$(cvs).prop('width', mmToPx(width));
@@ -1349,7 +1357,7 @@
 
 		// create main canvas
 		var cvs = $('<canvas id="pcb-canvas"></canvas>');
-		$('body').prepend(cvs);
+		$('body').append(cvs);
 		// normalize {request,cancel}AnimationFrame across browsers
 		var requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.msRequestAnimationFrame;
 		window.requestAnimationFrame = requestAnimationFrame;
@@ -1359,7 +1367,10 @@
 		$.pcb.auth();
 		$.pcb.clear();
 		$.pcb.library();
-		$.pcb.donMode(true);
+		checkWacomPlugin();
+		setTimeout(function() {
+			$.pcb.donMode(true);
+		}, 2000);
 	});
 
 	// Interface
@@ -1611,20 +1622,34 @@
 					} else {
 						options.donMode = true;
 					}
-					// studio
-					var elem = $('<div id="pcb-don-studio"></div>');
-					$('body').prepend(elem);
+					// intro
+					var elem = $('<audio id="pcb-don-music-intro"><source src="media/insert_cassette.ogg" type="audio/ogg"><source src="media/insert_cassette.mp3" type="audio/mpeg"></audio>');
+					$('body').append(elem);
 					// music
-					var elem = $('<audio id="pcb-don-music" loop><source src="media/don.ogg" type="audio/ogg"><source src="media/don.mp3" type="audio/mpeg"></audio>');
+					var tracks = ['media/composite_9_97_sidea', 'media/composite_9_97_sideb', 'media/quiet_iv_sidea', 'media/quiet_iv_sideb'];
+					// pick a random track based on the current date
+					var d = new Date();
+					var track = tracks[d.getDate() % tracks.length];
+					elem = $('<audio id="pcb-don-music" loop><source src="'+track+'.ogg" type="audio/ogg"><source src="'+track+'.mp3" type="audio/mpeg"></audio>');
 					$(elem).on('durationchange', function(e) {
 						// seek to a random position
 						this.currentTime = this.duration*Math.random();
-						this.volume = 0;
-						this.play();
+						this.volume = 0.2;
+						// play intro
+						var intro = $('#pcb-don-music-intro').get(0);
+						if (intro.readyState == 4) {
+							var that = this;
+							$(intro).on('ended', function(e) {
+								that.play();
+							});
+							intro.play();
+						} else {
+							this.play();
+						}
 					});
 					$(elem).on('play', function(e) {
 						// fade in
-						$(this).animate({volume: 1}, 10000);
+						$(this).animate({volume: 1}, 3000);
 					});
 					$('body').append(elem);
 				} else {
