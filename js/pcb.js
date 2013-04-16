@@ -167,12 +167,17 @@
 	};
 	var createThumbnail = function(brd) {
 		var cvs = $('<canvas></canvas>');
-		// TODO: fit board into thumbSize
-		$(cvs).prop('width', options.thumbSize);
-		$(cvs).prop('height', options.thumbSize);
+		if (board.height <= board.width) {
+			$(cvs).prop('width', options.thumbSize);
+			$(cvs).prop('height', board.height/(board.width/options.thumbSize));
+		} else {
+			$(cvs).prop('height', options.thumbSize);
+			$(cvs).prop('width', board.width/(board.height/options.thumbSize));
+		}
 		cvs = cvs.get(0);
 		var opt = $.extend(true, {}, defaultView);
 		opt.noSvg = true;
+		opt.zoom = mmToPx(board.width)/cvs.width;
 		renderBoard(cvs, brd, opt);
 		return cvs;
 	};
@@ -580,6 +585,7 @@
 		img.src = src;
 	};
 	var invalidateView = function(l) {
+		// TODO: this shouldn't be required for resize anymore
 		// delete variable DPI canvas elements
 		if (l === undefined) {
 			// all layers
@@ -1018,6 +1024,14 @@
 			var prefix = 'board'+brd.board+'-';
 		}
 
+		// check if the dimensions match, otherwise drop from cache
+		if (view.layers[prefix+l] !== undefined) {
+			var cvs = view.layers[prefix+l];
+			if (cvs.width != mmToPx(brd.width, opt.zoom)) {
+				delete view.layers[prefix+l];
+			}
+		}
+
 		// create them if needed
 		if (view.layers[prefix+l] === undefined) {
 			var cvs = $('<canvas></canvas>');
@@ -1265,6 +1279,7 @@
 			}
 			var p = screenPxToCanvas(e.offsetX, e.offsetY);
 			var wacom = getWacomPlugin();
+			// see http://www.wacomeng.com/web/TestFBPluginTable.html
 			if (wacom !== null) {
 				if (view.tool == 'draw' && wacom.penAPI.pointerType == 3) {
 					$.pcb.tool('erase');
@@ -2457,8 +2472,6 @@
 				} else {
 					$.pcb.deselect(view.sel);
 					view.sel = name;
-					// TODO
-					console.log('selected '+name);
 					requestRedraw();
 					return true;
 				}

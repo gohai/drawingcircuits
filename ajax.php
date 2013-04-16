@@ -383,6 +383,31 @@ if (empty($_REQUEST['method'])) {
 	// get floating point representation
 	$time = $date['hours']/24.0 + $date['minutes']/(24.0*60.0) + $date['seconds']/(24.0*60.0*60.0);
 	json_response(array('time' => $time));
+} elseif ($_REQUEST['method'] == 'listBoards') {
+	$q = db_fetch_raw('SELECT * FROM revisions AS revs INNER JOIN (SELECT board, MAX(rev) rev FROM revisions GROUP BY board) latest ON revs.board = latest.board AND revs.rev = latest.rev');
+	if ($q === false) {
+		http_error(500, true);
+		die();
+	} else {
+		$ret = array();
+		foreach ($q as $b) {
+			$b = array_merge($b, @json_decode($q[0]['json'], true));
+			if ($b['isPattern']) {
+				$b['isPattern'] = true;
+			} else {
+				$b['isPattern'] = false;
+			}
+			// only send relevant fields
+			unset($b['drills']);
+			unset($b['host']);
+			unset($b['json']);
+			unset($b['jumpers']);
+			unset($b['parts']);
+			unset($b['texts']);
+			$ret[] = $b;
+		}
+		json_response($ret);
+	}
 } elseif ($_REQUEST['method'] == 'load') {
 	$board = arg_required($_REQUEST['board'], 'integer');
 
