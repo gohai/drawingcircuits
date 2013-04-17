@@ -384,14 +384,14 @@ if (empty($_REQUEST['method'])) {
 	$time = $date['hours']/24.0 + $date['minutes']/(24.0*60.0) + $date['seconds']/(24.0*60.0*60.0);
 	json_response(array('time' => $time));
 } elseif ($_REQUEST['method'] == 'listBoards') {
-	$q = db_fetch_raw('SELECT * FROM revisions AS revs INNER JOIN (SELECT board, MAX(rev) rev FROM revisions GROUP BY board) latest ON revs.board = latest.board AND revs.rev = latest.rev');
+	$q = db_fetch_raw('SELECT * FROM revisions AS revs INNER JOIN (SELECT board, MAX(rev) rev FROM revisions GROUP BY board) latest ON revs.board = latest.board AND revs.rev = latest.rev ORDER BY revs.board DESC');
 	if ($q === false) {
 		http_error(500, true);
 		die();
 	} else {
 		$ret = array();
 		foreach ($q as $b) {
-			$b = array_merge($b, @json_decode($q[0]['json'], true));
+			$b = array_merge($b, @json_decode($b['json'], true));
 			if ($b['isPattern']) {
 				$b['isPattern'] = true;
 			} else {
@@ -447,8 +447,7 @@ if (empty($_REQUEST['method'])) {
 			// unknown board
 			http_error(400, true);
 			die();
-		} elseif ($q[0]['owner'] !== NULL && $q[0]['owner'] !== $auth['uid']) {
-			// TODO (later): check for (administrative) role as well
+		} elseif ($q[0]['owner'] !== NULL && $q[0]['owner'] !== $auth['uid'] && ($auth['role'] & 0x02) == 0 && ($auth['role'] & 0x04) == 0){
 			$board['board'] = NULL;
 		}
 	}

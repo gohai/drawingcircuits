@@ -149,6 +149,14 @@ textarea {
 	font-weight: bold;
 }
 
+#pcb-gallery-link {
+	background-color: #fff;
+	padding: 0 2px;
+	position: absolute;
+	right: 12px;
+	top: 28px;
+}
+
 .pcb-icon {
 	border-radius: 2px;
 	border-style: solid;
@@ -238,7 +246,7 @@ textarea {
 
 #pcb-tool-sel {
 	background-image: url("../img/icon-sel-bg.png");
-	top: 145px;
+	top: 155px;
 }
 
 #pcb-twitter {

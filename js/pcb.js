@@ -322,6 +322,10 @@
 	};
 	var drawPartDrillsGfx = function(ctx, part, rot, opt) {
 		var part = options.library[part];
+		// handle inexistent parts
+		if (options.library[part] === undefined) {
+			return;
+		}
 		ctx.save();
 		ctx.rotate(rot*Math.PI/180);
 		for (var d in part.drills) {
@@ -991,6 +995,11 @@
 			img.onload = function() {
 				// TODO (later): evaluate performance later (we could convert it to a canvas element here as well)
 				view.parts[part] = img;
+			}
+			// handle inexistent parts
+			if (options.library[part] === undefined) {
+				console.warn('Part '+part+' is not available in library');
+				return null;
 			}
 			// encodeURIComponent() fixes Mozilla (would error out on #)
 			img.src = 'data:image/svg+xml;utf8,'+encodeURIComponent(options.library[part].svg);

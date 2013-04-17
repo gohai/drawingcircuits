@@ -47,13 +47,14 @@
 <div id="pcb-icon-save" class="pcb-icon pcb-ui" title="Save (shift to save as a new board)"></div>
 <div id="pcb-icon-metadata" class="pcb-icon pcb-ui" title="Edit metadata">meta</div>
 <div id="pcb-icon-fabricate" class="pcb-icon pcb-ui" title="Fabricate board (shift for CNC mill, otherwise: vinyl cutter)"></div>
+<div id="pcb-login"></div>
+<div id="pcb-gallery-link"><a href="<?php echo base_url(); ?>gallery" target="_blank">Go to gallery</a></div>
 <?php
 
 	$s = TWITTER;
 	if (!empty($s)) {
 
 ?>
-<div id="pcb-login"></div>
 <div id="pcb-twitter">
 	<a href="https://twitter.com/<?php echo TWITTER; ?>" class="twitter-follow-button" data-show-count="false" data-size="large" data-show-screen-name="false">Follow @<?php echo TWITTER; ?></a>
 	<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
