@@ -16,6 +16,7 @@
 		library: null,
 		nudge: 0.1,
 		nudgeShift: 10,
+		patternsLibrary: null,
 		thumbSize: 300,
 		zoomCutoffPins: 1,
 		zoomCutoffSiblingText: 2,
@@ -322,10 +323,6 @@
 	};
 	var drawPartDrillsGfx = function(ctx, part, rot, opt) {
 		var part = options.library[part];
-		// handle inexistent parts
-		if (options.library[part] === undefined) {
-			return;
-		}
 		ctx.save();
 		ctx.rotate(rot*Math.PI/180);
 		for (var d in part.drills) {
@@ -657,7 +654,7 @@
 			// mask everything except the source
 			ctx.beginPath();
 			// the offset prevents a tiny border around the pattern
-			ctx.rect(Math.ceil(-src.layers[l].width/2), Math.ceil(-src.layers[l].height/2), src.layers[l].width-1, src.layers[l].height-1);
+			ctx.rect(Math.ceil(-src.layers[l].width/2), Math.ceil(-src.layers[l].height/2), src.layers[l].width-3, src.layers[l].height-2);
 			ctx.closePath();
 			ctx.clip();
 			// copy image
@@ -1177,7 +1174,6 @@
 				$.pcb.deselect();
 			} else if (e.charCode == 80) {
 				// P
-				$.pcb.selectPattern(40);
 				$.pcb.tool('pattern');
 			} else if (e.charCode == 83) {
 				// S
@@ -1392,8 +1388,24 @@
 		$.pcb.clear();
 		$.pcb.library();
 		checkWacomPlugin();
+
+		// make sure only one tab is playing music
+		var playing = true;
+		localStorage.setItem('pcbPing', Math.random());
+		window.addEventListener('storage', function(e) {
+			if (e.key == 'pcbPing' && playing) {
+				setTimeout(function() {
+					localStorage.setItem('pcbPong', Math.random());
+				}, 100);
+			} else if (e.key == 'pcbPong') {
+				playing = false;
+			}
+		}, false);
 		setTimeout(function() {
-			$.pcb.donMode(true);
+			if (playing) {
+				$.pcb.donMode(true);
+			} else {
+			}
 		}, 2000);
 	});
 
@@ -1893,6 +1905,8 @@
 					}
 				});
 				return false;
+			} else if (options.library === false) {
+				return false;
 			} else {
 				return $.extend(true, {}, options.library);
 			}
@@ -2190,6 +2204,31 @@
 			}
 			mergeBoards(board, view.pattern, x, y, rot);
 			invalidateView();
+		},
+		patternsLibrary: function(done) {
+			if (options.patternsLibrary === null) {
+				options.patternsLibrary = false;
+				ajaxRequest({
+					method: 'listBoards'
+				}, function(data) {
+					if (data !== null) {
+						options.patternsLibrary = data;
+						if (typeof done == 'function') {
+							done($.extend(true, {}, options.patternsLibrary));
+						}
+					} else {
+						options.patternsLibrary = null;
+					}
+				});
+				return false;
+			} else if (options.patternsLibrary === false) {
+				return false;
+			} else {
+				if (typeof done == 'function') {
+					done($.extend(true, {}, options.patternsLibrary));
+				}
+				return $.extend(true, {}, options.patternsLibrary);
+			}
 		},
 		point: function(x, y) {
 			if (view.tool == 'draw' || view.tool == 'erase') {

@@ -439,6 +439,41 @@ var showPartDialog = function() {
 	});
 	return true;
 };
+var showPatternDialog = function(showAllBoards) {
+	// destroy if already shown
+	hideDialog();
+	// create
+	var dialogElem = $('<div id="pcb-dlg-pattern" class="pcb-dlg pcb-ui"><ul id="pcb-dlg-pattern-list"></ul></div>');
+	$('body').append(dialogElem);
+	// add patterns to the list
+	$.pcb.patternsLibrary(function(patterns) {
+		$.each(patterns, function() {
+			if (this.isPattern !== true && showAllBoards !== true) {
+				return;
+			}
+			if (this.title !== undefined) {
+				var itemElem = $('<li>'+this.title+'</li>');
+			} else {
+				var itemElem = $('<li>Unnamed pattern '+this.board+'</li>');
+			}
+			var that = this;
+			$(itemElem).on('click', function() {
+				$.pcb.selectPattern(that.board);
+				$.pcb.tool('pattern');
+			});
+			$('#pcb-dlg-pattern-list').append(itemElem);
+		});
+	});
+	// handle close
+	$('html').on('click.pcb-dlg', function(e) {
+		if ($(e.target).is('#pcb-dlg-pattern') || $(e.target).parents('#pcb-dlg-pattern').length) {
+			return;
+		} else {
+			hideDialog();
+		}
+	});
+	return true;
+};
 
 $(document).ready(function() {
 	$('html').on('pcb-saving', function(e) {
@@ -498,6 +533,29 @@ $(document).ready(function() {
 			return false;
 		}
 	});
+	$('#pcb-tool-pattern').on('click', function(e) {
+		if (e.altKey) {
+			var c = promptManualCoords();
+			if (c === false) {
+				return;
+			}
+			s = prompt('Set rotation (deg clockwise)', ui.lastManualRot);
+			if (s === null) {
+				return;
+			} else {
+				var rot = parseFloat(s);
+			}
+			$.pcb.pattern(c.x, c.y, rot);
+			ui.lastManualRot = rot;
+		} else {
+			if (e.shiftKey) {
+				showPatternDialog(true);
+			} else {
+				showPatternDialog();
+			}
+			return false;
+		}
+	});
 	$('#pcb-icon-remove').on('click', function(e) {
 		// TODO: grey out
 		var sel = $.pcb.select();
@@ -545,6 +603,12 @@ $(document).ready(function() {
 			$.pcb.export($.pcb.exportPreset('camm'));
 		}
 		// TODO (later): animation
+	});
+	$('#pcb-icon-zoomin').on('click', function(e) {
+		$.pcb.zoom($.pcb.zoom()*0.8);
+	});
+	$('#pcb-icon-zoomout').on('click', function(e) {
+		$.pcb.zoom($.pcb.zoom()*1.2);
 	});
 	showLoginBar();
 });

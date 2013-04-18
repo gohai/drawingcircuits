@@ -79,7 +79,7 @@ textarea {
 	background: inherit;
 	left: 46px;
 	overflow: visible;
-	top: 110px;
+	top: 111px;
 }
 
 #pcb-dlg-part-info {
@@ -149,6 +149,25 @@ textarea {
 	font-weight: bold;
 }
 
+#pcb-dlg-pattern {
+	left: 46px;
+	max-height: 240px;
+	overflow-y: auto;
+	top: 146px;
+	width: 160px;
+}
+
+#pcb-dlg-pattern-list > li {
+	background-color: #fff;
+	cursor: pointer;
+	padding-left: 4px;
+	padding-right: 4px;
+}
+
+#pcb-dlg-pattern-list > li:hover {
+	background-color: #ccc;
+}
+
 #pcb-gallery-link {
 	background-color: #fff;
 	padding: 0 2px;
@@ -170,29 +189,57 @@ textarea {
 
 #pcb-icon-remove {
 	background-image: url("../img/icon-remove-bg.png");
-	top: 190px;
+	top: 225px;
 }
 
 #pcb-icon-clear {
 	background-image: url("../img/icon-clear-bg.png");
-	top: 235px;
+	top: 270px;
 }
 
 #pcb-icon-save {
 	background-image: url("../img/icon-save-bg.png");
-	top: 270px;
+	top: 305px;
 }
 
 #pcb-icon-metadata {
 	background-color: rgba(204, 204, 204, 0.9);
 	line-height: 28px;
 	text-align: center;
-	top: 305px;
+	top: 340px;
 }
 
 #pcb-icon-fabricate {
 	background-image: url("../img/icon-fabricate-bg.png");
-	top: 340px;
+	top: 375px;
+}
+
+#pcb-icon-zoomin {
+	background-image: url("../img/icon-zoomin-bg.png");
+	border-color: #000;
+	border-radius: 2px;
+	border-style: solid;
+	border-width: 1px;
+	cursor: pointer;
+	height: 13px;
+	left: 5px;
+	position: fixed;
+	top: 430px;
+	width: 13px;
+}
+
+#pcb-icon-zoomout {
+	background-image: url("../img/icon-zoomout-bg.png");
+	border-color: #000;
+	border-radius: 2px;
+	border-style: solid;
+	border-width: 1px;
+	cursor: pointer;
+	height: 13px;
+	left: 22px;
+	position: fixed;
+	top: 430px;
+	width: 13px;
 }
 
 #pcb-login {
@@ -244,9 +291,14 @@ textarea {
 	top: 110px;
 }
 
+#pcb-tool-pattern {
+	background-image: url("../img/icon-pattern-bg.png");
+	top: 145px;
+}
+
 #pcb-tool-sel {
 	background-image: url("../img/icon-sel-bg.png");
-	top: 155px;
+	top: 190px;
 }
 
 #pcb-twitter {
