@@ -1,4 +1,4 @@
--- 0.2
+-- 0.3
 Re-implement selection (Ctrl+A, Ctrl+D, Tab, Shift & click)
 Implement highlight
 Implements parts UI: Add drawing > name, file, [upload]; Add variant > name, parent, pins (with title, mark, description), title, description, longDescription, datasheet, datasheetPage, [commit]; Add comment > part, comment, [commit]; Add supplier > part, supplier, partNumber, url, [commit]; provide feedback whether contribution it is visible or not
@@ -9,12 +9,8 @@ Implement 404
 Rework colors
 Fix SVG rendering on Firefox
 Implement annotations toggle (also show pin names)
-Implement users (localStorage, .input-block-level, .btn, salt the hash)
-Implement metadata: title, description, bom, isPattern
-Implement gallery (filter for patterns, rating & use count)
 Implement schematics library
 Re-implement recording of traces (using Web Sockets)
-Set window title in .load
 Switch URLs to "//.." (also in Hotglue)
 Add project description to page ("?" in top right corner)
 

@@ -18,6 +18,7 @@
 		nudgeShift: 10,
 		patternsLibrary: null,
 		thumbSize: 300,
+		windowTitle: 'Drawing Circuits',
 		zoomCutoffPins: 1,
 		zoomCutoffSiblingText: 2,
 		zoomCutoffText: 3
@@ -1387,6 +1388,7 @@
 		$.pcb.auth();
 		$.pcb.clear();
 		$.pcb.library();
+		window.document.title = options.windowTitle;
 		checkWacomPlugin();
 
 		// make sure only one tab is playing music
@@ -1601,6 +1603,7 @@
 			// EVENT
 			$('html').trigger('pcb-tool-changed');
 			invalidateView();
+			window.document.title = options.windowTitle+' > Untitled';
 			if (isTouchDevice()) {
 				fitZoomToViewport();
 			} else {
@@ -1667,6 +1670,7 @@
 					var d = new Date();
 					var track = tracks[d.getDate() % tracks.length];
 					elem = $('<audio id="pcb-don-music" loop><source src="'+track+'.ogg" type="audio/ogg"><source src="'+track+'.mp3" type="audio/mpeg"></audio>');
+					// TODO: this doesn't seem to work on Firefox
 					$(elem).on('durationchange', function(e) {
 						// seek to a random position
 						this.currentTime = this.duration*Math.random();
@@ -1931,6 +1935,12 @@
 					top: $(window).height()+'px'
 				}, 1000, 'swing', function() {
 					board = newBoard;
+					// set window title
+					if (board.title) {
+						window.document.title = options.windowTitle+' > '+board.title;
+					} else {
+						window.document.title = options.windowTitle+' > '+board.board;
+					}
 					view = $.extend(true, {}, defaultView);
 					// TODO: consolidate with clear()
 					// EVENT
