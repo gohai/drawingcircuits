@@ -6,7 +6,8 @@
 }
 
 #pcb-don-studio {
-	background-image: url("../media/studio.jpg");
+	background-image: url("../img/studio.jpg");
+	background-repeat: no-repeat;
 	background-size: cover;
 	height: 100%;
 	position: fixed;

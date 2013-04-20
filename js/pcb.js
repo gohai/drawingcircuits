@@ -9,6 +9,7 @@
 			uid: null,
 			user: null
 		},
+		backgroundImg: null,
 		baseUrl: null,
 		donMode: false,
 		fontSize: 11,
@@ -209,6 +210,57 @@
 			});
 		};
 		return Math.sqrt(distToSegmentSquared(p, v, w));
+	};
+	var donBackgroundImg = function(index) {
+		if (typeof index != 'number') {
+			options.backgroundImg++;
+			if (283 < options.backgroundImg) {
+				options.backgroundImg = 0;
+			}
+		} else {
+			options.backgroundImg = index;
+		}
+		// preload
+		var url = options.baseUrl+'media/studio'+options.backgroundImg+'.jpg';
+		var img = new Image();
+		img.onload = function() {
+			$('#pcb-don-studio').css('background-image', 'url('+url+')');
+			$('#pcb-don-studio').css('background-position', 'center bottom');
+		};
+		img.src = url;
+	};
+	var donPlayMusic = function() {
+		// intro
+		var elem = $('<audio id="pcb-don-music-intro"><source src="media/insert_cassette.ogg" type="audio/ogg"><source src="media/insert_cassette.mp3" type="audio/mpeg"></audio>');
+		$('body').append(elem);
+		// music
+		var tracks = ['media/composite_9_97_sidea', 'media/composite_9_97_sideb', 'media/quiet_iv_sidea', 'media/quiet_iv_sideb'];
+		// pick a random track based on the current date
+		var d = new Date();
+		var track = tracks[d.getDate() % tracks.length];
+		elem = $('<audio id="pcb-don-music" loop><source src="'+track+'.ogg" type="audio/ogg"><source src="'+track+'.mp3" type="audio/mpeg"></audio>');
+		// TODO: this doesn't seem to work on Firefox
+		$(elem).on('durationchange', function(e) {
+			// seek to a random position
+			this.currentTime = this.duration*Math.random();
+			this.volume = 0.2;
+			// play intro
+			var intro = $('#pcb-don-music-intro').get(0);
+			if (intro.readyState == 4) {
+				var that = this;
+				$(intro).on('ended', function(e) {
+					that.play();
+				});
+				intro.play();
+			} else {
+				this.play();
+			}
+		});
+		$(elem).on('play', function(e) {
+			// fade in
+			$(this).animate({volume: 1}, 3000);
+		});
+		$('body').append(elem);
 	};
 	var downloadRequest = function(data) {
 		var arg = '';
@@ -1390,25 +1442,7 @@
 		$.pcb.library();
 		window.document.title = options.windowTitle;
 		checkWacomPlugin();
-
-		// make sure only one tab is playing music
-		var playing = true;
-		localStorage.setItem('pcbPing', Math.random());
-		window.addEventListener('storage', function(e) {
-			if (e.key == 'pcbPing' && playing) {
-				setTimeout(function() {
-					localStorage.setItem('pcbPong', Math.random());
-				}, 100);
-			} else if (e.key == 'pcbPong') {
-				playing = false;
-			}
-		}, false);
-		setTimeout(function() {
-			if (playing) {
-				$.pcb.donMode(true);
-			} else {
-			}
-		}, 2000);
+		$.pcb.donMode(true);
 	});
 
 	// Interface
@@ -1654,6 +1688,10 @@
 						this.currentTime = this.duration*Math.random();
 					}
 				});
+			} else if (enable == 'timelapse') {
+				// special command
+				clearInterval(options.backgroundImgInterval);
+				setInterval(donBackgroundImg, 1000);
 			} else {
 				if (enable) {
 					if (options.donMode) {
@@ -1661,45 +1699,55 @@
 					} else {
 						options.donMode = true;
 					}
-					// intro
-					var elem = $('<audio id="pcb-don-music-intro"><source src="media/insert_cassette.ogg" type="audio/ogg"><source src="media/insert_cassette.mp3" type="audio/mpeg"></audio>');
-					$('body').append(elem);
-					// music
-					var tracks = ['media/composite_9_97_sidea', 'media/composite_9_97_sideb', 'media/quiet_iv_sidea', 'media/quiet_iv_sideb'];
-					// pick a random track based on the current date
-					var d = new Date();
-					var track = tracks[d.getDate() % tracks.length];
-					elem = $('<audio id="pcb-don-music" loop><source src="'+track+'.ogg" type="audio/ogg"><source src="'+track+'.mp3" type="audio/mpeg"></audio>');
-					// TODO: this doesn't seem to work on Firefox
-					$(elem).on('durationchange', function(e) {
-						// seek to a random position
-						this.currentTime = this.duration*Math.random();
-						this.volume = 0.2;
-						// play intro
-						var intro = $('#pcb-don-music-intro').get(0);
-						if (intro.readyState == 4) {
-							var that = this;
-							$(intro).on('ended', function(e) {
-								that.play();
-							});
-							intro.play();
-						} else {
-							this.play();
+
+					// dynamic background image
+					/*
+					ajaxRequest({
+						method: 'getTime'
+					}, function(data) {
+						if (data.time) {
+							// recording started at 19:26
+							data.time -= 0.808333;
+							if (data.time < 0) {
+								data.time += 1;
+							}
+							// set the current image
+							// there are 284 images
+							donBackgroundImg(Math.floor(data.time*283));
+							// and schedule consecutive updates
+							options.backgroundImgInterval = setInterval(donBackgroundImg, 303*1000);
 						}
 					});
-					$(elem).on('play', function(e) {
-						// fade in
-						$(this).animate({volume: 1}, 3000);
-					});
-					$('body').append(elem);
+					*/
+
+					// music
+					// make sure only one tab is playing music at a time
+					var playing = true;
+					localStorage.setItem('pcbPing', Math.random());
+					window.addEventListener('storage', function(e) {
+						if (e.key == 'pcbPing' && playing) {
+							setTimeout(function() {
+								localStorage.setItem('pcbPong', Math.random());
+							}, 100);
+						} else if (e.key == 'pcbPong') {
+							playing = false;
+						}
+					}, false);
+					setTimeout(function() {
+						if (playing) {
+							donPlayMusic();
+						}
+					}, 2000);
 				} else {
 					options.donMode = false;
+					clearInterval(options.backgroundImgInterval);
+					$('#pcb-don-studio').css('background-image', '');
+					$('#pcb-don-studio').css('background-position', '');
 					$('#pcb-don-music').each(function() {
 						// fade out
 						$(this).animate({volume: 0}, 5000, 'swing', function() {
 							$(this).get(0).pause();
 							$(this).remove();
-							$('#pcb-don-studio').remove();
 						});
 					});
 				}
