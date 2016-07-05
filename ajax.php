@@ -391,7 +391,7 @@ if (empty($_REQUEST['method'])) {
 	} else {
 		$ret = array();
 		foreach ($q as $b) {
-			$b = array_merge($b, @json_decode($b['json'], true));
+			$b = @array_merge($b, @json_decode($b['json'], true));
 			if ($b['isPattern']) {
 				$b['isPattern'] = true;
 			} else {
