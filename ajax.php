@@ -397,6 +397,10 @@ if (empty($_REQUEST['method'])) {
 			} else {
 				$b['isPattern'] = false;
 			}
+			if (!@is_file('img/thumb-'.$b['board'].'.png')) {
+				// thumbnail missing, skip
+				continue;
+			}
 			// only send relevant fields
 			unset($b['drills']);
 			unset($b['host']);
